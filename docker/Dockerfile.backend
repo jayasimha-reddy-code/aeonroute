@@ -1,0 +1,31 @@
+FROM python:3.10-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements
+COPY requirements-api.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements-api.txt
+
+# Copy application code
+COPY src/ ./src/
+COPY backend_api.py .
+
+# Create necessary directories
+RUN mkdir -p models/sg_gan models/gnn_gan models/q_learning \
+    results/plots results/metrics \
+    data/generated_traffic data/training_data data/historical_routes
+
+# Expose port
+EXPOSE 8000
+
+# Run application
+CMD ["uvicorn", "backend_api:app", "--host", "0.0.0.0", "--port", "8000"]

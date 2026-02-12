@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  ev-routing:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    image: ev-routing:latest
+    container_name: ev-routing-dev
+    volumes:
+      - .:/app
+      - /app/__pycache__
+    environment:
+      - PYTHONUNBUFFERED=1
+      - TF_CPP_MIN_LOG_LEVEL=2
+    working_dir: /app
+    command: python -m pytest src -v
+
+  training:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    image: ev-routing:latest
+    container_name: ev-routing-train
+    volumes:
+      - .:/app
+      - ./models:/app/models
+      - ./results:/app/results
+      - ./data:/app/data
+      - /app/__pycache__
+    environment:
+      - PYTHONUNBUFFERED=1
+      - TF_CPP_MIN_LOG_LEVEL=2
+    working_dir: /app
+    command: python src/main.py --mode train --episodes 100
+    # Optional: mount GPU
+    # gpus: ['all']
+
+  tensorboard:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    image: ev-routing:latest
+    container_name: ev-routing-tensorboard
+    volumes:
+      - ./results:/app/results
+    ports:
+      - "6006:6006"
+    working_dir: /app
+    command: tensorboard --logdir=./results --host=0.0.0.0 --port=6006
+
+volumes:
+  tensorflow-cache:

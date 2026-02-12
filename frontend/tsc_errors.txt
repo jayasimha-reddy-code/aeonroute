@@ -1,0 +1,2 @@
+src/App.tsx(31,22): error TS6133: 'e' is declared but its value is never read.
+src/components/Header.tsx(8,11): error TS6133: 'isDarkMode' is declared but its value is never read.

@@ -1,0 +1,15 @@
+{
+  "route_generation": {
+    "avg_candidates": 3.8,
+    "avg_energy": 0.8096503701210024
+  },
+  "agent_performance": {
+    "success_rate": 1.0,
+    "avg_reward": 127.22903191970006,
+    "avg_steps": 9.0
+  },
+  "end_to_end": {
+    "completion_rate": 1.0,
+    "avg_energy": 3.597073410662174
+  }
+}

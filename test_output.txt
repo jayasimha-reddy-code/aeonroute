@@ -1,0 +1,56 @@
+============================= test session starts =============================
+platform win32 -- Python 3.11.9, pytest-9.0.2, pluggy-1.6.0 -- C:\Python311\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\thavv\OneDrive\Desktop\EV_Routing
+configfile: pyproject.toml
+plugins: anyio-4.12.1, langsmith-0.6.4
+collecting ... collected 17 items
+
+tests/test_api.py::TestHealthEndpoint::test_health_returns_200 PASSED    [  5%]
+Windows fatal exception: code 0x80000003
+
+Thread 0x000032b8 (most recent call first):
+  File "C:\Python311\Lib\asyncio\windows_events.py", line 825 in _poll
+  File "C:\Python311\Lib\asyncio\windows_events.py", line 444 in select
+  File "C:\Python311\Lib\asyncio\base_events.py", line 1898 in _run_once
+  File "C:\Python311\Lib\asyncio\base_events.py", line 608 in run_forever
+  File "C:\Python311\Lib\asyncio\windows_events.py", line 321 in run_forever
+  File "C:\Python311\Lib\asyncio\base_events.py", line 641 in run_until_complete
+  File "C:\Python311\Lib\asyncio\runners.py", line 118 in run
+  File "C:\Users\thavv\AppData\Roaming\Python\Python311\site-packages\anyio\_backends\_asyncio.py", line 2342 in run
+  File "C:\Users\thavv\AppData\Roaming\Python\Python311\site-packages\anyio\_core\_eventloop.py", line 77 in run
+  File "C:\Users\thavv\AppData\Roaming\Python\Python311\site-packages\anyio\from_thread.py", line 532 in run_blocking_portal
+  File "C:\Python311\Lib\threading.py", line 982 in run
+  File "C:\Python311\Lib\threading.py", line 1045 in _bootstrap_inner
+  File "C:\Python311\Lib\threading.py", line 1002 in _bootstrap
+
+Current thread 0x00003b08 (most recent call first):
+  File "C:\Python311\Lib\site-packages\_pytest\unraisableexception.py", line 83 in collect_unraisable
+  File "C:\Python311\Lib\site-packages\_pytest\unraisableexception.py", line 153 in pytest_runtest_setup
+  File "C:\Python311\Lib\site-packages\pluggy\_callers.py", line 121 in _multicall
+  File "C:\Python311\Lib\site-packages\pluggy\_manager.py", line 120 in _hookexec
+  File "C:\Python311\Lib\site-packages\pluggy\_hooks.py", line 512 in __call__
+  File "C:\Python311\Lib\site-packages\_pytest\runner.py", line 245 in <lambda>
+  File "C:\Python311\Lib\site-packages\_pytest\runner.py", line 353 in from_call
+  File "C:\Python311\Lib\site-packages\_pytest\runner.py", line 244 in call_and_report
+  File "C:\Python311\Lib\site-packages\_pytest\runner.py", line 131 in runtestprotocol
+  File "C:\Python311\Lib\site-packages\_pytest\runner.py", line 118 in pytest_runtest_protocol
+  File "C:\Python311\Lib\site-packages\pluggy\_callers.py", line 121 in _multicall
+  File "C:\Python311\Lib\site-packages\pluggy\_manager.py", line 120 in _hookexec
+  File "C:\Python311\Lib\site-packages\pluggy\_hooks.py", line 512 in __call__
+  File "C:\Python311\Lib\site-packages\_pytest\main.py", line 396 in pytest_runtestloop
+  File "C:\Python311\Lib\site-packages\pluggy\_callers.py", line 121 in _multicall
+  File "C:\Python311\Lib\site-packages\pluggy\_manager.py", line 120 in _hookexec
+  File "C:\Python311\Lib\site-packages\pluggy\_hooks.py", line 512 in __call__
+  File "C:\Python311\Lib\site-packages\_pytest\main.py", line 372 in _main
+  File "C:\Python311\Lib\site-packages\_pytest\main.py", line 318 in wrap_session
+  File "C:\Python311\Lib\site-packages\_pytest\main.py", line 365 in pytest_cmdline_main
+  File "C:\Python311\Lib\site-packages\pluggy\_callers.py", line 121 in _multicall
+  File "C:\Python311\Lib\site-packages\pluggy\_manager.py", line 120 in _hookexec
+  File "C:\Python311\Lib\site-packages\pluggy\_hooks.py", line 512 in __call__
+  File "C:\Python311\Lib\site-packages\_pytest\config\__init__.py", line 199 in main
+  File "C:\Python311\Lib\site-packages\_pytest\config\__init__.py", line 223 in console_main
+  File "C:\Python311\Lib\site-packages\pytest\__main__.py", line 9 in <module>
+  File "<frozen runpy>", line 88 in _run_code
+  File "<frozen runpy>", line 198 in _run_module_as_main
+tests/test_api.py::TestHealthEndpoint::test_health_response_structure 

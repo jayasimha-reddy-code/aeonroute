@@ -1,0 +1,26 @@
+# Requirements for EV Routing System with SG-GAN
+# ===============================================
+# Install with: pip install -r requirements.txt
+
+# Core ML Framework
+tensorflow>=2.10.0          # Deep learning (SG-GAN, DQN)
+
+# Graph Processing
+networkx>=3.0               # Road network graph
+
+# Reinforcement Learning
+gymnasium>=0.28.0           # RL environment (successor to gym)
+
+# Scientific Computing
+numpy>=1.23.0               # Numerical operations
+scipy>=1.10.0               # Scientific utilities
+
+# Visualization
+matplotlib>=3.7.0           # Plotting and visualization
+
+# Optional - Better Performance
+# tensorflow-gpu>=2.10.0    # GPU support (uncomment if you have CUDA)
+
+# Development Tools (optional)
+# pytest>=7.0.0             # Testing
+# jupyter>=1.0.0            # Notebooks
