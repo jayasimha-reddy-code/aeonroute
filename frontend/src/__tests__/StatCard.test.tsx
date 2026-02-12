@@ -1,7 +1,7 @@
 /**
  * StatCard Component Tests
  * =========================
- * Verifies StatCard renders correctly.
+ * Verifies StatCard renders title, value, and icon correctly.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -14,12 +14,12 @@ describe('StatCard', () => {
         const { container } = render(
             <StatCard title="Test" value="100" icon={Activity} color="primary" />
         );
-        expect(container).toBeInTheDocument();
+        expect(container.firstChild).toBeTruthy();
     });
 
     it('renders title and value', () => {
         render(<StatCard title="Total Routes" value="42" icon={Activity} color="primary" />);
-        expect(screen.getByText(/Total Routes/i)).toBeInTheDocument();
-        expect(screen.getByText('42')).toBeInTheDocument();
+        expect(screen.getByText(/Total Routes/i)).toBeTruthy();
+        expect(screen.getByText('42')).toBeTruthy();
     });
 });

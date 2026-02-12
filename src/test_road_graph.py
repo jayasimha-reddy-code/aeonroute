@@ -1,7 +1,7 @@
 """
 Backend Module Tests - Road Graph
 ==================================
-Unit tests for road_graph.py module.
+Unit tests for the RoadGraph class and related components.
 """
 
 import pytest
@@ -11,65 +11,113 @@ import os
 # Add project root to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from src.road_graph import RoadGraphManager, create_grid_network
-import networkx as nx
+from src.road_graph import RoadGraph, EVState, ChargingStation, RoadType
 
 
 @pytest.fixture
 def small_graph():
-    """Create a small 3x3 graph for testing."""
-    return create_grid_network(grid_size=3, num_charging_stations=1)
+    """Create a small 5x5 graph for testing."""
+    return RoadGraph(grid_size=5, seed=42)
 
 
 @pytest.fixture
-def medium_graph():
-    """Create a 5x5 graph for testing."""
-    return create_grid_network(grid_size=5, num_charging_stations=2)
+def default_ev():
+    """Create a default EV state."""
+    return EVState(battery_soc=80.0, battery_capacity_kwh=60.0, current_node=0, time_minutes=480)
 
 
-class TestGridNetworkCreation:
-    """Test grid network creation."""
-    
-    def test_create_grid_network_returns_valid_networkx_graph(self):
-        G = create_grid_network(grid_size=5, num_charging_stations=1)
-        assert isinstance(G, nx.Graph)
-    
-    def test_grid_size_creates_correct_number_of_nodes(self):
-        """Grid of size 5 should have 25 nodes."""
-        G = create_grid_network(grid_size=5, num_charging_stations=1)
-        assert G.number_of_nodes() == 25
-    
-    def test_nodes_have_required_attributes(self, small_graph):
-        """All nodes should have pos, is_charging, road_type attributes."""
-        G = small_graph
-        for node in G.nodes():
-            node_data = G.nodes[node]
-            assert 'pos' in node_data
-            assert 'is_charging' in node_data
-            assert isinstance(node_data['is_charging'], bool)
-    
-    def test_edges_have_required_attributes(self, small_graph):
-        """All edges should have weight, distance, road_type attributes."""
-        G = small_graph
-        for u, v in G.edges():
-            edge_data = G[u][v]
-            assert 'weight' in edge_data
-            assert 'distance' in edge_data
-            assert 'road_type' in edge_data
-    
-    def test_charging_stations_are_placed(self, medium_graph):
-        """At least one node should be a charging station."""
-        G = medium_graph
-        charging_nodes = [n for n in G.nodes() if G.nodes[n]['is_charging']]
-        assert len(charging_nodes) > 0
-    
-    def test_small_grid_boundary_works(self):
-        """3x3 grid (minimum) should work without error."""
-        G = create_grid_network(grid_size=3, num_charging_stations=1)
-        assert G.number_of_nodes() == 9
-    
-    @pytest.mark.slow
-    def test_large_grid_boundary_works(self):
-        """50x50 grid (maximum) should work without error."""
-        G = create_grid_network(grid_size=50, num_charging_stations=10)
-        assert G.number_of_nodes() == 2500
+class TestRoadGraphCreation:
+    """Test RoadGraph initialization."""
+
+    def test_creates_correct_number_of_nodes(self, small_graph):
+        assert small_graph.num_nodes == 25
+
+    def test_graph_is_directed(self, small_graph):
+        import networkx as nx
+        assert isinstance(small_graph.graph, nx.DiGraph)
+
+    def test_nodes_have_position(self, small_graph):
+        for node in small_graph.graph.nodes():
+            data = small_graph.graph.nodes[node]
+            assert 'x' in data
+            assert 'y' in data
+
+    def test_edges_have_distance(self, small_graph):
+        for u, v in small_graph.graph.edges():
+            data = small_graph.graph.edges[u, v]
+            assert 'distance_km' in data
+            assert data['distance_km'] > 0
+
+    def test_edges_have_road_type(self, small_graph):
+        for u, v in small_graph.graph.edges():
+            data = small_graph.graph.edges[u, v]
+            assert 'road_type' in data
+            assert isinstance(data['road_type'], RoadType)
+
+
+class TestChargingStations:
+    """Test charging station placement."""
+
+    def test_charging_stations_exist(self, small_graph):
+        assert len(small_graph.charging_stations) > 0
+
+    def test_charging_station_nodes_flagged(self, small_graph):
+        for node_id in small_graph.charging_stations:
+            assert small_graph.graph.nodes[node_id]['is_charging_station'] is True
+
+    def test_charge_time_calculation(self):
+        station = ChargingStation(node_id=0, charging_power_kw=50.0)
+        time = station.charge_time_minutes(25.0)  # 25 kWh
+        assert time == pytest.approx(30.0)  # 25/50 * 60 = 30 min
+
+
+class TestEVState:
+    """Test EV state properties."""
+
+    def test_remaining_energy(self, default_ev):
+        # 80% of 60 kWh = 48 kWh
+        assert default_ev.remaining_energy_kwh == pytest.approx(48.0)
+
+    def test_estimated_range(self, default_ev):
+        # 48 kWh / 0.2 kWh/km = 240 km
+        assert default_ev.estimated_range_km == pytest.approx(240.0)
+
+    def test_time_hours(self, default_ev):
+        # 480 min / 60 = 8.0 hours
+        assert default_ev.time_hours == pytest.approx(8.0)
+
+    def test_to_array_shape(self, default_ev):
+        arr = default_ev.to_array()
+        assert arr.shape == (5,)
+
+    def test_copy_creates_independent(self, default_ev):
+        copy = default_ev.copy()
+        copy.battery_soc = 50.0
+        assert default_ev.battery_soc == 80.0
+
+
+class TestRouting:
+    """Test shortest path and edge cost."""
+
+    def test_shortest_path_exists(self, small_graph):
+        path = small_graph.shortest_path(0, 24)  # Corner to corner in 5x5
+        assert len(path) > 0
+        assert path[0] == 0
+        assert path[-1] == 24
+
+    def test_edge_cost_returns_required_keys(self, small_graph, default_ev):
+        edges = list(small_graph.graph.edges())
+        cost = small_graph.calculate_edge_cost(edges[0], default_ev)
+        assert 'energy_kwh' in cost
+        assert 'time_minutes' in cost
+        assert 'distance_km' in cost
+        assert 'feasible' in cost
+
+    def test_edge_cost_energy_positive(self, small_graph, default_ev):
+        edges = list(small_graph.graph.edges())
+        cost = small_graph.calculate_edge_cost(edges[0], default_ev)
+        assert cost['energy_kwh'] > 0
+
+    def test_traffic_patterns_shape(self, small_graph):
+        num_edges = small_graph.graph.number_of_edges()
+        assert small_graph.traffic_patterns.shape == (num_edges, 24)
