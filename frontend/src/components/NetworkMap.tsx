@@ -265,8 +265,11 @@ const NetworkMap = memo(function NetworkMap({
   return (
     <div
       ref={containerRef}
-      className={`w-full h-full rounded-xl overflow-hidden ${className}`}
+      className={`w-full h-full rounded-2xl overflow-hidden border border-[var(--glass-border)] shadow-card ${className}`}
       style={{ minHeight: 300 }}
+      role="application"
+      aria-label="EV route map"
+      aria-roledescription="Interactive map"
     />
   );
 });

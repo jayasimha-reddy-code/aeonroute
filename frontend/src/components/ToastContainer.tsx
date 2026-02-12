@@ -48,7 +48,11 @@ function ToastContainer() {
   };
 
   return (
-    <div className="fixed bottom-4 right-4 z-[100] flex flex-col gap-2 max-w-sm w-full pointer-events-none">
+    <div
+      className="fixed bottom-4 right-4 z-[100] flex flex-col gap-2 max-w-sm w-full pointer-events-none"
+      aria-live="polite"
+      aria-label="Notifications"
+    >
       {toasts.map((toast) => {
         const Icon = iconMap[toast.type];
         const isDismissing = dismissing.has(toast.id);
@@ -57,12 +61,16 @@ function ToastContainer() {
           <div
             key={toast.id}
             className={cn(
-              'pointer-events-auto flex items-start gap-3 p-4 rounded-xl border-l-4 shadow-elevated',
-              'bg-white dark:bg-surface-800',
+              'pointer-events-auto flex items-start gap-3 p-4 rounded-xl border-l-4 shadow-elevated relative overflow-hidden',
               isDismissing ? 'animate-slide-out-right' : 'animate-slide-in-right',
               colorMap[toast.type],
             )}
-            role="alert"
+            style={{
+              background: 'var(--glass-bg)',
+              backdropFilter: 'blur(var(--glass-blur)) saturate(var(--glass-saturate))',
+              WebkitBackdropFilter: 'blur(var(--glass-blur)) saturate(var(--glass-saturate))',
+            }}
+            role={toast.type === 'error' || toast.type === 'warning' ? 'alert' : 'status'}
             onAnimationEnd={(e) => handleAnimationEnd(e, toast.id)}
           >
             <Icon className={cn('w-5 h-5 flex-shrink-0 mt-0.5', iconColorMap[toast.type])} />
@@ -79,9 +87,18 @@ function ToastContainer() {
             <button
               onClick={() => handleDismiss(toast.id)}
               className="flex-shrink-0 p-1 rounded-md text-surface-400 hover:text-surface-600 dark:hover:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-700 transition-colors"
+              aria-label="Dismiss notification"
             >
               <X className="w-3.5 h-3.5" />
             </button>
+
+            {/* Progress bar */}
+            <div
+              className="absolute bottom-0 left-0 h-0.5 bg-current opacity-30"
+              style={{
+                animation: `toastProgress ${toast.duration || 4000}ms linear`,
+              }}
+            />
           </div>
         );
       })}

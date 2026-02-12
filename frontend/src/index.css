@@ -232,8 +232,10 @@
      ───────────────────────────────────────────────────────────────────────── */
   .card {
     @apply rounded-2xl p-6;
-    background: var(--color-surface-raised);
-    border: 1px solid var(--color-border);
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    border: 1px solid var(--glass-border);
     box-shadow:
       0 1px 2px rgba(0, 0, 0, 0.04),
       0 4px 16px rgba(0, 0, 0, 0.04);
@@ -244,12 +246,12 @@
   }
 
   .dark .card {
-    background: rgba(30, 41, 59, 0.5);
-    border-color: var(--color-border);
+    background: var(--glass-bg);
+    border-color: var(--glass-border);
     box-shadow:
       0 1px 2px rgba(0, 0, 0, 0.2),
       0 4px 16px rgba(0, 0, 0, 0.15),
-      inset 0 1px 0 rgba(255, 255, 255, 0.02);
+      inset 0 1px 0 rgba(255, 255, 255, 0.04);
   }
 
   .card-interactive {
@@ -277,6 +279,11 @@
 
   .card-interactive:active {
     transform: scale(0.985) translateY(0);
+  }
+
+  .card-interactive:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: var(--focus-ring-offset);
   }
 
 
@@ -427,12 +434,13 @@
   }
 
   .btn:focus-visible {
-    outline: 2px solid var(--color-primary);
-    outline-offset: 2px;
+    outline: none;
+    box-shadow: 0 0 0 3px var(--focus-ring);
   }
 
   .btn:disabled {
-    @apply opacity-50 cursor-not-allowed pointer-events-none;
+    @apply opacity-40 cursor-not-allowed pointer-events-none;
+    filter: grayscale(30%);
   }
 
   .btn:active:not(:disabled) {
@@ -443,14 +451,23 @@
   .btn-sm {
     @apply px-3.5 py-1.5 text-xs;
     border-radius: var(--radius-md);
+    min-height: 36px;
   }
 
   .btn-md {
     @apply px-5 py-2.5 text-sm;
+    min-height: 44px;
   }
 
   .btn-lg {
     @apply px-6 py-3 text-base;
+    min-height: 48px;
+  }
+
+  .btn-loading {
+    pointer-events: none;
+    opacity: 0.7;
+    cursor: wait;
   }
 
   /* Primary — Electric cyan gradient */
@@ -899,6 +916,17 @@
 .route-path-animated {
   stroke-dasharray: 10, 5;
   animation: dashFlow 1s linear infinite;
+}
+
+/* Toast progress bar */
+@keyframes toastProgress {
+  from {
+    width: 100%;
+  }
+
+  to {
+    width: 0%;
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
