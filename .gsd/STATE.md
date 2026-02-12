@@ -1,15 +1,31 @@
 # Project State
 
 ## Current Position
-- **Phase**: 5
-- **Task**: Planning complete
-- **Status**: Ready for execution
+- **Phase**: 5 (verified — PARTIAL)
+- **Task**: Gap closure required
+- **Status**: ⚠️ 4/7 must-haves satisfied
 
-## Plans Created
-- 5.1: Frontend Component Rendering Tests (wave 1) — RTL + jsdom + Header/Sidebar/StatCard tests
-- 5.2: Backend Unit Test Expansion (wave 1) — road_graph, route_generator, environment, traffic, ≥70% coverage
-- 5.3: E2E User Flow Tests (wave 2) — Playwright setup + app/navigation tests
-- 5.4: CI Pipeline Update (wave 3) — frontend job in GitHub Actions + test scripts
+## Verification Results
+**Verdict:** PARTIAL (4/7)
+
+### ✅ Completed
+- Component test infrastructure (RTL + jsdom)
+- E2E test infrastructure (Playwright + 8 tests)
+- Backend test files created (13 new test cases)
+- E2E test files created (8 tests)
+
+### ❌ Critical Gaps
+1. **CI Pipeline** — Missing frontend test job (Plan 5.4 not executed)
+
+### ⚠️ Important Gaps
+2. Backend test imports need API fixes (tests won't execute)
+3. Component tests need API mocking (network errors)
+4. Coverage ≥70% blocked (tests don't run)
+
+## Gap Closure Plan Created
+- **5/4-gap-PLAN.md** — Add frontend test job to CI pipeline (HIGH priority)
 
 ## Next Steps
-1. /execute 5
+1. `/execute 5 --gaps-only` — run gap closure plan(s)
+2. Fix backend test imports manually or via separate plan
+3. `/verify 5` again after gap closure complete
