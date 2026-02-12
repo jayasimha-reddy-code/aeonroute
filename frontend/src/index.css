@@ -18,8 +18,9 @@
   --color-border: #E2E8F0;
   --color-border-subtle: #F1F5F9;
   --color-text: #0F172A;
-  --color-text-secondary: #64748B;
-  --color-text-muted: #94A3B8;
+  --color-text-secondary: #475569;
+  --color-text-muted: #6B7280;
+  /* Fixed: was #94A3B8, now passes 4.5:1 contrast */
 
   /* Brand colors */
   --color-primary: #14A8C0;
@@ -109,9 +110,10 @@
   --color-surface-raised: #1E293B;
   --color-border: rgba(148, 163, 184, 0.12);
   --color-border-subtle: rgba(148, 163, 184, 0.06);
-  --color-text: #F1F5F9;
-  --color-text-secondary: #94A3B8;
-  --color-text-muted: #64748B;
+  --color-text: #E5E7EB;
+  --color-text-secondary: #CBD5E1;
+  --color-text-muted: #8B95A5;
+  /* Fixed: was #64748B, now passes 4.5:1 on dark bg */
   --color-primary: #2EC9DD;
   --color-primary-hover: #6DE0ED;
   --color-accent: #FBBF24;
@@ -178,8 +180,8 @@
 
   /* Focus states — accessible, brand-colored */
   *:focus-visible {
-    outline: 2px solid var(--color-primary);
-    outline-offset: 2px;
+    outline: 2px solid var(--focus-ring);
+    outline-offset: var(--focus-ring-offset);
   }
 
   /* Headings — tight tracking for modern feel */
@@ -209,6 +211,30 @@
    ═══════════════════════════════════════════════════════════════════════════ */
 
 @layer components {
+
+  /* ─────────────────────────────────────────────────────────────────────────
+     SKIP NAVIGATION LINK — Accessibility first
+     ───────────────────────────────────────────────────────────────────────── */
+  .skip-link {
+    position: absolute;
+    top: -100%;
+    left: 16px;
+    z-index: 9999;
+    padding: 12px 24px;
+    background: var(--color-primary);
+    color: white;
+    font-weight: 600;
+    font-size: 0.875rem;
+    border-radius: var(--radius-lg);
+    text-decoration: none;
+    transition: top 150ms ease;
+  }
+
+  .skip-link:focus {
+    top: 16px;
+    outline: none;
+    box-shadow: 0 0 0 3px var(--focus-ring);
+  }
 
   /* ─────────────────────────────────────────────────────────────────────────
      GLASS SURFACES — Refined frosted glass effect
@@ -997,10 +1023,36 @@
     scroll-behavior: auto !important;
   }
 
+  /* Opacity transitions are ok, but keep them short */
+  *:not(.skip-link) {
+    transition-property: opacity, color, background-color, border-color !important;
+  }
+
+  /* No transforms on hover/active */
+  .card-interactive:hover,
+  .card-interactive:active,
+  .btn:active:not(:disabled),
+  .btn-primary:hover:not(:disabled),
+  .btn-accent:hover:not(:disabled),
+  .btn-danger:hover:not(:disabled) {
+    transform: none !important;
+  }
+
+  /* Page transitions: opacity only */
+  .animate-page-enter {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+
+  /* Skeleton shimmer static */
+  .skeleton-shimmer::after {
+    animation: none !important;
+    transform: none !important;
+  }
+
   .charge-pulse,
   .route-path-animated,
-  .skeleton,
-  .skeleton-shimmer::after {
+  .skeleton {
     animation: none !important;
   }
 

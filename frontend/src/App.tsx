@@ -73,10 +73,16 @@ function App() {
   return (
     <div className={isDarkMode ? 'dark' : ''}>
       <div className="flex flex-col h-screen bg-surface-50 dark:bg-surface-950 text-surface-900 dark:text-surface-50 transition-colors duration-300">
+        {/* Skip to main content link */}
+        <a href="#main-content" className="skip-link">
+          Skip to main content
+        </a>
+
         <Header />
         <div className="flex flex-1 overflow-hidden">
           <Sidebar />
           <main
+            id="main-content"
             className={cn(
               'flex-1 overflow-y-auto transition-all duration-300',
               // Subtle inset shadow on the main content area
