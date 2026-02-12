@@ -214,27 +214,17 @@
      GLASS SURFACES — Refined frosted glass effect
      ───────────────────────────────────────────────────────────────────────── */
   .glass {
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
-    border: 1px solid var(--color-border);
-  }
-
-  .dark .glass {
-    background: rgba(15, 23, 42, 0.75);
-    border-color: var(--color-border);
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    border: 1px solid var(--glass-border);
   }
 
   .glass-subtle {
-    background: rgba(255, 255, 255, 0.5);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    background: var(--glass-bg);
+    backdrop-filter: blur(calc(var(--glass-blur) * 0.6));
+    -webkit-backdrop-filter: blur(calc(var(--glass-blur) * 0.6));
     border: 1px solid var(--color-border-subtle);
-  }
-
-  .dark .glass-subtle {
-    background: rgba(15, 23, 42, 0.4);
-    border-color: var(--color-border-subtle);
   }
 
   /* ─────────────────────────────────────────────────────────────────────────

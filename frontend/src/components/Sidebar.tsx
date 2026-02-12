@@ -1,13 +1,13 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { BarChart3, Map, Zap, ChevronLeft, X, Cpu, Activity, Brain } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useSystemStore, AppTab } from '../store/store';
 
 const menuItems: Array<{ id: AppTab; label: string; icon: React.ComponentType<{ className?: string }>; description: string }> = [
-  { id: 'dashboard',     label: 'Dashboard',      icon: BarChart3, description: 'System overview' },
-  { id: 'route-planner', label: 'Route Planner',   icon: Map,       description: 'Plan EV routes' },
-  { id: 'training',      label: 'Training',        icon: Brain,     description: 'Model training' },
-  { id: 'analytics',     label: 'Analytics',        icon: Activity,  description: 'Performance data' },
+  { id: 'dashboard', label: 'Dashboard', icon: BarChart3, description: 'System overview' },
+  { id: 'route-planner', label: 'Route Planner', icon: Map, description: 'Plan EV routes' },
+  { id: 'training', label: 'Training', icon: Brain, description: 'Model training' },
+  { id: 'analytics', label: 'Analytics', icon: Activity, description: 'Performance data' },
 ];
 
 function Sidebar() {
@@ -17,17 +17,73 @@ function Sidebar() {
     mobileSidebarOpen, setMobileSidebarOpen,
   } = useSystemStore();
 
+  // Keyboard navigation state
+  const navButtonRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  // Keyboard navigation handler
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
+    const key = e.key;
+    const currentIndex = navButtonRefs.current.findIndex((ref) => ref === document.activeElement);
+    let nextIndex = currentIndex;
+
+    if (key === 'ArrowDown') {
+      e.preventDefault();
+      nextIndex = currentIndex < menuItems.length - 1 ? currentIndex + 1 : 0;
+    } else if (key === 'ArrowUp') {
+      e.preventDefault();
+      nextIndex = currentIndex > 0 ? currentIndex - 1 : menuItems.length - 1;
+    } else if (key === 'Home') {
+      e.preventDefault();
+      nextIndex = 0;
+    } else if (key === 'End') {
+      e.preventDefault();
+      nextIndex = menuItems.length - 1;
+    } else if (key === 'Enter' || key === ' ') {
+      e.preventDefault();
+      if (currentIndex >= 0 && navButtonRefs.current[currentIndex]) {
+        navButtonRefs.current[currentIndex]?.click();
+      }
+      return;
+    } else {
+      return;
+    }
+
+    navButtonRefs.current[nextIndex]?.focus();
+  };
+
+  // Mobile overlay Escape handler
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && mobileSidebarOpen) {
+        setMobileSidebarOpen(false);
+      }
+    };
+
+    if (mobileSidebarOpen) {
+      document.addEventListener('keydown', handleEscape);
+      return () => document.removeEventListener('keydown', handleEscape);
+    }
+  }, [mobileSidebarOpen, setMobileSidebarOpen]);
+
   const navContent = (
     <>
-      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto no-scrollbar">
-        {menuItems.map((item) => {
+      <nav
+        className="flex-1 px-3 py-4 space-y-1 overflow-y-auto no-scrollbar"
+        role="navigation"
+        aria-label="Main navigation"
+        onKeyDown={handleKeyDown}
+      >
+        {menuItems.map((item, index) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
           return (
             <button
               key={item.id}
+              ref={(el) => (navButtonRefs.current[index] = el)}
               onClick={() => setActiveTab(item.id)}
               title={sidebarCollapsed ? item.label : undefined}
+              tabIndex={index === 0 ? 0 : -1}
+              aria-current={isActive ? 'page' : undefined}
               className={cn(
                 'group w-full flex items-center gap-3 rounded-xl font-medium transition-all duration-200 relative',
                 sidebarCollapsed ? 'justify-center px-3 py-3' : 'px-3 py-2.5',
@@ -67,6 +123,7 @@ function Sidebar() {
         <div className="hidden lg:block px-3 py-2 border-t border-surface-200/40 dark:border-white/[0.06]">
           <button
             onClick={toggleSidebar}
+            aria-expanded={!sidebarCollapsed}
             className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-medium text-surface-500 dark:text-surface-400 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors"
           >
             <ChevronLeft className={cn('w-4 h-4 transition-transform duration-300', sidebarCollapsed && 'rotate-180')} />
@@ -113,6 +170,8 @@ function Sidebar() {
         <div
           className="lg:hidden fixed inset-0 z-50 bg-black/40 backdrop-blur-sm animate-fade-in"
           onClick={() => setMobileSidebarOpen(false)}
+          role="dialog"
+          aria-modal="true"
         >
           <aside
             className="w-72 h-full bg-white dark:bg-surface-900 border-r border-surface-200 dark:border-surface-700 shadow-elevated flex flex-col animate-slide-in-left"
