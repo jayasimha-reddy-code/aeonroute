@@ -1,22 +1,15 @@
 # Project State
 
 ## Current Position
-- **Phase**: 4 (verified)
-- **Status**: ✅ Complete and verified
+- **Phase**: 5
+- **Task**: Planning complete
+- **Status**: Ready for execution
 
-## Phase 4 Verification
-- **Verdict**: PASS (12/12 must-haves)
-- **Build**: 155.79 kB gzip (≤ 170 kB)
-- **TypeScript**: 0 errors
-- **Tests**: 13/13 passing
-
-## Completed Plans
-- 4.1: Design Tokens (wave 1) — skipped (CSS already has tokens from Phase 1)
-- 4.2: Theme System (wave 1) — 3-state toggle, system preference, store upgrade ✅
-- 4.3: Navigation A11y (wave 2) — sidebar keyboard, ARIA, glass token integration ✅
-- 4.4: Component Surfaces (wave 2) — cards/buttons/toasts/map upgrades ✅
-- 4.5: Accessibility Hardening (wave 3) — skip link, contrast, reduced motion ✅
-- 4.6: Responsive + Gradient (wave 3) — skipped (existing styles sufficient)
+## Plans Created
+- 5.1: Frontend Component Rendering Tests (wave 1) — RTL + jsdom + Header/Sidebar/StatCard tests
+- 5.2: Backend Unit Test Expansion (wave 1) — road_graph, route_generator, environment, traffic, ≥70% coverage
+- 5.3: E2E User Flow Tests (wave 2) — Playwright setup + app/navigation tests
+- 5.4: CI Pipeline Update (wave 3) — frontend job in GitHub Actions + test scripts
 
 ## Next Steps
 1. /execute 5
