@@ -66,12 +66,18 @@
 
 ---
 
-## Phase 6: Backend Optimization & Security
+## Phase 6: Backend Optimization & Security ✅ COMPLETE
 **Scope**: Production-ready backend with advanced caching, rate limiting, structured logging, and security hardening.
 
-**Key deliverables:**
-- Request rate limiting middleware
-- Enhanced structured logging with correlation IDs
-- Input sanitization hardening
-- API documentation (OpenAPI/Swagger polish)
-- Docker build optimization (multi-stage, layer caching)
+**Deliverables (completed):**
+- Rate limiting via `slowapi` (per-endpoint: 5-120/min) + `429 Too Many Requests`
+- Correlation IDs via `contextvars` + `X-Request-ID` header
+- Structured JSON logging with custom `_StructuredFormatter` (env-configurable `LOG_FORMAT`)
+- Security headers middleware (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`)
+- CORS tightened with `CORS_ORIGINS` env var + explicit method whitelist
+- Request body size limit (1 MB)
+- OpenAPI polish: 4 tag groups, descriptions, response models, contact/license
+- Pydantic upper bounds on all model fields
+- Multi-stage `Dockerfile.backend` with healthcheck + non-root user
+- `.dockerignore` for build context optimization
+
