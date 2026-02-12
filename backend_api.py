@@ -2,9 +2,10 @@
 FastAPI Backend for EV Routing System
 ======================================
 Exposes the EV routing system as REST API endpoints for the web frontend.
+Production-ready with rate limiting, structured logging, and security hardening.
 """
 
-from fastapi import FastAPI, HTTPException, BackgroundTasks, Request
+from fastapi import FastAPI, HTTPException, BackgroundTasks, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
@@ -17,16 +18,48 @@ import os
 import sys
 import time
 import logging
+import uuid
+from contextvars import ContextVar
 from pathlib import Path
 from typing import Optional, List, Any, Dict
 from functools import lru_cache
+from pydantic import BaseModel, Field, field_validator
 
-# ── Logging ──────────────────────────────────────────
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s  %(levelname)-8s  %(message)s",
-    datefmt="%H:%M:%S",
-)
+# ── Correlation ID context ────────────────────────────
+_request_id_ctx: ContextVar[str] = ContextVar("request_id", default="-")
+
+# ── Structured Logging ───────────────────────────────
+LOG_FORMAT = os.getenv("LOG_FORMAT", "json")
+
+class _StructuredFormatter(logging.Formatter):
+    """JSON structured log formatter with correlation ID support."""
+    def format(self, record: logging.LogRecord) -> str:
+        log = {
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "level": record.levelname,
+            "logger": record.name,
+            "message": record.getMessage(),
+            "request_id": _request_id_ctx.get("-"),
+        }
+        if record.exc_info and record.exc_info[0]:
+            log["exception"] = self.formatException(record.exc_info)
+        # Merge extra fields attached by middleware
+        for k in ("method", "path", "status", "duration_ms"):
+            if hasattr(record, k):
+                log[k] = getattr(record, k)
+        return json.dumps(log, default=str)
+
+_handler = logging.StreamHandler()
+if LOG_FORMAT == "json":
+    _handler.setFormatter(_StructuredFormatter())
+else:
+    _handler.setFormatter(logging.Formatter(
+        "%(asctime)s  %(levelname)-8s  [%(request_id)s]  %(message)s",
+        datefmt="%H:%M:%S",
+        defaults={"request_id": "-"},
+    ))
+
+logging.basicConfig(level=logging.INFO, handlers=[_handler], force=True)
 logger = logging.getLogger("ev_routing")
 
 # Add src directory to path
@@ -36,6 +69,13 @@ from src.road_graph import RoadGraph, EVState
 from src.route_generator import RouteGenerator, EVRoutePlanner
 from src.main import EVRoutingSystem
 from src.q_learning_agent import QLearningAgent
+
+# ── Rate Limiting ─────────────────────────────────────
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+
+limiter = Limiter(key_func=get_remote_address, default_limits=["60/minute"])
 
 # ==================== Lifecycle ====================
 
@@ -51,24 +91,44 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error("❌  Failed to initialise system: %s", e)
     yield
-    # Shutdown cleanup (if needed in the future)
     logger.info("Shutting down EV Routing System")
+
+# ==================== OpenAPI Metadata ====================
+
+tags_metadata = [
+    {"name": "System", "description": "Health checks and system statistics"},
+    {"name": "Routing", "description": "EV route generation and optimization"},
+    {"name": "Training", "description": "ML model training pipeline management"},
+    {"name": "Analytics", "description": "Route metrics and traffic pattern analysis"},
+]
 
 # ==================== App Init ====================
 
 app = FastAPI(
     title="EV Routing System API",
-    description="AI-Powered Electric Vehicle Route Optimization API",
+    description=(
+        "AI-Powered Electric Vehicle Route Optimization API.\n\n"
+        "Uses SG-GAN for traffic generation, graph-based road networks, "
+        "and Q-Learning for optimal EV routing decisions."
+    ),
     version="2.0.0",
     lifespan=lifespan,
+    openapi_tags=tags_metadata,
+    contact={"name": "EV Routing Team", "url": "https://github.com/ev-routing"},
+    license_info={"name": "MIT", "url": "https://opensource.org/licenses/MIT"},
 )
 
-# CORS
+# Register rate limiter
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# CORS — configurable via env
+_cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://localhost:3000").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_cors_origins,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -80,6 +140,38 @@ training_status: Dict[str, Any] = {
     "current_step": "",
     "metrics": {},
 }
+
+# ==================== Response Models ====================
+
+class APIResponse(BaseModel):
+    """Standard API response envelope."""
+    ok: bool = True
+    message: str = "success"
+    data: Any = None
+
+class HealthData(BaseModel):
+    status: str
+    system_initialized: bool
+    timestamp: str
+
+class RouteData(BaseModel):
+    path: List[int]
+    distance_km: float
+    energy_kwh: float
+    time_minutes: float
+    feasibility_score: float
+    charging_stops: List[Any] = []
+
+class RoutesResponse(BaseModel):
+    routes: List[RouteData]
+    count: int
+
+class MetricsData(BaseModel):
+    avg_distance_km: float
+    avg_energy_kwh: float
+    avg_time_minutes: float
+    avg_feasibility: float
+    samples: int
 
 # ==================== Helpers ====================
 
@@ -112,19 +204,55 @@ def require_route_gen():
 
 # ==================== Middleware ====================
 
+# Request body size limit (1 MB)
+_MAX_BODY_SIZE = int(os.getenv("MAX_BODY_SIZE", 1_048_576))
+
+@app.middleware("http")
+async def security_headers_middleware(request: Request, call_next):
+    """Add security headers to all responses."""
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    return response
+
+
 @app.middleware("http")
 async def request_logger(request: Request, call_next):
-    """Log every request with timing + expose X-Response-Time header."""
+    """Log every request with timing, correlation ID, and structured fields."""
+    # Correlation ID
+    request_id = request.headers.get("X-Request-ID", str(uuid.uuid4())[:8])
+    _request_id_ctx.set(request_id)
+
+    # Body size check for POST/PUT/PATCH
+    if request.method in ("POST", "PUT", "PATCH"):
+        content_length = request.headers.get("content-length")
+        if content_length and int(content_length) > _MAX_BODY_SIZE:
+            return JSONResponse(
+                status_code=413,
+                content={"ok": False, "message": "Request body too large (max 1 MB)"},
+            )
+
     start = time.perf_counter()
     response = await call_next(request)
     elapsed_ms = (time.perf_counter() - start) * 1000
+
     response.headers["X-Response-Time"] = f"{elapsed_ms:.1f}ms"
+    response.headers["X-Request-ID"] = request_id
+
     logger.info(
         "%s %s %s  %.0f ms",
         request.method,
         request.url.path,
         response.status_code,
         elapsed_ms,
+        extra={
+            "method": request.method,
+            "path": request.url.path,
+            "status": response.status_code,
+            "duration_ms": round(elapsed_ms, 1),
+        },
     )
     return response
 
@@ -132,27 +260,28 @@ async def request_logger(request: Request, call_next):
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     """Catch-all – never leak raw tracebacks to the frontend."""
-    logger.exception("Unhandled error on %s %s", request.method, request.url.path)
+    logger.exception(
+        "Unhandled error on %s %s", request.method, request.url.path,
+        extra={"method": request.method, "path": request.url.path},
+    )
     return JSONResponse(
         status_code=500,
         content={"ok": False, "message": "Internal server error"},
     )
 
-# ==================== Models ====================
-
-from pydantic import BaseModel, Field, field_validator
+# ==================== Request Models ====================
 
 class EVStateRequest(BaseModel):
-    battery_soc: float = Field(..., ge=0, le=100, description="State of charge 0-100")
-    current_node: int = Field(..., ge=0)
-    battery_capacity_kwh: float = Field(60, gt=0)
-    time_minutes: int = Field(480, ge=0)
+    battery_soc: float = Field(..., ge=0, le=100, description="State of charge (0-100%)")
+    current_node: int = Field(..., ge=0, le=9999, description="Current node ID")
+    battery_capacity_kwh: float = Field(60, gt=0, le=500, description="Battery capacity in kWh")
+    time_minutes: int = Field(480, ge=0, le=1440, description="Current time of day in minutes")
 
 class RouteRequest(BaseModel):
-    source: int = Field(..., ge=0)
-    destination: int = Field(..., ge=0)
+    source: int = Field(..., ge=0, le=9999, description="Source node ID")
+    destination: int = Field(..., ge=0, le=9999, description="Destination node ID")
     ev_state: EVStateRequest
-    num_candidates: int = Field(5, ge=1, le=20)
+    num_candidates: int = Field(5, ge=1, le=20, description="Number of candidate routes")
 
     @field_validator("destination")
     @classmethod
@@ -162,12 +291,12 @@ class RouteRequest(BaseModel):
         return v
 
 class TrainingConfig(BaseModel):
-    grid_size: int = Field(10, ge=3, le=50)
-    gan_epochs: int = Field(100, ge=1)
-    rl_episodes: int = Field(500, ge=1)
-    traffic_samples: int = Field(500, ge=10)
-    gan_batch_size: int = Field(32, ge=1)
-    rl_max_steps: int = Field(200, ge=10)
+    grid_size: int = Field(10, ge=3, le=50, description="Road network grid size")
+    gan_epochs: int = Field(100, ge=1, le=1000, description="GAN training epochs")
+    rl_episodes: int = Field(500, ge=1, le=5000, description="RL training episodes")
+    traffic_samples: int = Field(500, ge=10, le=5000, description="Number of traffic samples")
+    gan_batch_size: int = Field(32, ge=1, le=256, description="GAN batch size")
+    rl_max_steps: int = Field(200, ge=10, le=1000, description="Max steps per RL episode")
 
 # ==================== Response Cache ====================
 
@@ -191,8 +320,10 @@ def _get_cached_stats() -> Optional[Dict]:
 
 # ==================== Endpoints ====================
 
-@app.get("/health")
-async def health_check():
+@app.get("/health", tags=["System"], summary="Health check",
+         description="Returns system health status and initialization state.")
+@limiter.limit("120/minute")
+async def health_check(request: Request):
     return ok({
         "status": "healthy",
         "system_initialized": system is not None,
@@ -200,9 +331,10 @@ async def health_check():
     })
 
 
-@app.get("/api/road-network")
-async def get_road_network(grid_size: int = 10):
-    """Return the current road network topology (cached per grid_size)."""
+@app.get("/api/road-network", tags=["Routing"], summary="Get road network",
+         description="Return the current road network topology with node positions and edges. Cached for 5 minutes per grid size.")
+@limiter.limit("30/minute")
+async def get_road_network(request: Request, grid_size: int = 10):
     # Clamp grid size to valid range
     grid_size = max(3, min(grid_size, 50))
 
@@ -251,13 +383,15 @@ async def get_road_network(grid_size: int = 10):
         fail(f"Failed to fetch road network: {e}")
 
 
-@app.post("/api/generate-route")
-async def generate_route(request: RouteRequest):
+@app.post("/api/generate-route", tags=["Routing"], summary="Generate EV route",
+          description="Generate optimal EV routes between two nodes considering battery state, charging stations, and traffic conditions.")
+@limiter.limit("30/minute")
+async def generate_route(request: Request, route_req: RouteRequest):
     """Generate optimal EV routes between two nodes."""
     s = require_route_gen()
     try:
         node_count = s.road_graph.num_nodes
-        if request.source >= node_count or request.destination >= node_count:
+        if route_req.source >= node_count or route_req.destination >= node_count:
             fail(
                 f"Node IDs must be in [0, {node_count - 1}]",
                 422,
@@ -265,17 +399,17 @@ async def generate_route(request: RouteRequest):
             )
 
         ev_state = EVState(
-            battery_soc=request.ev_state.battery_soc,
-            current_node=request.ev_state.current_node,
-            battery_capacity_kwh=request.ev_state.battery_capacity_kwh,
-            time_minutes=request.ev_state.time_minutes,
+            battery_soc=route_req.ev_state.battery_soc,
+            current_node=route_req.ev_state.current_node,
+            battery_capacity_kwh=route_req.ev_state.battery_capacity_kwh,
+            time_minutes=route_req.ev_state.time_minutes,
         )
 
         routes = s.route_generator.generate_routes(
-            source=request.source,
-            destination=request.destination,
+            source=route_req.source,
+            destination=route_req.destination,
             ev_state=ev_state,
-            num_candidates=request.num_candidates,
+            num_candidates=route_req.num_candidates,
         )
 
         routes_data = [
@@ -297,9 +431,10 @@ async def generate_route(request: RouteRequest):
         fail(f"Route generation failed: {e}")
 
 
-@app.get("/api/traffic-patterns")
-async def get_traffic_patterns(time_step: int = 12):
-    """Generate sample traffic pattern scenarios."""
+@app.get("/api/traffic-patterns", tags=["Analytics"], summary="Get traffic patterns",
+         description="Generate sample traffic pattern scenarios using the trained GAN model.")
+@limiter.limit("30/minute")
+async def get_traffic_patterns(request: Request, time_step: int = 12):
     s = require_system()
     if s.gan is None:
         fail("Traffic GAN model not trained yet", 503)
@@ -316,15 +451,17 @@ async def get_traffic_patterns(time_step: int = 12):
         fail(f"Traffic generation failed: {e}")
 
 
-@app.get("/api/training-status")
-async def get_training_status():
-    """Return current training pipeline status."""
+@app.get("/api/training-status", tags=["Training"], summary="Training status",
+         description="Return current training pipeline status including progress and metrics.")
+@limiter.limit("60/minute")
+async def get_training_status(request: Request):
     return ok(training_status)
 
 
-@app.post("/api/start-training")
-async def start_training(config: TrainingConfig, background_tasks: BackgroundTasks):
-    """Kick off the full training pipeline in the background."""
+@app.post("/api/start-training", tags=["Training"], summary="Start training",
+          description="Kick off the full ML training pipeline (SG-GAN + Q-Learning) in the background.")
+@limiter.limit("5/minute")
+async def start_training(request: Request, config: TrainingConfig, background_tasks: BackgroundTasks):
     global system, training_status
 
     if training_status["is_training"]:
@@ -350,7 +487,6 @@ async def start_training(config: TrainingConfig, background_tasks: BackgroundTas
             "use_gnn_gan": True,
         }
 
-        # Create a new training system but keep the old one until training succeeds
         training_system = EVRoutingSystem(system_config)
         training_status.update({
             "is_training": True,
@@ -360,7 +496,7 @@ async def start_training(config: TrainingConfig, background_tasks: BackgroundTas
         })
 
         background_tasks.add_task(run_training_pipeline, training_system)
-        logger.info("Training started with config: %s", config.dict())
+        logger.info("Training started with config: %s", config.model_dump())
         return ok({"status": "training_started"})
     except HTTPException:
         raise
@@ -368,9 +504,10 @@ async def start_training(config: TrainingConfig, background_tasks: BackgroundTas
         fail(f"Failed to start training: {e}")
 
 
-@app.post("/api/stop-training")
-async def stop_training():
-    """Request graceful stop of training."""
+@app.post("/api/stop-training", tags=["Training"], summary="Stop training",
+          description="Request graceful stop of any running training pipeline.")
+@limiter.limit("10/minute")
+async def stop_training(request: Request):
     global training_status
     if not training_status["is_training"]:
         fail("No training is currently running", 409)
@@ -379,9 +516,10 @@ async def stop_training():
     return ok({"status": "training_stopped"})
 
 
-@app.get("/api/route-metrics")
-async def get_route_metrics(num_samples: int = 10):
-    """Sample random routes and return aggregate metrics."""
+@app.get("/api/route-metrics", tags=["Analytics"], summary="Route metrics",
+         description="Sample random routes and return aggregate performance metrics including distance, energy, time, and feasibility.")
+@limiter.limit("30/minute")
+async def get_route_metrics(request: Request, num_samples: int = 10):
     s = require_route_gen()
     try:
         distances, energies, times, feasibilities = [], [], [], []
@@ -413,18 +551,20 @@ async def get_route_metrics(num_samples: int = 10):
         fail(f"Metrics generation failed: {e}")
 
 
-@app.post("/api/save-route")
-async def save_route(request: RouteRequest):
-    """Bookmark a route for later reference."""
+@app.post("/api/save-route", tags=["Routing"], summary="Save route",
+          description="Bookmark a route for later reference.")
+@limiter.limit("30/minute")
+async def save_route(request: Request, route_req: RouteRequest):
     return ok({
         "status": "saved",
-        "route": {"source": request.source, "destination": request.destination},
+        "route": {"source": route_req.source, "destination": route_req.destination},
     })
 
 
-@app.get("/api/system-stats")
-async def get_system_stats():
-    """Aggregate system statistics (cached 10s)."""
+@app.get("/api/system-stats", tags=["System"], summary="System statistics",
+         description="Aggregate system statistics including road network info, model status, and training state. Cached for 10 seconds.")
+@limiter.limit("60/minute")
+async def get_system_stats(request: Request):
     global _system_stats_cache
     cached = _get_cached_stats()
     if cached is not None:
@@ -456,15 +596,6 @@ async def get_system_stats():
 async def run_training_pipeline(sys: EVRoutingSystem):
     """Run the full training pipeline in background."""
     global training_status, system
-    steps = [
-        (10,  "Creating road network",      lambda: sys.step1_create_road_network()),
-        (25,  "Generating traffic data",     lambda: sys.step2_generate_traffic_data()),
-        (40,  "Training traffic GAN",        None),  # needs return value from step 2
-        (55,  "Creating RL environment",     lambda: sys.step4_create_environment()),
-        (75,  "Training Q-Learning agent",   lambda: sys.step5_train_agent()),
-        (85,  "Creating route generator",    lambda: sys.step6_create_route_generator()),
-        (95,  "Evaluating system",           None),
-    ]
     try:
         # Step 1
         training_status["current_step"] = "Creating road network"
