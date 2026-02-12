@@ -12,6 +12,11 @@ export default defineConfig({
       brotliSize: false,
     }),
   ],
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: ['./src/__tests__/setup.ts'],
+  },
   server: {
     proxy: {
       '/api': {
