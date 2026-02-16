@@ -182,23 +182,23 @@ Plans:
 
 ### Phase 08: Testing & Demo Hardening
 **Goal:** Final hardening pass — ensure test isolation, visual regression coverage, presentation mode toggle, and full offline capability so the demo survives any environment.
-**Status:** Planned
+**Status:** ✅ Complete
 **Dependencies:** Phase 02, Phase 03, Phase 04, Phase 05, Phase 06, Phase 07
 **Requirements:** TEST-01, TEST-02, TEST-03, TEST-04, TEST-05, TEST-06
 
 **Success Criteria:**
-1. Backend tests use DI mock overrides — no test touches global state or real file system
-2. Pressing `Ctrl+Shift+P` activates presentation mode (higher contrast, thicker borders, simpler animations)
-3. Playwright visual regression tests capture key pages and detect unintended layout changes
-4. App works fully offline — map tiles cached, all data bundled, no external fetch calls
-5. Pre-trained model checkpoints included in repo — `git clone` + `docker compose up` → working demo
+1. ✅ Backend tests use DI mock overrides — no test touches global state or real file system
+2. ✅ Pressing `Ctrl+Shift+P` activates presentation mode (higher contrast, thicker borders, simpler animations)
+3. ✅ Playwright visual regression tests capture key pages and detect unintended layout changes
+4. ✅ App works fully offline — map tiles cached, all data bundled, no external fetch calls
+5. ✅ Pre-trained model checkpoints included in repo — `git clone` + `docker compose up` → working demo
 
-**Plans:** 3 plans
+**Plans:** 3 plans (3/3 complete)
 
 Plans:
-- [ ] 08-01-PLAN.md — Test infrastructure & isolation (backend DI mocks, frontend FM/MapLibre mocks)
-- [ ] 08-02-PLAN.md — Playwright visual regression for key pages
-- [ ] 08-03-PLAN.md — Offline demo & model checkpoints
+- [x] 08-01-PLAN.md — Test infrastructure & isolation (backend DI mocks, frontend FM/MapLibre mocks)
+- [x] 08-02-PLAN.md — Playwright visual regression for key pages
+- [x] 08-03-PLAN.md — Offline demo & model checkpoints
 
 ---
 
