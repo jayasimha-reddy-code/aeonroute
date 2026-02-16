@@ -510,7 +510,7 @@ class SGGANTrafficGenerator:
         return d_loss_real, d_loss_fake, g_loss
     
     def train(self, real_data: np.ndarray, epochs: int = 100, batch_size: int = 32,
-              verbose: bool = True):
+              verbose: bool = True, epoch_callback=None):
         """
         Train the SG-GAN.
         
@@ -592,6 +592,14 @@ class SGGANTrafficGenerator:
             self.history['d_loss_real'].append(np.mean(epoch_d_loss_real))
             self.history['d_loss_fake'].append(np.mean(epoch_d_loss_fake))
             self.history['g_loss'].append(np.mean(epoch_g_loss))
+
+            # Fire epoch callback if provided
+            if epoch_callback:
+                epoch_callback(epoch + 1, epochs, {
+                    'g_loss': self.history['g_loss'][-1],
+                    'd_loss_real': self.history['d_loss_real'][-1],
+                    'd_loss_fake': self.history['d_loss_fake'][-1],
+                })
             
             # Print progress
             if verbose and (epoch + 1) % 10 == 0:

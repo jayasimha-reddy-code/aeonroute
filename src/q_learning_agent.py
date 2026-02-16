@@ -450,7 +450,8 @@ if HAS_TF:
 def train_q_learning_agent(env, agent: QLearningAgent, 
                           episodes: int = 500,
                           max_steps: int = 200,
-                          verbose: bool = True) -> Tuple[List[float], List[int]]:
+                          verbose: bool = True,
+                          episode_callback=None) -> Tuple[List[float], List[int]]:
     """
     Train Q-Learning agent in environment.
     
@@ -517,6 +518,10 @@ def train_q_learning_agent(env, agent: QLearningAgent,
         agent.decay_exploration()
         episode_rewards.append(episode_reward)
         episode_lengths.append(episode_length)
+
+        # Fire episode callback if provided
+        if episode_callback:
+            episode_callback(episode + 1, episodes, episode_reward, episode_length)
         
         # Progress reporting
         if verbose and (episode + 1) % 50 == 0:

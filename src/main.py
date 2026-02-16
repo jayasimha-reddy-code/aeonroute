@@ -179,7 +179,7 @@ class EVRoutingSystem:
         
         return traffic_data
     
-    def step3_train_gan(self, traffic_data: np.ndarray):
+    def step3_train_gan(self, traffic_data: np.ndarray, epoch_callback=None):
         """STEP 3: Train the SG-GAN on traffic data."""
         print("\n" + "=" * 60)
         print("STEP 3: Training SG-GAN")
@@ -200,7 +200,8 @@ class EVRoutingSystem:
             traffic_normalized,
             epochs=self.config['gan_epochs'],
             batch_size=self.config['gan_batch_size'],
-            verbose=True
+            verbose=True,
+            epoch_callback=epoch_callback
         )
         
         # Save GAN
@@ -318,7 +319,7 @@ class EVRoutingSystem:
         
         return self.environment
     
-    def step5_train_agent(self):
+    def step5_train_agent(self, episode_callback=None):
         """STEP 5: Train the Q-Learning agent."""
         print("\n" + "=" * 60)
         print("STEP 5: Training Q-Learning Agent")
@@ -347,7 +348,8 @@ class EVRoutingSystem:
             self.agent,
             episodes=self.config['rl_episodes'],
             max_steps=self.config['rl_max_steps'],
-            verbose=True
+            verbose=True,
+            episode_callback=episode_callback
         )
         
         # Save agent
