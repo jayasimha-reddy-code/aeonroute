@@ -1,0 +1,37 @@
+﻿# Requirements Lock File - Pinned versions for reproducibility
+# Generated: 2026-02-16
+# Platform: Windows (Python 3.10+)
+# ============================================================
+# Install with: pip install -r requirements-lock.txt
+
+# Core ML Framework
+tensorflow==2.20.0
+
+# Scientific Computing
+numpy==2.4.2
+scipy==1.17.0
+
+# Graph Processing
+networkx==3.6.1
+
+# Reinforcement Learning
+gymnasium==1.2.3
+
+# Visualization
+matplotlib==3.10.8
+
+# API Framework
+fastapi==0.115.6
+uvicorn==0.34.0
+pydantic==2.10.4
+pydantic-settings==2.7.1
+slowapi==0.1.9
+python-multipart==0.0.18
+python-json-logger==2.0.7
+
+# Testing
+pytest==9.0.2
+pytest-asyncio==0.25.2
+pytest-cov==7.0.0
+httpx==0.28.1
+anyio==4.8.0
