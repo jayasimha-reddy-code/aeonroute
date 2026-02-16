@@ -2,12 +2,21 @@ import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'ax
 
 // ─── Types ────────────────────────────────────────────────
 
+export interface EdgeData {
+  source: number;
+  target: number;
+  distance_km?: number;
+  base_energy_kwh_per_km?: number;
+  base_time_minutes?: number;
+  road_type?: string;
+}
+
 export interface RoadNetworkData {
   nodes: number;
   edges: number;
   charging_stations: number[];
   nodes_pos: Record<string, { x: number; y: number }>;
-  edges_list: Array<{ source: number; target: number }>;
+  edges_list: EdgeData[];
 }
 
 export interface EVState {

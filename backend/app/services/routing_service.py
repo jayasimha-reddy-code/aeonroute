@@ -33,8 +33,17 @@ def fetch_road_network(state: AppState, grid_size: int) -> Dict[str, Any]:
             "y": float(data.get("y", 0.0)),
         }
     edges_list = [
-        {"source": int(u), "target": int(v)}
-        for u, v in rg.graph.edges()
+        {
+            "source": int(u),
+            "target": int(v),
+            "distance_km": round(float(d.get("distance_km", 0)), 3),
+            "base_energy_kwh_per_km": round(float(d.get("base_energy_kwh_per_km", 0)), 4),
+            "base_time_minutes": round(float(d.get("base_time_minutes", 0)), 2),
+            "road_type": str(d.get("road_type", "local").value)
+            if hasattr(d.get("road_type", ""), "value")
+            else str(d.get("road_type", "local")),
+        }
+        for u, v, d in rg.graph.edges(data=True)
     ]
     charging_stations = (
         [int(cs) for cs in rg.charging_stations]
