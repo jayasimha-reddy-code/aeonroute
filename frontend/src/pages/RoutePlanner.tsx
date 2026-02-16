@@ -148,6 +148,7 @@ function RoutePlanner() {
                   sourceNode={source}
                   destNode={destination}
                   onNodeClick={handleNodeClick}
+                  onRouteSelect={(idx) => { setHighlightIdx(idx); setSelectedRoute(generatedRoutes[idx]); }}
                 />
               ) : (
                 <div className="h-full flex items-center justify-center bg-surface-50 dark:bg-surface-900/50">

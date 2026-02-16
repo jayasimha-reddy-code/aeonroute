@@ -1,16 +1,17 @@
 import { memo, useRef, useMemo, useCallback, useState, useEffect } from 'react';
-import Map, { Source, Layer, NavigationControl, Popup } from 'react-map-gl/maplibre';
+import Map, { NavigationControl, Popup } from 'react-map-gl/maplibre';
 import type { MapRef, MapLayerMouseEvent } from 'react-map-gl/maplibre';
 import { LngLatBounds } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
 import type { RoadNetworkData, Route } from '../../services/api';
 import { useMapTheme } from '../../hooks/useMapTheme';
-import { networkToGeoJSON, buildPosLookup, routeToGeoJSON } from '../../lib/geo';
-import { ROUTE_COLORS } from './mapStyles';
+import { networkToGeoJSON, buildPosLookup } from '../../lib/geo';
 import { NetworkEdgesLayer } from './NetworkEdgesLayer';
 import { NetworkNodesLayer } from './NetworkNodesLayer';
 import { NodeMarkers } from './NodeMarkers';
+import { RouteLayer } from './RouteLayer';
+import { RouteLegend } from './RouteLegend';
 
 export interface MapViewProps {
   network: RoadNetworkData | null;
@@ -44,6 +45,7 @@ const MapView = memo(function MapView({
   center = [30.2672, -97.7431],
   zoom = 13,
   onNodeClick,
+  onRouteSelect,
   children,
 }: MapViewProps) {
   const mapRef = useRef<MapRef>(null);
@@ -61,14 +63,6 @@ const MapView = memo(function MapView({
     if (!network) return { nodesGeoJSON: null, edgesGeoJSON: null };
     return networkToGeoJSON(network, center);
   }, [network, center]);
-
-  const routeGeoJSONs = useMemo(
-    () =>
-      posLookup
-        ? routes.map((r) => routeToGeoJSON(r, posLookup))
-        : [],
-    [routes, posLookup],
-  );
 
   // ── Interaction handlers ──────────────────────────────
   const handleClick = useCallback(
@@ -153,47 +147,12 @@ const MapView = memo(function MapView({
         {/* Network nodes (rendered on GPU as circles) */}
         <NetworkNodesLayer nodesGeoJSON={nodesGeoJSON} />
 
-        {/* Route polylines */}
-        {routeGeoJSONs.map((geojson, idx) => {
-          const color = ROUTE_COLORS[idx % ROUTE_COLORS.length];
-          const isHighlighted =
-            highlightIndex === undefined || highlightIndex === idx;
-
-          return (
-            <Source
-              key={`route-source-${idx}`}
-              id={`route-source-${idx}`}
-              type="geojson"
-              data={geojson}
-            >
-              {/* Glow underlay */}
-              {isHighlighted && (
-                <Layer
-                  id={`route-glow-${idx}`}
-                  type="line"
-                  paint={{
-                    'line-color': color,
-                    'line-width': 8,
-                    'line-opacity': 0.15,
-                    'line-blur': 4,
-                  }}
-                  layout={{ 'line-cap': 'round', 'line-join': 'round' }}
-                />
-              )}
-              {/* Main line */}
-              <Layer
-                id={`route-main-${idx}`}
-                type="line"
-                paint={{
-                  'line-color': color,
-                  'line-width': isHighlighted ? 4 : 2.5,
-                  'line-opacity': isHighlighted ? 0.9 : 0.35,
-                }}
-                layout={{ 'line-cap': 'round', 'line-join': 'round' }}
-              />
-            </Source>
-          );
-        })}
+        {/* Route visualization (animated, gradient) */}
+        <RouteLayer
+          routes={routes}
+          highlightIndex={highlightIndex}
+          posLookup={posLookup}
+        />
 
         {/* Source / Destination markers */}
         <NodeMarkers
@@ -219,9 +178,16 @@ const MapView = memo(function MapView({
           </Popup>
         )}
 
-        {/* Extension slot for Plan 02 (RouteLayer, etc.) */}
+        {/* Extension slot */}
         {children}
       </Map>
+
+      {/* Route legend overlay (HTML, not a map layer) */}
+      <RouteLegend
+        routes={routes}
+        highlightIndex={highlightIndex}
+        onRouteSelect={onRouteSelect}
+      />
     </div>
   );
 });
