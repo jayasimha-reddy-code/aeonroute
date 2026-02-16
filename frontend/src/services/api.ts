@@ -79,6 +79,12 @@ export interface ApiError {
   detail?: string;
 }
 
+export interface TemporalTrafficData {
+  grid_size: number;
+  time_steps: number;
+  traffic: number[][];
+}
+
 // ─── API Client ───────────────────────────────────────────
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
@@ -162,6 +168,10 @@ class APIClient {
 
   async getTrafficPatterns(timeStep = 12) {
     return (await this.client.get('/api/traffic-patterns', { params: { time_step: timeStep } })).data;
+  }
+
+  async getTemporalTraffic(): Promise<TemporalTrafficData> {
+    return (await this.client.get('/api/traffic-patterns/temporal')).data;
   }
 
   // ─── Training ─────────────────────────────────────────
