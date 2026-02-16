@@ -12,6 +12,8 @@ import { NetworkNodesLayer } from './NetworkNodesLayer';
 import { NodeMarkers } from './NodeMarkers';
 import { RouteLayer } from './RouteLayer';
 import { RouteLegend } from './RouteLegend';
+import { EVMarker } from './EVMarker';
+import { ChargingOverlay } from './ChargingOverlay';
 
 export interface MapViewProps {
   network: RoadNetworkData | null;
@@ -25,6 +27,13 @@ export interface MapViewProps {
   zoom?: number;
   onNodeClick?: (nodeId: number) => void;
   onRouteSelect?: (idx: number) => void;
+  simulationState?: {
+    isSimulating: boolean;
+    currentPosition: [number, number] | null;
+    currentBearing: number;
+    isCharging: boolean;
+    chargingProgress: number;
+  };
   children?: React.ReactNode;
 }
 
@@ -46,6 +55,7 @@ const MapView = memo(function MapView({
   zoom = 13,
   onNodeClick,
   onRouteSelect,
+  simulationState,
   children,
 }: MapViewProps) {
   const mapRef = useRef<MapRef>(null);
@@ -160,6 +170,22 @@ const MapView = memo(function MapView({
           destNodeId={dstNodeId}
           posLookup={posLookup}
         />
+
+        {/* EV Simulation overlay */}
+        {simulationState?.isSimulating && (
+          <>
+            <EVMarker
+              position={simulationState.currentPosition}
+              bearing={simulationState.currentBearing}
+              isCharging={simulationState.isCharging}
+            />
+            <ChargingOverlay
+              isCharging={simulationState.isCharging}
+              chargingProgress={simulationState.chargingProgress}
+              position={simulationState.currentPosition}
+            />
+          </>
+        )}
 
         {/* Hover popup */}
         {hoverInfo && (

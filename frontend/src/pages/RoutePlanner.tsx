@@ -1,13 +1,16 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useSystemStore } from '../store/store';
 import api from '../services/api';
 import NetworkMap from '../components/NetworkMap';
 import RouteCard from '../components/RouteCard';
 import PageHeader from '../components/PageHeader';
-import { Card, Button, EmptyState, Spinner } from '../components/ui';
-import { Map, MapPin, Navigation, Sparkles, Zap, Globe } from 'lucide-react';
+import { Card, Button, EmptyState, Spinner, ProgressBar } from '../components/ui';
+import { Map, MapPin, Navigation, Sparkles, Zap, Globe, Play, Pause, RotateCcw } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { RouteCardSkeleton } from '../components/ui/Skeleton';
+import { buildPosLookup } from '../lib/geo';
+import { useEVSimulation } from '../hooks/useEVSimulation';
+import { BatteryGauge } from '../components/map/BatteryGauge';
 
 function RoutePlanner() {
   const { roadNetwork, generatedRoutes, setGeneratedRoutes, selectedRoute, setSelectedRoute, currentEVState, setEVState, addToast } = useSystemStore();
@@ -15,6 +18,16 @@ function RoutePlanner() {
   const [destination, setDestination] = useState(10);
   const [loading, setLoading] = useState(false);
   const [highlightIdx, setHighlightIdx] = useState<number | undefined>(undefined);
+
+  const posLookup = useMemo(() => roadNetwork ? buildPosLookup(roadNetwork) : null, [roadNetwork]);
+
+  const { state: simState, start: startSim, pause: pauseSim, resume: resumeSim, reset: resetSim } =
+    useEVSimulation({
+      route: selectedRoute,
+      posLookup,
+      startSOC: currentEVState.battery_soc,
+      batteryCapacityKWh: currentEVState.battery_capacity_kwh,
+    });
 
   const handleGenerateRoutes = async () => {
     if (!roadNetwork) {
@@ -108,6 +121,43 @@ function RoutePlanner() {
             {generatedRoutes.length > 0 && (
               <p className="text-xs text-center text-surface-500 mt-3">{generatedRoutes.length} routes found</p>
             )}
+
+            {/* ── Simulation Controls ──────────────── */}
+            {selectedRoute && (
+              <div className="mt-4">
+                <div className="divider mb-4" />
+                <div className="flex items-center gap-2.5 mb-3">
+                  <div className="p-1.5 rounded-lg bg-amber-500/10"><Zap className="w-3.5 h-3.5 text-amber-500" /></div>
+                  <h3 className="text-sm font-semibold text-surface-900 dark:text-surface-100 uppercase tracking-wider">Simulation</h3>
+                </div>
+                <BatteryGauge
+                  soc={simState.currentSOC}
+                  capacityKWh={currentEVState.battery_capacity_kwh}
+                  isCharging={simState.isCharging}
+                  isSimulating={simState.isSimulating}
+                />
+                <div className="flex gap-2 mt-3">
+                  {!simState.isSimulating ? (
+                    <Button variant="primary" fullWidth icon={Play} onClick={startSim}>Simulate</Button>
+                  ) : simState.isPaused ? (
+                    <Button variant="primary" fullWidth icon={Play} onClick={resumeSim}>Resume</Button>
+                  ) : (
+                    <Button variant="secondary" fullWidth icon={Pause} onClick={pauseSim}>Pause</Button>
+                  )}
+                  {simState.isSimulating && (
+                    <Button variant="ghost" icon={RotateCcw} onClick={resetSim} />
+                  )}
+                </div>
+                {simState.isSimulating && (
+                  <div className="mt-3">
+                    <ProgressBar value={simState.progress * 100} size="sm" variant={simState.isCharging ? 'warning' : 'primary'} />
+                    <p className="text-xs text-surface-500 mt-1.5 text-center">
+                      {simState.isCharging ? 'Charging…' : `Segment ${simState.currentSegmentIndex + 1}/${(selectedRoute?.path?.length ?? 1) - 1}`}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
           </Card>
         </div>
 
@@ -149,6 +199,7 @@ function RoutePlanner() {
                   destNode={destination}
                   onNodeClick={handleNodeClick}
                   onRouteSelect={(idx) => { setHighlightIdx(idx); setSelectedRoute(generatedRoutes[idx]); }}
+                  simulationState={simState}
                 />
               ) : (
                 <div className="h-full flex items-center justify-center bg-surface-50 dark:bg-surface-900/50">
