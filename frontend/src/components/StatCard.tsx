@@ -1,6 +1,7 @@
 import { memo } from 'react';
 import { cn } from '../lib/utils';
 import { TrendingUp, TrendingDown, LucideIcon } from 'lucide-react';
+import AnimatedNumber from './ui/AnimatedNumber';
 
 interface StatCardProps {
   title: string;
@@ -20,6 +21,32 @@ const iconBg: Record<string, string> = {
   green: 'bg-success-500/10 text-success-600 dark:text-success-400',
 };
 
+function renderValue(value: string | number) {
+  if (typeof value === 'number') {
+    return <AnimatedNumber value={value} className="text-2xl font-bold text-surface-900 dark:text-surface-50 tracking-tight" />;
+  }
+  // Try to parse "42.5 kWh" or "— min" style strings
+  const match = String(value).match(/^([^0-9]*?)([\d,.]+)(.*?)$/);
+  if (match) {
+    const [, prefix, numStr, suffix] = match;
+    const num = parseFloat(numStr.replace(/,/g, ''));
+    if (!isNaN(num)) {
+      const decimals = numStr.includes('.') ? numStr.split('.')[1]?.length ?? 0 : 0;
+      return (
+        <AnimatedNumber
+          value={num}
+          prefix={prefix}
+          suffix={suffix}
+          decimals={decimals}
+          className="text-2xl font-bold text-surface-900 dark:text-surface-50 tracking-tight"
+        />
+      );
+    }
+  }
+  // Fallback: non-numeric string
+  return <span className="text-2xl font-bold text-surface-900 dark:text-surface-50 tracking-tight">{value}</span>;
+}
+
 const StatCard = memo(function StatCard({ title, value, icon: Icon, color, change, subtitle }: StatCardProps) {
   return (
     <div className="card group hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-250">
@@ -37,9 +64,7 @@ const StatCard = memo(function StatCard({ title, value, icon: Icon, color, chang
       <p className="text-xs font-medium text-surface-500 dark:text-surface-400 uppercase tracking-wider mb-1">
         {title}
       </p>
-      <p className="text-2xl font-bold text-surface-900 dark:text-surface-50 tracking-tight">
-        {value}
-      </p>
+      {renderValue(value)}
       {subtitle && (
         <p className="text-xs text-surface-400 dark:text-surface-500 mt-1">{subtitle}</p>
       )}

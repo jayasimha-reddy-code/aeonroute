@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { m } from 'framer-motion';
 import { useRoadNetwork, useSetActiveTab, useAddToast } from '../store/store';
 import api, { SystemStats, RouteMetrics } from '../services/api';
 import NetworkMap from '../components/NetworkMap';
@@ -6,6 +7,7 @@ import StatCard from '../components/StatCard';
 import PageHeader from '../components/PageHeader';
 import { Card, Badge, Spinner, GlassCard } from '../components/ui';
 import { StatCardSkeleton } from '../components/ui/Skeleton';
+import { staggerContainer, staggerItem } from '../lib/motion';
 import { BarChart3, Activity, Battery, Navigation, TrendingUp, MapPin, Zap, ArrowRight, Globe, Cpu } from 'lucide-react';
 
 function Dashboard() {
@@ -44,18 +46,23 @@ function Dashboard() {
       />
 
       {/* ── Key Metrics ─────────────────────────────── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 mb-8 animate-stagger">
+      <m.div
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 mb-8"
+        variants={staggerContainer}
+        initial="hidden"
+        animate="show"
+      >
         {loading ? (
           Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)
         ) : (
           <>
-            <GlassCard variant="interactive" padding="none"><StatCard title="Network Nodes" value={stats?.road_network?.nodes ?? 0} icon={Navigation} color="primary" subtitle="Active intersections" /></GlassCard>
-            <GlassCard variant="interactive" padding="none"><StatCard title="Road Edges" value={stats?.road_network?.edges ?? 0} icon={Activity} color="accent" subtitle="Connected segments" /></GlassCard>
-            <GlassCard variant="interactive" padding="none"><StatCard title="Avg Energy" value={`${metrics?.avg_energy_kwh?.toFixed(1) ?? '—'} kWh`} icon={Battery} color="orange" subtitle="Per generated route" /></GlassCard>
-            <GlassCard variant="interactive" padding="none"><StatCard title="Avg Time" value={`${metrics?.avg_time_minutes?.toFixed(0) ?? '—'} min`} icon={TrendingUp} color="green" subtitle="Per generated route" /></GlassCard>
+            <m.div variants={staggerItem}><GlassCard variant="interactive" padding="none"><StatCard title="Network Nodes" value={stats?.road_network?.nodes ?? 0} icon={Navigation} color="primary" subtitle="Active intersections" /></GlassCard></m.div>
+            <m.div variants={staggerItem}><GlassCard variant="interactive" padding="none"><StatCard title="Road Edges" value={stats?.road_network?.edges ?? 0} icon={Activity} color="accent" subtitle="Connected segments" /></GlassCard></m.div>
+            <m.div variants={staggerItem}><GlassCard variant="interactive" padding="none"><StatCard title="Avg Energy" value={`${metrics?.avg_energy_kwh?.toFixed(1) ?? '—'} kWh`} icon={Battery} color="orange" subtitle="Per generated route" /></GlassCard></m.div>
+            <m.div variants={staggerItem}><GlassCard variant="interactive" padding="none"><StatCard title="Avg Time" value={`${metrics?.avg_time_minutes?.toFixed(0) ?? '—'} min`} icon={TrendingUp} color="green" subtitle="Per generated route" /></GlassCard></m.div>
           </>
         )}
-      </div>
+      </m.div>
 
       {/* ── Map + Sidebar ───────────────────────────── */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">

@@ -1,10 +1,12 @@
 import { useEffect, lazy, Suspense } from 'react';
+import { LazyMotion, domAnimation } from 'framer-motion';
 import { useActiveTab, useTheme, useSetRoadNetwork, useLoading, useAddToast } from './store/store';
 import api from './services/api';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import ToastContainer from './components/ToastContainer';
 import PageLoader from './components/ui/PageLoader';
+import PageTransition from './components/ui/PageTransition';
 import { cn } from './lib/utils';
 
 // Lazy-load page components for code-splitting
@@ -89,11 +91,13 @@ function App() {
               'bg-surface-50 dark:bg-surface-950',
             )}
           >
-            <Suspense fallback={<PageLoader />}>
-              <div className="animate-page-enter" key={activeTab}>
-                {renderView()}
-              </div>
-            </Suspense>
+            <LazyMotion features={domAnimation} strict>
+              <Suspense fallback={<PageLoader />}>
+                <PageTransition pageKey={activeTab}>
+                  {renderView()}
+                </PageTransition>
+              </Suspense>
+            </LazyMotion>
           </main>
         </div>
 
