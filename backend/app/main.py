@@ -1,0 +1,84 @@
+﻿"""FastAPI application factory for the EV Routing System."""
+
+from contextlib import asynccontextmanager
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+import logging
+
+from backend.app.state import get_state
+from backend.app.middleware import register_middleware
+from backend.app.routers import health, routing, training, analytics
+from src.config import get_settings
+from src.main import EVRoutingSystem
+
+logger = logging.getLogger("ev_routing")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    state = get_state()
+    try:
+        state.system = EVRoutingSystem()
+        state.system.step1_create_road_network()
+        state.system.step6_create_route_generator()
+        logger.info("EV Routing System initialised")
+    except Exception as e:
+        logger.error("Failed to initialise system: %s", e)
+    yield
+    logger.info("Shutting down EV Routing System")
+
+
+tags_metadata = [
+    {"name": "System", "description": "Health checks and system statistics"},
+    {"name": "Routing", "description": "EV route generation and optimization"},
+    {"name": "Training", "description": "ML model training pipeline management"},
+    {"name": "Analytics", "description": "Route metrics and traffic pattern analysis"},
+]
+
+
+def create_app() -> FastAPI:
+    settings = get_settings()
+    limiter = Limiter(key_func=get_remote_address, default_limits=["60/minute"])
+
+    app = FastAPI(
+        title="EV Routing System API",
+        description="AI-Powered Electric Vehicle Route Optimization API.",
+        version="2.0.0",
+        lifespan=lifespan,
+        openapi_tags=tags_metadata,
+        contact={"name": "EV Routing Team", "url": "https://github.com/ev-routing"},
+        license_info={"name": "MIT", "url": "https://opensource.org/licenses/MIT"},
+    )
+
+    # Rate limiter
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+    # CORS
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.cors_origins,
+        allow_credentials=True,
+        allow_methods=["GET", "POST", "OPTIONS"],
+        allow_headers=["*"],
+    )
+
+    # Custom middleware
+    register_middleware(app)
+
+    # Routers
+    app.include_router(health.router)
+    app.include_router(routing.router)
+    app.include_router(training.router)
+    app.include_router(analytics.router)
+
+    # Static files (must be last -- catches all unmatched routes)
+    frontend_path = settings.frontend_dist_path
+    if frontend_path.exists():
+        app.mount("/", StaticFiles(directory=str(frontend_path), html=True), name="static")
+
+    return app
