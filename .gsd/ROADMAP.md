@@ -127,7 +127,12 @@ Plans:
 4. Time-of-day traffic slider on dashboard updates heatmap showing SG-GAN temporal patterns
 5. If SSE connection drops, frontend auto-reconnects with exponential backoff and falls back to polling
 
-**Estimated Plans:** 2–3 | **Complexity:** Medium-Heavy
+**Plans:** 3 plans
+
+Plans:
+- [ ] 05-01-PLAN.md — Backend training metrics pipeline (ML callbacks + SSE enrichment + temporal endpoint)
+- [ ] 05-02-PLAN.md — SSE streaming + live training charts (useSSE hook + Zustand + Recharts)
+- [ ] 05-03-PLAN.md — Traffic slider + dashboard auto-refresh
 
 ---
 
