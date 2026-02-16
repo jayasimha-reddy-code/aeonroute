@@ -206,6 +206,24 @@ class APIClient {
   async getSystemStats(): Promise<SystemStats> {
     return (await this.client.get('/api/system-stats')).data;
   }
+
+  // ─── Analytics Evaluation ─────────────────────────────
+
+  async getGanEvaluation() {
+    return (await this.client.get('/api/analytics/gan-evaluation')).data;
+  }
+
+  async getAgentPerformance() {
+    return (await this.client.get('/api/analytics/agent-performance')).data;
+  }
+
+  async getRouteEvaluation() {
+    return (await this.client.get('/api/analytics/route-evaluation')).data;
+  }
+
+  async getTrainingHistory() {
+    return (await this.client.get('/api/analytics/training-history')).data;
+  }
 }
 
 const api = new APIClient();
