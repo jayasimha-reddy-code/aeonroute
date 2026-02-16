@@ -50,6 +50,13 @@ class EVRoutingSettings(BaseSettings):
     seed: int = 42
     use_gnn_gan: bool = True
 
+    # GNN Route GAN hyperparameters
+    gnn_hidden_dim: int = 128
+    gnn_num_layers: int = 3
+    gnn_noise_dim: int = 64
+    gnn_attention_heads: int = 4
+    gnn_learning_rate: float = 1e-4
+
     #  API config 
     cors_origins: List[str] = [
         "http://localhost:5173",

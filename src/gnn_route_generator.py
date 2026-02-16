@@ -46,6 +46,8 @@ from dataclasses import dataclass
 import warnings
 warnings.filterwarnings('ignore')
 
+from src.config import get_settings
+
 
 # ============================================================================
 # ROUTE ENCODING
@@ -351,6 +353,7 @@ class GNNRouteGenerator(Model):
                  ev_state_dim: int = 5,
                  hidden_dim: int = 128,
                  num_gnn_layers: int = 3,
+                 attention_heads: int = 4,
                  **kwargs):
         super().__init__(**kwargs)
         
@@ -375,7 +378,7 @@ class GNNRouteGenerator(Model):
             )
         
         # Attention layer
-        self.attention = GraphAttentionLayerV2(hidden_dim // 4, num_heads=4)
+        self.attention = GraphAttentionLayerV2(hidden_dim // attention_heads, num_heads=attention_heads)
         
         # Output: node selection probability
         self.output_dense = layers.Dense(1, activation='sigmoid')
@@ -536,6 +539,7 @@ class GNNRouteDiscriminator(Model):
                  node_feature_dim: int = 8,
                  ev_state_dim: int = 5,
                  hidden_dim: int = 128,
+                 attention_heads: int = 4,
                  **kwargs):
         super().__init__(**kwargs)
         
@@ -547,7 +551,7 @@ class GNNRouteDiscriminator(Model):
         # GNN layers for route analysis
         self.gnn1 = GraphConvLayer(hidden_dim, activation='relu')
         self.gnn2 = GraphConvLayer(hidden_dim, activation='relu')
-        self.attention = GraphAttentionLayerV2(hidden_dim // 4, num_heads=4)
+        self.attention = GraphAttentionLayerV2(hidden_dim // attention_heads, num_heads=attention_heads)
         
         # EV state processing
         self.ev_encoder = layers.Dense(hidden_dim, activation='relu')
@@ -632,9 +636,20 @@ class GNNRouteGAN:
     def __init__(self,
                  num_nodes: int = 100,
                  node_feature_dim: int = 8,
-                 noise_dim: int = 64,
-                 ev_state_dim: int = 5):
+                 noise_dim: Optional[int] = None,
+                 ev_state_dim: int = 5,
+                 hidden_dim: Optional[int] = None,
+                 num_gnn_layers: Optional[int] = None,
+                 attention_heads: Optional[int] = None,
+                 learning_rate: Optional[float] = None):
         
+        _cfg = get_settings()
+        noise_dim = noise_dim if noise_dim is not None else _cfg.gnn_noise_dim
+        hidden_dim = hidden_dim if hidden_dim is not None else _cfg.gnn_hidden_dim
+        num_gnn_layers = num_gnn_layers if num_gnn_layers is not None else _cfg.gnn_num_layers
+        attention_heads = attention_heads if attention_heads is not None else _cfg.gnn_attention_heads
+        learning_rate = learning_rate if learning_rate is not None else _cfg.gnn_learning_rate
+
         self.num_nodes = num_nodes
         self.noise_dim = noise_dim
         self.ev_state_dim = ev_state_dim
@@ -645,22 +660,27 @@ class GNNRouteGAN:
             num_nodes=num_nodes,
             node_feature_dim=node_feature_dim,
             noise_dim=noise_dim,
-            ev_state_dim=ev_state_dim
+            ev_state_dim=ev_state_dim,
+            hidden_dim=hidden_dim,
+            num_gnn_layers=num_gnn_layers,
+            attention_heads=attention_heads,
         )
         
         print("🏗️ Building GNN Route Discriminator...")
         self.discriminator = GNNRouteDiscriminator(
             num_nodes=num_nodes,
             node_feature_dim=node_feature_dim,
-            ev_state_dim=ev_state_dim
+            ev_state_dim=ev_state_dim,
+            hidden_dim=hidden_dim,
+            attention_heads=attention_heads,
         )
         
         # Route encoder
         self.encoder = RouteEncoder(max_nodes=num_nodes, feature_dim=node_feature_dim)
         
         # Optimizers
-        self.g_optimizer = keras.optimizers.Adam(1e-4, beta_1=0.5)
-        self.d_optimizer = keras.optimizers.Adam(1e-4, beta_1=0.5)
+        self.g_optimizer = keras.optimizers.Adam(learning_rate, beta_1=0.5)
+        self.d_optimizer = keras.optimizers.Adam(learning_rate, beta_1=0.5)
         
         # Loss
         self.bce = keras.losses.BinaryCrossentropy()
@@ -801,27 +821,29 @@ class GNNRouteGAN:
         return self.generator.generate_route(source, destination, adj, ev_state)
     
     def save(self, path: str):
-        """Save models."""
+        """Save models in .keras format."""
         import os
         os.makedirs(path, exist_ok=True)
-        self.generator.save_weights(f"{path}/gnn_generator.weights.h5")
-        self.discriminator.save_weights(f"{path}/gnn_discriminator.weights.h5")
+        self.generator.save(f"{path}/gnn_generator.keras")
+        self.discriminator.save(f"{path}/gnn_discriminator.keras")
         print(f"✅ GNN Route GAN saved to {path}")
     
     def load(self, path: str):
-        """Load models."""
-        # Build models first
-        dummy_noise = tf.zeros((1, self.noise_dim))
-        dummy_ev = tf.zeros((1, self.ev_state_dim))
-        dummy_cond = tf.zeros((1, 20))
-        dummy_adj = tf.zeros((1, self.num_nodes, self.num_nodes))
-        dummy_feat = tf.zeros((1, self.num_nodes, self.node_feature_dim))
-        
-        _ = self.generator([dummy_noise, dummy_ev, dummy_cond], dummy_adj)
-        _ = self.discriminator([dummy_feat, dummy_adj, dummy_ev])
-        
-        self.generator.load_weights(f"{path}/gnn_generator.weights.h5")
-        self.discriminator.load_weights(f"{path}/gnn_discriminator.weights.h5")
+        """Load models from .keras format."""
+        self.generator = tf.keras.models.load_model(
+            f"{path}/gnn_generator.keras",
+            custom_objects={
+                'GraphConvLayer': GraphConvLayer,
+                'GraphAttentionLayerV2': GraphAttentionLayerV2,
+            },
+        )
+        self.discriminator = tf.keras.models.load_model(
+            f"{path}/gnn_discriminator.keras",
+            custom_objects={
+                'GraphConvLayer': GraphConvLayer,
+                'GraphAttentionLayerV2': GraphAttentionLayerV2,
+            },
+        )
         print(f"✅ GNN Route GAN loaded from {path}")
 
 
