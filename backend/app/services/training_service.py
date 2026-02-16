@@ -42,6 +42,14 @@ class TrainingService:
             "use_gnn_gan": True,
         }
 
+        system_config["demo_mode"] = config.demo_mode
+        if config.demo_mode:
+            system_config["gan_epochs"] = 5
+            system_config["rl_episodes"] = 20
+            system_config["gnn_epochs"] = 5
+            system_config["traffic_samples"] = 50
+            system_config["historical_routes"] = 30
+
         training_system = EVRoutingSystem(system_config)
         self.state.training_status.update({
             "is_training": True,
@@ -69,6 +77,13 @@ class TrainingService:
 
             self._update(10, "Creating road network")
             sys.step1_create_road_network()
+
+            if sys.config.get("demo_mode"):
+                self._update(15, "Loading model checkpoints (demo mode)")
+                try:
+                    sys.load_models()
+                except Exception:
+                    pass  # No checkpoints, train from scratch
 
             self._update(25, "Generating traffic data")
             traffic_data = sys.step2_generate_traffic_data()

@@ -26,3 +26,4 @@ class TrainingConfig(BaseModel):
     traffic_samples: int = Field(500, ge=10, le=5000, description="Number of traffic samples")
     gan_batch_size: int = Field(32, ge=1, le=256, description="GAN batch size")
     rl_max_steps: int = Field(200, ge=10, le=1000, description="Max steps per RL episode")
+    demo_mode: bool = Field(False, description="Fast training from checkpoints (5-10 epochs)")
