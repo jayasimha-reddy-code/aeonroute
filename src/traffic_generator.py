@@ -309,29 +309,29 @@ class SGGANDiscriminator(Model):
         
         self.input_shape_target = input_shape
         
-        # Condition processing
-        self.condition_dense = layers.Dense(64, activation='relu')
+        # Condition processing (spectral normalization for training stability)
+        self.condition_dense = layers.SpectralNormalization(layers.Dense(64, activation='relu'))
         
         # Discriminator network
         self.flatten = layers.Flatten()
         
-        self.dense1 = layers.Dense(512)
+        self.dense1 = layers.SpectralNormalization(layers.Dense(512))
         self.ln1 = layers.LayerNormalization()
         self.relu1 = layers.LeakyReLU(alpha=0.2)
         self.dropout1 = layers.Dropout(0.3)
         
-        self.dense2 = layers.Dense(256)
+        self.dense2 = layers.SpectralNormalization(layers.Dense(256))
         self.ln2 = layers.LayerNormalization()
         self.relu2 = layers.LeakyReLU(alpha=0.2)
         self.dropout2 = layers.Dropout(0.3)
         
-        self.dense3 = layers.Dense(128)
+        self.dense3 = layers.SpectralNormalization(layers.Dense(128))
         self.relu3 = layers.LeakyReLU(alpha=0.2)
         
         # Multi-task outputs
-        self.validity_head = layers.Dense(1, activation='sigmoid', name='validity')
-        self.energy_head = layers.Dense(1, activation='sigmoid', name='energy_feasibility')
-        self.realism_head = layers.Dense(1, activation='sigmoid', name='realism')
+        self.validity_head = layers.SpectralNormalization(layers.Dense(1, activation='sigmoid', name='validity'))
+        self.energy_head = layers.SpectralNormalization(layers.Dense(1, activation='sigmoid', name='energy_feasibility'))
+        self.realism_head = layers.SpectralNormalization(layers.Dense(1, activation='sigmoid', name='realism'))
         
     def call(self, inputs, training=False):
         """
@@ -438,9 +438,9 @@ class SGGANTrafficGenerator:
         _ = self.generator([dummy_noise, dummy_ev, dummy_cond])
         _ = self.discriminator([dummy_data, dummy_ev, dummy_cond])
         
-        # Optimizers
-        self.generator_optimizer = keras.optimizers.Adam(learning_rate=0.0002, beta_1=0.5)
-        self.discriminator_optimizer = keras.optimizers.Adam(learning_rate=0.0002, beta_1=0.5)
+        # Optimizers (clipnorm for gradient stability)
+        self.generator_optimizer = keras.optimizers.Adam(learning_rate=0.0002, beta_1=0.5, clipnorm=1.0)
+        self.discriminator_optimizer = keras.optimizers.Adam(learning_rate=0.0002, beta_1=0.5, clipnorm=1.0)
         
         # Loss function
         self.loss_fn = keras.losses.BinaryCrossentropy()
@@ -464,10 +464,21 @@ class SGGANTrafficGenerator:
         
         return ev_states, conditions
     
+    @staticmethod
+    def _sanitize_gradients(grads):
+        """Replace NaN values in gradients with zeros (NaN guard)."""
+        sanitized = []
+        for g in grads:
+            if g is not None:
+                sanitized.append(tf.where(tf.math.is_nan(g), tf.zeros_like(g), g))
+            else:
+                sanitized.append(g)
+        return sanitized
+
     @tf.function
     def _train_step(self, real_data: tf.Tensor, ev_states: tf.Tensor, 
                    conditions: tf.Tensor, noise: tf.Tensor):
-        """Single training step."""
+        """Single training step with NaN guard."""
         batch_size = tf.shape(real_data)[0]
         
         # Labels
@@ -480,6 +491,7 @@ class SGGANTrafficGenerator:
             d_loss_real = self.loss_fn(real_labels, real_output['combined'])
         
         d_grads_real = tape.gradient(d_loss_real, self.discriminator.trainable_variables)
+        d_grads_real = self._sanitize_gradients(d_grads_real)
         self.discriminator_optimizer.apply_gradients(
             zip(d_grads_real, self.discriminator.trainable_variables)
         )
@@ -491,6 +503,7 @@ class SGGANTrafficGenerator:
             d_loss_fake = self.loss_fn(fake_labels, fake_output['combined'])
         
         d_grads_fake = tape.gradient(d_loss_fake, self.discriminator.trainable_variables)
+        d_grads_fake = self._sanitize_gradients(d_grads_fake)
         self.discriminator_optimizer.apply_gradients(
             zip(d_grads_fake, self.discriminator.trainable_variables)
         )
@@ -503,6 +516,7 @@ class SGGANTrafficGenerator:
             g_loss = self.loss_fn(real_labels, fake_output['combined'])
         
         g_grads = tape.gradient(g_loss, self.generator.trainable_variables)
+        g_grads = self._sanitize_gradients(g_grads)
         self.generator_optimizer.apply_gradients(
             zip(g_grads, self.generator.trainable_variables)
         )
@@ -695,7 +709,7 @@ class SGGANTrafficGenerator:
         print(f"✅ SG-GAN saved to {filepath}")
     
     def load(self, filepath: str):
-        """Load GAN models."""
+        """Load GAN models (.keras format only)."""
         try:
             self.generator = keras.models.load_model(
                 f"{filepath}_generator.keras",
@@ -707,14 +721,8 @@ class SGGANTrafficGenerator:
             )
             print(f"✅ SG-GAN loaded from {filepath}")
         except Exception as e:
-            # Try loading .h5 format (legacy)
-            try:
-                self.generator = keras.models.load_model(f"{filepath}_generator.h5")
-                self.discriminator = keras.models.load_model(f"{filepath}_discriminator.h5")
-                print(f"✅ SG-GAN loaded from {filepath} (legacy format)")
-            except Exception as e2:
-                print(f"❌ Failed to load SG-GAN: {e2}")
-                raise
+            print(f"❌ Failed to load SG-GAN: {e}")
+            raise
 
 
 # ============================================================================
