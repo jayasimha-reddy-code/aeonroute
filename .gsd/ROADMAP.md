@@ -182,7 +182,7 @@ Plans:
 
 ### Phase 08: Testing & Demo Hardening
 **Goal:** Final hardening pass — ensure test isolation, visual regression coverage, presentation mode toggle, and full offline capability so the demo survives any environment.
-**Status:** Not Started
+**Status:** Planned
 **Dependencies:** Phase 02, Phase 03, Phase 04, Phase 05, Phase 06, Phase 07
 **Requirements:** TEST-01, TEST-02, TEST-03, TEST-04, TEST-05, TEST-06
 
@@ -193,7 +193,12 @@ Plans:
 4. App works fully offline — map tiles cached, all data bundled, no external fetch calls
 5. Pre-trained model checkpoints included in repo — `git clone` + `docker compose up` → working demo
 
-**Estimated Plans:** 2 | **Complexity:** Light-Medium
+**Plans:** 3 plans
+
+Plans:
+- [ ] 08-01-PLAN.md — Test infrastructure & isolation (backend DI mocks, frontend FM/MapLibre mocks)
+- [ ] 08-02-PLAN.md — Playwright visual regression for key pages
+- [ ] 08-03-PLAN.md — Offline demo & model checkpoints
 
 ---
 
