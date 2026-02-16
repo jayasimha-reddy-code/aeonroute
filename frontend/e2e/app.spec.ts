@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test.describe('App Page Load', () => {
     test('page loads with correct title', async ({ page }) => {
         await page.goto('/');
-        await expect(page).toHaveTitle(/EVRouteOpt/i);
+        await expect(page).toHaveTitle(/EV Routing/i);
     });
 
     test('dashboard view is default', async ({ page }) => {
@@ -23,7 +23,7 @@ test.describe('App Page Load', () => {
 
     test('theme toggle cycles through modes', async ({ page }) => {
         await page.goto('/');
-        const themeButton = page.getByRole('button', { name: /toggle theme/i });
+        const themeButton = page.getByRole('button', { name: /theme.*click to switch/i });
 
         // Initial state — click once
         await themeButton.click();

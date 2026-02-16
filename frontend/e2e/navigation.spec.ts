@@ -20,7 +20,7 @@ test.describe('Navigation', () => {
 
     test('Training tab shows training content', async ({ page }) => {
         await page.goto('/');
-        await page.getByText(/Training/i).click();
+        await page.getByRole('button', { name: /Training/i }).click();
         await expect(page.locator('main')).toBeVisible();
     });
 
