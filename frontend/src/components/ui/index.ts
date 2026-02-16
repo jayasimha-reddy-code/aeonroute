@@ -9,4 +9,6 @@ export { default as EmptyState } from './EmptyState';
 export { default as GlassCard } from './GlassCard';
 export { default as GlassButton } from './GlassButton';
 export { default as GlassInput } from './GlassInput';
+export { default as AnimatedNumber } from './AnimatedNumber';
+export { default as PageTransition } from './PageTransition';
 export { StatCardSkeleton, RouteCardSkeleton, DashboardSkeleton, AnalyticsSkeleton, TrainingSkeleton } from './Skeleton';
