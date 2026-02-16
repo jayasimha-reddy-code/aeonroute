@@ -4,7 +4,7 @@
 import pytest
 import os
 import numpy as np
-from traffic_generator import create_synthetic_traffic, SGGANTrafficGenerator, save_gan, load_gan
+from src.traffic_generator import create_synthetic_traffic, SGGANTrafficGenerator, save_gan, load_gan
 
 
 def test_create_synthetic_traffic():

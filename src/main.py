@@ -26,19 +26,16 @@ from datetime import datetime
 import warnings
 warnings.filterwarnings('ignore')
 
-# Add src directory to path
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-
 # Import modules
-from road_graph import RoadGraph, EVState, HistoricalRouteGenerator
-from traffic_generator import SGGANTrafficGenerator, create_synthetic_traffic, save_gan, plot_training_history
-from environment import EVRoutingEnvironment, LegacyEVRoutingEnvironment, EnvironmentConfig
-from q_learning_agent import QLearningAgent, train_q_learning_agent, evaluate_agent
-from route_generator import RouteGenerator, EVRoutePlanner
+from src.road_graph import RoadGraph, EVState, HistoricalRouteGenerator
+from src.traffic_generator import SGGANTrafficGenerator, create_synthetic_traffic, save_gan, plot_training_history
+from src.environment import EVRoutingEnvironment, LegacyEVRoutingEnvironment, EnvironmentConfig
+from src.q_learning_agent import QLearningAgent, train_q_learning_agent, evaluate_agent
+from src.route_generator import RouteGenerator, EVRoutePlanner
 
 # Import GNN Route GAN (new advanced module)
 try:
-    from gnn_route_generator import GNNRouteGAN, generate_historical_routes
+    from src.gnn_route_generator import GNNRouteGAN, generate_historical_routes
     HAS_GNN_GAN = True
 except ImportError:
     HAS_GNN_GAN = False

@@ -18,12 +18,8 @@ from typing import Dict, List, Tuple, Optional, Set
 import heapq
 from dataclasses import dataclass
 
-try:
-    from road_graph import RoadGraph, EVState, HistoricalRouteGenerator
-    from traffic_generator import SGGANTrafficGenerator
-except ImportError:
-    from src.road_graph import RoadGraph, EVState, HistoricalRouteGenerator
-    from src.traffic_generator import SGGANTrafficGenerator
+from src.road_graph import RoadGraph, EVState, HistoricalRouteGenerator
+from src.traffic_generator import SGGANTrafficGenerator
 
 
 @dataclass
@@ -693,9 +689,10 @@ if __name__ == "__main__":
     # Visualize routes
     print("\n📊 Creating visualization...")
     try:
-        import os
-        os.makedirs("../results/plots", exist_ok=True)
-        generator.visualize_routes(candidates, "../results/plots/candidate_routes.png")
+        from src.config import get_settings
+        settings = get_settings()
+        settings.plots_path.mkdir(parents=True, exist_ok=True)
+        generator.visualize_routes(candidates, str(settings.plots_path / "candidate_routes.png"))
     except Exception as e:
         print(f"   ⚠️ Could not create visualization: {e}")
     

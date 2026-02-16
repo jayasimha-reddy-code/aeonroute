@@ -815,14 +815,16 @@ if __name__ == "__main__":
     
     # Step 5: Save model
     print("\n💾 Saving model...")
-    os.makedirs("../models/sg_gan", exist_ok=True)
-    gan.save("../models/sg_gan/traffic_gan")
+    from src.config import get_settings
+    settings = get_settings()
+    settings.sg_gan_model_path.mkdir(parents=True, exist_ok=True)
+    gan.save(str(settings.sg_gan_model_path / "traffic_gan"))
     
     # Step 6: Plot and save training history
     print("\n📈 Creating training plots...")
     try:
-        os.makedirs("../results/plots", exist_ok=True)
-        plot_training_history(gan, "../results/plots/gan_training_history.png")
+        settings.plots_path.mkdir(parents=True, exist_ok=True)
+        plot_training_history(gan, str(settings.plots_path / "gan_training_history.png"))
     except Exception as e:
         print(f"⚠️ Could not save plots: {e}")
     

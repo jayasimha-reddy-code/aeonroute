@@ -894,7 +894,7 @@ if __name__ == "__main__":
     print("=" * 60)
     
     # Import road graph
-    from road_graph import RoadGraph, EVState
+    from src.road_graph import RoadGraph, EVState
     
     # Create road network
     print("\n1. Creating road network...")

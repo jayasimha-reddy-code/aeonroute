@@ -18,14 +18,11 @@ import json
 from datetime import datetime
 from typing import Dict, List, Optional
 
-# Add src directory to path
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-
-from road_graph import RoadGraph, EVState
-from traffic_generator import SGGANTrafficGenerator, create_synthetic_traffic
-from environment import EVRoutingEnvironment, LegacyEVRoutingEnvironment
-from q_learning_agent import QLearningAgent, evaluate_agent
-from route_generator import RouteGenerator, EVRoutePlanner
+from src.road_graph import RoadGraph, EVState
+from src.traffic_generator import SGGANTrafficGenerator, create_synthetic_traffic
+from src.environment import EVRoutingEnvironment, LegacyEVRoutingEnvironment
+from src.q_learning_agent import QLearningAgent, evaluate_agent
+from src.route_generator import RouteGenerator, EVRoutePlanner
 
 # Try matplotlib
 try:

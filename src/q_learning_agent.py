@@ -670,18 +670,20 @@ if __name__ == "__main__":
     
     # Test save/load
     print("\n💾 Testing save/load...")
-    os.makedirs("../models/q_learning", exist_ok=True)
-    agent.save_model("../models/q_learning/test_agent.pkl")
+    from src.config import get_settings
+    settings = get_settings()
+    settings.q_learning_model_path.mkdir(parents=True, exist_ok=True)
+    agent.save_model(str(settings.q_learning_model_path / "test_agent.pkl"))
     
     new_agent = QLearningAgent(action_space=5)
-    new_agent.load_model("../models/q_learning/test_agent.pkl")
+    new_agent.load_model(str(settings.q_learning_model_path / "test_agent.pkl"))
     
     print(f"   Loaded Q-table size: {len(new_agent.q_table)}")
     
     # Test with environment
     print("\n🌍 Testing with environment...")
     try:
-        from environment import LegacyEVRoutingEnvironment
+        from src.environment import LegacyEVRoutingEnvironment
         
         env = LegacyEVRoutingEnvironment(grid_size=5, max_battery=100)
         test_agent = QLearningAgent(action_space=5)

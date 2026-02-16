@@ -739,9 +739,12 @@ if __name__ == "__main__":
     print("\n📊 Creating visualization...")
     try:
         import matplotlib.pyplot as plt
+        from src.config import get_settings
+        settings = get_settings()
+        settings.plots_path.mkdir(parents=True, exist_ok=True)
         fig, ax = plt.subplots(1, 1, figsize=(10, 10))
         graph.visualize(route=route, ax=ax)
-        plt.savefig("../results/plots/road_graph.png", dpi=150, bbox_inches='tight')
+        plt.savefig(str(settings.plots_path / "road_graph.png"), dpi=150, bbox_inches='tight')
         print("✅ Saved road graph visualization to results/plots/road_graph.png")
     except Exception as e:
         print(f"⚠️ Could not save visualization: {e}")

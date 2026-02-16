@@ -1,6 +1,6 @@
 # test_environment.py
 import pytest
-from environment import EVRoutingEnvironment, LegacyEVRoutingEnvironment
+from src.environment import EVRoutingEnvironment, LegacyEVRoutingEnvironment
 import numpy as np
 
 

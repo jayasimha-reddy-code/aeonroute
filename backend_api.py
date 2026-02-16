@@ -62,9 +62,6 @@ else:
 logging.basicConfig(level=logging.INFO, handlers=[_handler], force=True)
 logger = logging.getLogger("ev_routing")
 
-# Add src directory to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
-
 from src.road_graph import RoadGraph, EVState
 from src.route_generator import RouteGenerator, EVRoutePlanner
 from src.main import EVRoutingSystem

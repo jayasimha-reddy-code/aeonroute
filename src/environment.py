@@ -21,11 +21,7 @@ from typing import Dict, List, Tuple, Optional, Any
 from dataclasses import dataclass
 import warnings
 
-# Import our custom modules
-try:
-    from road_graph import RoadGraph, EVState, ChargingStation
-except ImportError:
-    from src.road_graph import RoadGraph, EVState, ChargingStation
+from src.road_graph import RoadGraph, EVState, ChargingStation
 
 
 @dataclass
