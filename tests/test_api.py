@@ -1,9 +1,11 @@
-"""
+﻿"""
 Backend API Integration Tests
 ==============================
 Tests FastAPI endpoints using httpx TestClient.
+Includes regression tests for the Phase 02 backend restructure.
 """
 
+import pathlib
 import pytest
 import sys
 import os
@@ -20,6 +22,9 @@ def client():
     """Create a test client for the FastAPI app."""
     with TestClient(app) as c:
         yield c
+
+
+# ==================== Original Tests (14) ====================
 
 
 class TestHealthEndpoint:
@@ -77,7 +82,6 @@ class TestRoadNetworkEndpoint:
         r2 = client.get("/api/road-network", params={"grid_size": 5})
         assert r1.status_code == 200
         assert r2.status_code == 200
-        # Both should return same data
         assert r1.json()["data"]["nodes"] == r2.json()["data"]["nodes"]
 
 
@@ -148,3 +152,120 @@ class TestErrorHandling:
         """Unknown API paths should return 404."""
         response = client.get("/api/nonexistent")
         assert response.status_code == 404
+
+
+# ==================== New: Security Header Tests (BACK-08) ====================
+
+
+class TestSecurityHeaders:
+    """Verify security headers are present on all responses."""
+
+    def test_security_headers_present(self, client):
+        response = client.get("/health")
+        assert response.headers.get("X-Content-Type-Options") == "nosniff"
+        assert response.headers.get("X-Frame-Options") == "DENY"
+        assert response.headers.get("Referrer-Policy") == "strict-origin-when-cross-origin"
+        assert response.headers.get("X-XSS-Protection") == "1; mode=block"
+
+    def test_response_time_header(self, client):
+        response = client.get("/health")
+        assert "X-Response-Time" in response.headers
+
+    def test_request_id_header(self, client):
+        response = client.get("/health")
+        assert "X-Request-ID" in response.headers
+
+
+# ==================== New: Architecture Tests (BACK-01, BACK-02) ====================
+
+
+class TestArchitecture:
+    """Verify backend architecture constraints."""
+
+    def test_no_globals_in_backend_app(self):
+        """BACK-02: Zero global keywords in backend/app/ code."""
+        backend_dir = pathlib.Path("backend/app")
+        for py_file in backend_dir.rglob("*.py"):
+            content = py_file.read_text(encoding="utf-8")
+            lines = content.split("\n")
+            for i, line in enumerate(lines, 1):
+                stripped = line.strip()
+                # Allow 'global _state' in state.py reset_state()
+                if py_file.name == "state.py" and "_state" in stripped:
+                    continue
+                assert not stripped.startswith("global "), \
+                    f"Found 'global' in {py_file}:{i}: {stripped}"
+
+    def test_no_route_definitions_in_main(self):
+        """BACK-01: No @app.get or @app.post in main.py."""
+        main_py = pathlib.Path("backend/app/main.py").read_text(encoding="utf-8")
+        assert "@app.get" not in main_py, "Route definition found in main.py"
+        assert "@app.post" not in main_py, "Route definition found in main.py"
+
+    def test_backend_api_is_thin_proxy(self):
+        """backend_api.py should be a thin proxy (< 15 lines of code)."""
+        content = pathlib.Path("backend_api.py").read_text(encoding="utf-8")
+        code_lines = [l for l in content.strip().split("\n")
+                      if l.strip() and not l.strip().startswith("#")
+                      and not l.strip().startswith('\"\"\"')
+                      and not l.strip().startswith("'")]
+        assert len(code_lines) <= 15, f"backend_api.py has {len(code_lines)} code lines, expected <= 15"
+
+    def test_routers_exist(self):
+        """BACK-01: All 4 router files exist."""
+        for name in ["health", "routing", "training", "analytics"]:
+            assert pathlib.Path(f"backend/app/routers/{name}.py").exists(), \
+                f"Router {name}.py missing"
+
+
+# ==================== New: Regression Tests ====================
+
+
+class TestRegressionResponseShapes:
+    """Ensure refactored endpoints return identical response shapes."""
+
+    @pytest.mark.parametrize("url", [
+        "/health",
+        "/api/training-status",
+        "/api/system-stats",
+    ])
+    def test_get_endpoints_return_ok_envelope(self, client, url):
+        r = client.get(url)
+        assert r.status_code == 200
+        data = r.json()
+        assert "ok" in data
+        assert "message" in data
+        assert "data" in data
+
+    def test_road_network_shape(self, client):
+        r = client.get("/api/road-network", params={"grid_size": 5})
+        assert r.status_code == 200
+        d = r.json()["data"]
+        assert all(k in d for k in [
+            "nodes", "edges", "charging_stations", "nodes_pos", "edges_list"
+        ])
+
+    def test_training_status_shape(self, client):
+        r = client.get("/api/training-status")
+        d = r.json()["data"]
+        assert all(k in d for k in [
+            "is_training", "progress", "current_step", "metrics"
+        ])
+
+    def test_stop_training_not_running_409(self, client):
+        r = client.post("/api/stop-training")
+        assert r.status_code == 409
+
+
+# ==================== New: SSE Endpoint Test (BACK-04) ====================
+
+
+class TestSSEEndpoint:
+    """Verify SSE training stream endpoint."""
+
+    def test_training_stream_returns_event_stream(self, client):
+        """SSE endpoint exists and returns correct content type."""
+        response = client.get("/api/training/stream")
+        assert response.status_code == 200
+        content_type = response.headers.get("content-type", "")
+        assert "text/event-stream" in content_type
