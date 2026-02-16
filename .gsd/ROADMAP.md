@@ -61,7 +61,13 @@ Plans:
 4. All existing API endpoints return identical responses (regression test passes)
 5. Security headers and rate limiting still present in response headers after refactor
 
-**Estimated Plans:** 3–4 | **Complexity:** Heavy
+**Plans:** 4 plans
+
+Plans:
+- [ ] 02-01-PLAN.md — Scaffold backend/app/ + AppState + models + middleware + deps
+- [ ] 02-02-PLAN.md — Health, routing, analytics routers + service layer
+- [ ] 02-03-PLAN.md — Training router + SSE streaming + ThreadPoolExecutor
+- [ ] 02-04-PLAN.md — Proxy rewrite + regression tests + security verification
 
 ---
 
@@ -172,7 +178,7 @@ Plans:
 | Phase | Name | Plans | Complexity | Dependencies |
 |-------|------|-------|------------|--------------|
 | 01 | Foundation & Stability | 2–3 | Light | None |
-| 02 | Backend Restructure | 3–4 | Heavy | 01 |
+| 02 | Backend Restructure | 4 | Heavy | 01 |
 | 03 | Design System & UI Polish | 2–3 | Medium | 01 |
 | 04 | Map & Route Visualization | 2–3 | Medium-Heavy | 03 |
 | 05 | Live Data & Training | 2–3 | Medium-Heavy | 02 |
