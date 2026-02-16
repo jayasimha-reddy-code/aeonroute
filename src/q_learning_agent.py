@@ -89,6 +89,12 @@ class QLearningAgent:
         
         # Statistics
         self.total_updates = 0
+
+        # Convergence monitoring
+        self.reward_history = []
+        self.convergence_window = 50
+        self.convergence_threshold = 5.0
+        self.converged = False
     
     def _state_to_key(self, state) -> Tuple:
         """Convert state to hashable key for Q-table."""
@@ -198,7 +204,15 @@ class QLearningAgent:
     def get_best_action(self, state) -> int:
         """Get best action for a state (exploitation only)."""
         return self.choose_action(state, training=False)
-    
+
+    def update_convergence(self, episode_reward):
+        """Track rolling average reward for convergence detection."""
+        self.reward_history.append(episode_reward)
+        if len(self.reward_history) >= self.convergence_window * 2:
+            recent = np.mean(self.reward_history[-self.convergence_window:])
+            previous = np.mean(self.reward_history[-2*self.convergence_window:-self.convergence_window])
+            self.converged = abs(recent - previous) < self.convergence_threshold
+
     def get_stats(self) -> Dict:
         """Get agent statistics."""
         return {

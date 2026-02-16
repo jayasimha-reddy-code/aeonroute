@@ -15,6 +15,7 @@ Compatible with OpenAI Gymnasium interface.
 """
 
 import numpy as np
+import networkx as nx
 import gymnasium as gym
 from gymnasium import spaces
 from typing import Dict, List, Tuple, Optional, Any
@@ -317,6 +318,9 @@ class EVRoutingEnvironment(gym.Env):
                     self.ev_state.time_minutes += int(charge_time)
 
                     reward = self.config.charging_time_penalty
+                    # Charging incentive: reward charging when battery is critically low
+                    if old_soc < 30:
+                        reward += 10.0
                     info['charged_kwh'] = charged_amount
                     info['new_soc'] = self.ev_state.battery_soc
                     info['charge_time_minutes'] = charge_time
@@ -361,6 +365,10 @@ class EVRoutingEnvironment(gym.Env):
                 progress_reward = (old_dist - new_dist) * self.config.progress_reward_scale
 
                 reward = energy_penalty + progress_reward
+
+                # Potential-based reward shaping
+                shaping_reward = 0.95 * self._potential(target_node) - self._potential(current_node)
+                reward += shaping_reward * 2.0
 
                 info['energy_used'] = cost['energy_kwh']
                 info['time_used'] = cost['time_minutes']
@@ -420,6 +428,23 @@ class EVRoutingEnvironment(gym.Env):
         state = self.get_state() if hasattr(self, 'get_state') else obs
         return state, reward, done, info
     
+    def _potential(self, node):
+        """Distance-based potential: closer to goal = higher potential."""
+        if self.destination_node is None:
+            return 0.0
+        # Check cache first
+        if not hasattr(self, '_potential_cache'):
+            self._potential_cache = {}
+        if node in self._potential_cache:
+            return self._potential_cache[node]
+        try:
+            dist = nx.shortest_path_length(self.road_graph.graph, node, self.destination_node, weight='distance')
+            val = -dist
+        except nx.NetworkXNoPath:
+            val = -1000.0
+        self._potential_cache[node] = val
+        return val
+
     def _distance_to_destination(self, node: int) -> float:
         """Calculate Euclidean distance from node to destination."""
         node_data = self.road_graph.graph.nodes[node]
@@ -473,6 +498,7 @@ class EVRoutingEnvironment(gym.Env):
         self.episode_distance = 0.0
         self.visited_nodes = [self.source_node]
         self.route_history = [self.source_node]
+        self._potential_cache = {}
 
         info = {
             'source': self.source_node,
