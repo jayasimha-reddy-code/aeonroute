@@ -138,22 +138,22 @@ Plans:
 
 ### Phase 06: EV Simulation & Interactivity
 **Goal:** Create the "wow moment" — an animated EV icon moving along the planned route on the map with battery depleting, charging station stops, and interactive network exploration.
-**Status:** Not Started
+**Status:** ✅ Complete
 **Dependencies:** Phase 04
 **Requirements:** SIM-01, SIM-02, SIM-03, SIM-04, SIM-05
 
 **Success Criteria:**
-1. After route calculation, clicking "Simulate" shows an EV icon smoothly moving along the route path on the map
-2. Battery gauge in sidebar depletes in sync with EV position and energy consumption
-3. When EV reaches a charging station, charge animation plays (battery filling up)
-4. Route timeline panel shows distance, estimated time, and energy at each segment
-5. Hovering network nodes shows stats popup; clicking edges reveals weight details
+1. ✅ After route calculation, clicking "Simulate" shows an EV icon smoothly moving along the route path on the map
+2. ✅ Battery gauge in sidebar depletes in sync with EV position and energy consumption
+3. ✅ When EV reaches a charging station, charge animation plays (battery filling up)
+4. ✅ Route timeline panel shows distance, estimated time, and energy at each segment
+5. ✅ Hovering network nodes shows stats popup; clicking edges reveals weight details
 
-**Plans:** 2 plans
+**Plans:** 2 plans (2/2 complete)
 
 Plans:
-- [ ] 06-01-PLAN.md — EV simulation engine + map animation (EVMarker, BatteryGauge, ChargingOverlay)
-- [ ] 06-02-PLAN.md — Route timeline + network interactivity (edge weights, node stats, segment breakdown)
+- [x] 06-01-PLAN.md — EV simulation engine + map animation (EVMarker, BatteryGauge, ChargingOverlay)
+- [x] 06-02-PLAN.md — Route timeline + network interactivity (edge weights, node stats, segment breakdown)
 
 ---
 
