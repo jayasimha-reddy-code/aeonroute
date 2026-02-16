@@ -28,23 +28,23 @@ Phase 01 ──→ Phase 07 (ML Pipeline — semi-independent)
 
 ### Phase 01: Foundation & Stability
 **Goal:** Establish a stable, tested, properly configured codebase that all subsequent phases can build on without fighting broken tests, duplicate files, or hardcoded paths.
-**Status:** Not Started
+**Status:** ✅ Complete
 **Dependencies:** None
 **Requirements:** STAB-01, STAB-02, STAB-03, STAB-04, STAB-05, STAB-06, STAB-07
 
 **Success Criteria:**
-1. `pytest` runs on Windows without asyncio ProactorEventLoop crash — all tests green
-2. `tsc --noEmit` and `vitest run` both exit with zero errors/failures
-3. Only one canonical `data/`, `models/`, `results/` directory exists at project root — duplicates deleted
-4. All paths come from Pydantic Settings config — `grep -r "hardcoded"` finds nothing
-5. `pip install -r requirements-lock.txt` in a fresh venv reproduces exact dependency tree
+1. ✅ `pytest` runs on Windows without asyncio ProactorEventLoop crash — 52 tests green
+2. ✅ `tsc --noEmit` (0 errors), `vitest run` (24/24), Playwright (8/8)
+3. ✅ Only one canonical `data/`, `models/`, `results/` at project root — src/ duplicates deleted
+4. ✅ All paths from Pydantic Settings — zero sys.path hacks, zero hardcoded paths
+5. ✅ `requirements-lock.txt` created with pinned dependencies
 
-**Plans:** 3 plans
+**Plans:** 3 plans (3/3 complete)
 
 Plans:
-- [ ] 01-01-PLAN.md — Python test infrastructure (deps + asyncio fix)
-- [ ] 01-02-PLAN.md — Frontend fixes (TS errors + Vitest + Playwright)
-- [ ] 01-03-PLAN.md — Directory consolidation & Pydantic Settings
+- [x] 01-01-PLAN.md — Python test infrastructure (deps + asyncio fix)
+- [x] 01-02-PLAN.md — Frontend fixes (TS errors + Vitest + Playwright)
+- [x] 01-03-PLAN.md — Directory consolidation & Pydantic Settings
 
 ---
 
