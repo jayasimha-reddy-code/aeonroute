@@ -7,6 +7,7 @@ import Sidebar from './components/Sidebar';
 import ToastContainer from './components/ToastContainer';
 import PageLoader from './components/ui/PageLoader';
 import PageTransition from './components/ui/PageTransition';
+import { usePresentationModeEffect } from './hooks/usePresentationMode';
 import { cn } from './lib/utils';
 
 // Lazy-load page components for code-splitting
@@ -21,6 +22,9 @@ function App() {
   const setRoadNetwork = useSetRoadNetwork();
   const { setIsLoading } = useLoading();
   const addToast = useAddToast();
+
+  // Register presentation mode Ctrl+Shift+P shortcut
+  usePresentationModeEffect();
 
   // Apply dark mode class to HTML root
   useEffect(() => {

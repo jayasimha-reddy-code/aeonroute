@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
-import { useTheme, useSidebar } from '../store/store';
-import { Sun, Moon, Monitor, Zap, Menu, Wifi, WifiOff, Bell } from 'lucide-react';
+import { useTheme, useSidebar, usePresentationMode } from '../store/store';
+import { Sun, Moon, Monitor, Zap, Menu, Wifi, WifiOff, Bell, Presentation } from 'lucide-react';
 import { cn } from '../lib/utils';
 import api from '../services/api';
 
 function Header() {
   const { themeMode, cycleTheme } = useTheme();
   const { setMobileSidebarOpen } = useSidebar();
+  const { presentationMode } = usePresentationMode();
   const [isOnline, setIsOnline] = useState(false);
 
   // Poll backend health
@@ -80,6 +81,14 @@ function Header() {
 
           {/* Mobile-only status dot */}
           <div className={cn('sm:hidden w-2.5 h-2.5 rounded-full', isOnline ? 'bg-success-500' : 'bg-danger-500')} />
+
+          {/* Presentation Mode Indicator */}
+          {presentationMode && (
+            <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-primary-500/10 text-primary-600 dark:text-primary-400 border border-primary-400/20 animate-fade-in">
+              <Presentation className="w-3.5 h-3.5" />
+              Presenting
+            </span>
+          )}
 
           {/* Notification Button */}
           <button

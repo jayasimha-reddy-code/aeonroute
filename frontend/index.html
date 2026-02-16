@@ -19,6 +19,9 @@
         } else {
           document.documentElement.classList.remove('dark');
         }
+        if (p?.state?.presentationMode) {
+          document.documentElement.classList.add('presentation');
+        }
       } catch (e) {}
     </script>
   </head>
