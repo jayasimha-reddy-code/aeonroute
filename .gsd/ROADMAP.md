@@ -158,8 +158,8 @@ Plans:
 ---
 
 ### Phase 07: ML Pipeline Upgrade
-**Goal:** Improve model training stability and output quality — spectral normalization on GAN discriminator, SB3 for RL, .keras format, and demo-mode fast training from checkpoints.
-**Status:** Not Started
+**Goal:** Improve model training stability and output quality — spectral normalization on GAN discriminator, reward shaping for RL, .keras format, and demo-mode fast training from checkpoints.
+**Status:** Planned
 **Dependencies:** Phase 01
 **Requirements:** ML-01, ML-02, ML-03, ML-04, ML-05, ML-06
 
@@ -170,7 +170,13 @@ Plans:
 4. Demo-mode training starts from checkpoint and completes 5–10 epochs in under 60 seconds
 5. Analytics page shows comprehensive evaluation metrics (loss curves, accuracy, sample outputs)
 
-**Estimated Plans:** 2–3 | **Complexity:** Medium
+**Plans:** 4 plans
+
+Plans:
+- [ ] 07-01-PLAN.md — SG-GAN training stability & .h5 format cleanup
+- [ ] 07-02-PLAN.md — GNN hyperparameter config & RL reward shaping
+- [ ] 07-03-PLAN.md — Demo-mode training from checkpoints
+- [ ] 07-04-PLAN.md — Comprehensive evaluation metrics & Analytics page
 
 ---
 
