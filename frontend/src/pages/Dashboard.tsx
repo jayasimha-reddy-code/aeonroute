@@ -1,14 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { m } from 'framer-motion';
 import { useRoadNetwork, useSetActiveTab, useAddToast } from '../store/store';
 import api, { SystemStats, RouteMetrics } from '../services/api';
 import NetworkMap from '../components/NetworkMap';
 import StatCard from '../components/StatCard';
 import PageHeader from '../components/PageHeader';
+import TrafficSlider from '../components/dashboard/TrafficSlider';
 import { Card, Badge, Spinner, GlassCard } from '../components/ui';
 import { StatCardSkeleton } from '../components/ui/Skeleton';
 import { staggerContainer, staggerItem } from '../lib/motion';
-import { BarChart3, Activity, Battery, Navigation, TrendingUp, MapPin, Zap, ArrowRight, Globe, Cpu } from 'lucide-react';
+import { BarChart3, Activity, Battery, Navigation, TrendingUp, MapPin, Zap, ArrowRight, Globe, Cpu, Clock, RefreshCw } from 'lucide-react';
 
 function Dashboard() {
   const roadNetwork = useRoadNetwork();
@@ -17,25 +18,58 @@ function Dashboard() {
   const [stats, setStats] = useState<SystemStats | null>(null);
   const [metrics, setMetrics] = useState<RouteMetrics | null>(null);
   const [loading, setLoading] = useState(true);
+  const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const loadData = useCallback(async (isInitial = false) => {
+    if (!isInitial) setIsRefreshing(true);
+    try {
+      const [systemStats, routeMetrics] = await Promise.all([
+        api.getSystemStats(),
+        api.getRouteMetrics(),
+      ]);
+      setStats(systemStats);
+      setMetrics(routeMetrics);
+      setLastRefresh(new Date());
+    } catch (error: any) {
+      if (isInitial) addToast({ type: 'error', title: 'Failed to load dashboard', message: error?.message });
+    } finally {
+      if (isInitial) setLoading(false);
+      setIsRefreshing(false);
+    }
+  }, [addToast]);
+
+  // Initial load
   useEffect(() => {
-    let mounted = true;
-    const loadData = async () => {
-      try {
-        const [systemStats, routeMetrics] = await Promise.all([
-          api.getSystemStats(),
-          api.getRouteMetrics(),
-        ]);
-        if (mounted) { setStats(systemStats); setMetrics(routeMetrics); }
-      } catch (error: any) {
-        if (mounted) addToast({ type: 'error', title: 'Failed to load dashboard', message: error?.message });
-      } finally {
-        if (mounted) setLoading(false);
+    loadData(true);
+  }, [loadData]);
+
+  // 30-second auto-refresh (pauses when tab is hidden)
+  useEffect(() => {
+    const startPolling = () => {
+      intervalRef.current = setInterval(() => {
+        if (!document.hidden) loadData();
+      }, 30000);
+    };
+
+    const handleVisibility = () => {
+      if (document.hidden) {
+        if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
+      } else {
+        loadData(); // refresh immediately on return
+        startPolling();
       }
     };
-    loadData();
-    return () => { mounted = false; };
-  }, [addToast]);
+
+    startPolling();
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [loadData]);
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 xl:p-10 max-w-[1600px] mx-auto">
@@ -44,6 +78,14 @@ function Dashboard() {
         subtitle="Real-time EV routing system status and performance metrics"
         icon={BarChart3}
       />
+
+      {/* ── Auto-refresh indicator ───────────────────── */}
+      {lastRefresh && (
+        <div className="flex items-center gap-1.5 mb-4 text-[11px] text-surface-500">
+          <RefreshCw className={`w-3 h-3 ${isRefreshing ? 'animate-spin' : ''}`} />
+          <span>Auto-refreshing every 30s · Last: {lastRefresh.toLocaleTimeString()}</span>
+        </div>
+      )}
 
       {/* ── Key Metrics ─────────────────────────────── */}
       <m.div
@@ -149,6 +191,31 @@ function Dashboard() {
           </Card>
         </div>
       </div>
+
+      {/* ── Time-of-Day Traffic Patterns (full width) ── */}
+      {stats && (
+        <m.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, type: 'spring', stiffness: 300, damping: 25 }}
+          className="mt-6"
+        >
+          <Card>
+            <div className="flex items-center gap-3 mb-5">
+              <div className="p-2 rounded-lg bg-primary-500/10">
+                <Clock className="w-4 h-4 text-primary-500" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-surface-900 dark:text-surface-100 uppercase tracking-wider">
+                  Time-of-Day Traffic Patterns
+                </h3>
+                <p className="text-[11px] text-surface-500">SG-GAN learned temporal traffic variation</p>
+              </div>
+            </div>
+            <TrafficSlider />
+          </Card>
+        </m.div>
+      )}
     </div>
   );
 }
