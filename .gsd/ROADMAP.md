@@ -116,7 +116,7 @@ Plans:
 
 ### Phase 05: Live Data & Training
 **Goal:** Connect frontend to real-time training progress via SSE, showing animated loss/reward curves building live during ML training — the single most impressive demo feature.
-**Status:** Not Started
+**Status:** In Progress (1/3 plans complete)
 **Dependencies:** Phase 02
 **Requirements:** LIVE-01, LIVE-02, LIVE-03, LIVE-04, LIVE-05, LIVE-06, LIVE-07
 
@@ -127,10 +127,10 @@ Plans:
 4. Time-of-day traffic slider on dashboard updates heatmap showing SG-GAN temporal patterns
 5. If SSE connection drops, frontend auto-reconnects with exponential backoff and falls back to polling
 
-**Plans:** 3 plans
+**Plans:** 3 plans (1/3 complete)
 
 Plans:
-- [ ] 05-01-PLAN.md — Backend training metrics pipeline (ML callbacks + SSE enrichment + temporal endpoint)
+- [x] 05-01-PLAN.md — Backend training metrics pipeline (ML callbacks + SSE enrichment + temporal endpoint)
 - [ ] 05-02-PLAN.md — SSE streaming + live training charts (useSSE hook + Zustand + Recharts)
 - [ ] 05-03-PLAN.md — Traffic slider + dashboard auto-refresh
 
