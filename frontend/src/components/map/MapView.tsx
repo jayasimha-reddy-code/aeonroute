@@ -3,6 +3,7 @@ import Map, { NavigationControl, Popup } from 'react-map-gl/maplibre';
 import type { MapRef, MapLayerMouseEvent } from 'react-map-gl/maplibre';
 import { LngLatBounds } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
+import { Zap } from 'lucide-react';
 
 import type { RoadNetworkData, Route } from '../../services/api';
 import { useMapTheme } from '../../hooks/useMapTheme';
@@ -42,6 +43,18 @@ interface HoverInfo {
   lat: number;
   nodeId: number;
   isCharging: boolean;
+  degree: number;
+}
+
+interface EdgeHoverInfo {
+  lng: number;
+  lat: number;
+  source: number;
+  target: number;
+  distance_km: number;
+  energy_per_km: number;
+  time_minutes: number;
+  road_type: string;
 }
 
 const MapView = memo(function MapView({
@@ -62,6 +75,7 @@ const MapView = memo(function MapView({
   const { mapStyle, isDarkMode } = useMapTheme();
   const [cursor, setCursor] = useState('auto');
   const [hoverInfo, setHoverInfo] = useState<HoverInfo | null>(null);
+  const [edgeHoverInfo, setEdgeHoverInfo] = useState<EdgeHoverInfo | null>(null);
 
   // ── Derived geo data ──────────────────────────────────
   const posLookup = useMemo(
@@ -78,8 +92,21 @@ const MapView = memo(function MapView({
   const handleClick = useCallback(
     (evt: MapLayerMouseEvent) => {
       const feature = evt.features?.[0];
-      if (feature?.properties?.nodeId != null && onNodeClick) {
+      if (!feature) return;
+      if (feature.layer?.id === 'nodes-layer' && feature.properties?.nodeId != null && onNodeClick) {
         onNodeClick(feature.properties.nodeId as number);
+      }
+      if (feature.layer?.id === 'edges-hit-area' && feature.properties?.source != null) {
+        setEdgeHoverInfo({
+          lng: evt.lngLat.lng,
+          lat: evt.lngLat.lat,
+          source: feature.properties.source as number,
+          target: feature.properties.target as number,
+          distance_km: (feature.properties.distance_km as number) ?? 0,
+          energy_per_km: (feature.properties.energy_per_km as number) ?? 0,
+          time_minutes: (feature.properties.time_minutes as number) ?? 0,
+          road_type: (feature.properties.road_type as string) ?? 'unknown',
+        });
       }
     },
     [onNodeClick],
@@ -87,14 +114,18 @@ const MapView = memo(function MapView({
 
   const handleMouseMove = useCallback((evt: MapLayerMouseEvent) => {
     const feature = evt.features?.[0];
-    if (feature?.properties) {
+    if (feature?.properties && feature.layer?.id === 'nodes-layer') {
       setHoverInfo({
         lng: evt.lngLat.lng,
         lat: evt.lngLat.lat,
         nodeId: feature.properties.nodeId as number,
         isCharging: !!feature.properties.isCharging,
+        degree: (feature.properties.degree as number) ?? 0,
       });
       setCursor('pointer');
+    } else if (feature?.layer?.id === 'edges-hit-area') {
+      setCursor('pointer');
+      setHoverInfo(null);
     } else {
       setHoverInfo(null);
       setCursor('auto');
@@ -143,7 +174,7 @@ const MapView = memo(function MapView({
         }}
         style={{ width: '100%', height: '100%' }}
         mapStyle={mapStyle}
-        interactiveLayerIds={['nodes-layer']}
+        interactiveLayerIds={['nodes-layer', 'edges-hit-area']}
         onClick={handleClick}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
@@ -187,7 +218,7 @@ const MapView = memo(function MapView({
           </>
         )}
 
-        {/* Hover popup */}
+        {/* Node hover popup */}
         {hoverInfo && (
           <Popup
             longitude={hoverInfo.lng}
@@ -196,10 +227,36 @@ const MapView = memo(function MapView({
             anchor="bottom"
             offset={10}
           >
-            <div className="text-xs font-medium">
-              {hoverInfo.isCharging
-                ? `⚡ Charging Station #${hoverInfo.nodeId}`
-                : `Node ${hoverInfo.nodeId}`}
+            <div className="text-xs space-y-1 min-w-[120px]">
+              <p className="font-semibold">Node {hoverInfo.nodeId}</p>
+              {hoverInfo.isCharging && (
+                <p className="text-amber-500 flex items-center gap-1">
+                  <Zap className="w-3 h-3" /> Charging Station
+                </p>
+              )}
+              <p className="text-surface-500">Connections: {hoverInfo.degree}</p>
+            </div>
+          </Popup>
+        )}
+
+        {/* Edge click popup */}
+        {edgeHoverInfo && (
+          <Popup
+            longitude={edgeHoverInfo.lng}
+            latitude={edgeHoverInfo.lat}
+            closeButton={true}
+            onClose={() => setEdgeHoverInfo(null)}
+            anchor="bottom"
+            offset={12}
+          >
+            <div className="text-xs space-y-1.5 min-w-[140px]">
+              <p className="font-semibold">Edge {edgeHoverInfo.source} → {edgeHoverInfo.target}</p>
+              <div className="space-y-0.5 text-surface-600 dark:text-surface-400">
+                <p>Distance: {edgeHoverInfo.distance_km.toFixed(2)} km</p>
+                <p>Energy: {edgeHoverInfo.energy_per_km.toFixed(3)} kWh/km</p>
+                <p>Time: {edgeHoverInfo.time_minutes.toFixed(1)} min</p>
+                <p>Type: {edgeHoverInfo.road_type}</p>
+              </div>
             </div>
           </Popup>
         )}

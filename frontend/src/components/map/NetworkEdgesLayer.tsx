@@ -7,6 +7,17 @@ interface NetworkEdgesLayerProps {
   isDarkMode: boolean;
 }
 
+const edgesHitArea: LineLayerSpecification = {
+  id: 'edges-hit-area',
+  type: 'line',
+  source: 'network-edges',
+  paint: {
+    'line-color': 'transparent',
+    'line-width': 10,
+    'line-opacity': 0,
+  },
+};
+
 const edgesLayerStyle = (isDark: boolean): LineLayerSpecification => ({
   id: 'edges-layer',
   type: 'line',
@@ -22,6 +33,18 @@ const edgesLayerStyle = (isDark: boolean): LineLayerSpecification => ({
   },
 });
 
+const edgesHoverStyle = (isDark: boolean): LineLayerSpecification => ({
+  id: 'edges-hover',
+  type: 'line',
+  source: 'network-edges',
+  filter: ['==', ['get', 'source'], -1],
+  paint: {
+    'line-color': isDark ? '#818cf8' : '#6366f1',
+    'line-width': 3,
+    'line-opacity': 0.8,
+  },
+});
+
 export const NetworkEdgesLayer = memo(function NetworkEdgesLayer({
   edgesGeoJSON,
   isDarkMode,
@@ -30,7 +53,9 @@ export const NetworkEdgesLayer = memo(function NetworkEdgesLayer({
 
   return (
     <Source id="network-edges" type="geojson" data={edgesGeoJSON}>
+      <Layer {...edgesHitArea} />
       <Layer {...edgesLayerStyle(isDarkMode)} />
+      <Layer {...edgesHoverStyle(isDarkMode)} />
     </Source>
   );
 });

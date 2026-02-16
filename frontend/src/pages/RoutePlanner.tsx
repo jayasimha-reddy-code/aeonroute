@@ -11,6 +11,7 @@ import { RouteCardSkeleton } from '../components/ui/Skeleton';
 import { buildPosLookup } from '../lib/geo';
 import { useEVSimulation } from '../hooks/useEVSimulation';
 import { BatteryGauge } from '../components/map/BatteryGauge';
+import { RouteTimeline } from '../components/map/RouteTimeline';
 
 function RoutePlanner() {
   const { roadNetwork, generatedRoutes, setGeneratedRoutes, selectedRoute, setSelectedRoute, currentEVState, setEVState, addToast } = useSystemStore();
@@ -230,6 +231,15 @@ function RoutePlanner() {
               </Card>
             )}
           </div>
+
+          {/* Route Timeline */}
+          {selectedRoute && (
+            <RouteTimeline
+              route={selectedRoute}
+              posLookup={posLookup}
+              currentSegmentIndex={simState?.currentSegmentIndex}
+            />
+          )}
         </div>
       </div>
     </div>
