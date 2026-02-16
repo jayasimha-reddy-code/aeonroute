@@ -95,22 +95,22 @@ Plans:
 
 ### Phase 04: Map & Route Visualization
 **Goal:** Replace Leaflet with MapLibre GL for GPU-accelerated map rendering, then add animated route drawing, energy gradients, and interactive click-to-select — making the core routing domain visually impressive.
-**Status:** Not Started
+**Status:** ✅ Complete
 **Dependencies:** Phase 03
 **Requirements:** MAP-01, MAP-02, MAP-03, MAP-04, MAP-05, MAP-06, MAP-07
 
 **Success Criteria:**
-1. Map renders via MapLibre GL (WebGL) — Leaflet fully removed from dependencies
-2. Clicking two nodes on the map sets source and destination, triggering route calculation
-3. Route draws progressively on the map with animated polyline trace (not instant appearance)
-4. Energy consumption visualized as color gradient along route (green → yellow → red)
-5. Two or three alternative routes displayed simultaneously with distinguishable colors and legend
+1. ✅ Map renders via MapLibre GL (WebGL) — Leaflet fully removed from dependencies
+2. ✅ Clicking two nodes on the map sets source and destination, triggering route calculation
+3. ✅ Route draws progressively on the map with animated polyline trace (not instant appearance)
+4. ✅ Energy consumption visualized as color gradient along route (green → yellow → red)
+5. ✅ Two or three alternative routes displayed simultaneously with distinguishable colors and legend
 
-**Plans:** 2 plans (0/2 complete)
+**Plans:** 2 plans (2/2 complete)
 
 Plans:
-- [ ] 04-01-PLAN.md — MapLibre GL foundation: deps, geo utils, MapView component, node interactivity, theme switching
-- [ ] 04-02-PLAN.md — Route visualization: animated drawing, energy gradient, multi-route comparison, legend
+- [x] 04-01-PLAN.md — MapLibre GL foundation: deps, geo utils, MapView component, node interactivity, theme switching
+- [x] 04-02-PLAN.md — Route visualization: animated drawing, energy gradient, multi-route comparison, legend
 
 ---
 

@@ -11,11 +11,11 @@ When an evaluator sees this app, they immediately understand this is production-
 ## Current State
 
 **Milestone:** v1 — Presentation Release
-**Current Phase:** Phase 04 — Map & Route Visualization
+**Current Phase:** Phase 05 — Live Data & Training
 **Phase Status:** Not Started
-**Overall Progress:** 3/8 phases complete
+**Overall Progress:** 4/8 phases complete
 
-Progress: ███░░░░░░░ 37%
+Progress: █████░░░░░ 50%
 
 ## Phase Tracker
 
@@ -24,7 +24,7 @@ Progress: ███░░░░░░░ 37%
 | 01 | Foundation & Stability | ✅ | 3/3 | 100% |
 | 02 | Backend Restructure | ✅ | 4/4 | 100% |
 | 03 | Design System & UI Polish | ✅ | 3/3 | 100% |
-| 04 | Map & Route Visualization | ○ | 0/0 | 0% |
+| 04 | Map & Route Visualization | ✅ | 2/2 | 100% |
 | 05 | Live Data & Training | ○ | 0/0 | 0% |
 | 06 | EV Simulation & Interactivity | ○ | 0/0 | 0% |
 | 07 | ML Pipeline Upgrade | ○ | 0/0 | 0% |
@@ -50,8 +50,10 @@ Progress: ███░░░░░░░ 37%
 - [x] Phase 02 execution
 - [x] Phase 03 planning
 - [x] Phase 03 execution
-- [ ] Phase 04 planning
-- [ ] Phase 04 execution
+- [x] Phase 04 planning
+- [x] Phase 04 execution
+- [ ] Phase 05 planning
+- [ ] Phase 05 execution
 
 ## Key Dates
 
@@ -65,7 +67,8 @@ Progress: ███░░░░░░░ 37%
 | Phase 01 complete | 2026-02-16 |
 | Phase 02 complete | 2026-02-17 |
 | Phase 03 complete | 2026-02-17 |
+| Phase 04 complete | 2025-07-20 |
 
 ---
 
-_Last updated: 2026-02-17_
+_Last updated: 2025-07-20_
