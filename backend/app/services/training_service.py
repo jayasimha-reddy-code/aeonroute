@@ -48,6 +48,12 @@ class TrainingService:
             "progress": 0,
             "current_step": "Queued",
             "metrics": {},
+            "loss_history": [],
+            "reward_history": [],
+            "gan_epoch": 0,
+            "gan_total_epochs": 0,
+            "rl_episode": 0,
+            "rl_total_episodes": 0,
         })
 
         loop = asyncio.get_running_loop()
@@ -57,6 +63,10 @@ class TrainingService:
     def _run_pipeline(self, sys: EVRoutingSystem) -> None:
         """Synchronous — runs in ThreadPoolExecutor thread. NOT async."""
         try:
+            # Reset history arrays at pipeline start
+            self.state.training_status["loss_history"] = []
+            self.state.training_status["reward_history"] = []
+
             self._update(10, "Creating road network")
             sys.step1_create_road_network()
 
@@ -64,7 +74,18 @@ class TrainingService:
             traffic_data = sys.step2_generate_traffic_data()
 
             self._update(40, "Training traffic GAN")
-            sys.step3_train_gan(traffic_data)
+
+            def on_gan_epoch(epoch, total, losses):
+                self.state.training_status["loss_history"].append({
+                    "epoch": epoch,
+                    "g_loss": float(losses["g_loss"]),
+                    "d_loss_real": float(losses["d_loss_real"]),
+                    "d_loss_fake": float(losses["d_loss_fake"]),
+                })
+                self.state.training_status["gan_epoch"] = epoch
+                self.state.training_status["gan_total_epochs"] = total
+
+            sys.step3_train_gan(traffic_data, epoch_callback=on_gan_epoch)
 
             self._update(55, "Creating RL environment")
             sys.step4_create_environment()
@@ -75,7 +96,17 @@ class TrainingService:
                 return
 
             self._update(75, "Training Q-Learning agent")
-            sys.step5_train_agent()
+
+            def on_rl_episode(episode, total, reward, length):
+                self.state.training_status["reward_history"].append({
+                    "episode": episode,
+                    "reward": float(reward),
+                    "length": int(length),
+                })
+                self.state.training_status["rl_episode"] = episode
+                self.state.training_status["rl_total_episodes"] = total
+
+            sys.step5_train_agent(episode_callback=on_rl_episode)
 
             self._update(85, "Creating route generator")
             sys.step6_create_route_generator()

@@ -13,6 +13,12 @@ class AppState:
         "progress": 0,
         "current_step": "",
         "metrics": {},
+        "loss_history": [],
+        "reward_history": [],
+        "gan_epoch": 0,
+        "gan_total_epochs": 0,
+        "rl_episode": 0,
+        "rl_total_episodes": 0,
     })
     road_network_cache: TTLCache = field(default_factory=lambda: TTLCache(maxsize=16, ttl=300))
     system_stats_cache: TTLCache = field(default_factory=lambda: TTLCache(maxsize=1, ttl=10))

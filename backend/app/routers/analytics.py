@@ -7,6 +7,24 @@ from src.road_graph import EVState
 router = APIRouter(prefix="/api", tags=["Analytics"])
 
 
+@router.get("/traffic-patterns/temporal", summary="Temporal traffic for heatmap slider")
+async def get_temporal_traffic(request: Request, state: AppState = Depends(get_state)):
+    if state.system is None or state.system.gan is None:
+        return fail("System or GAN not initialized", 503)
+    try:
+        traffic = state.system.gan.generate_traffic_scenarios(n_samples=1)
+        grid_size = state.system.config.get("grid_size", 10)
+        return ok({
+            "grid_size": grid_size,
+            "time_steps": 24,
+            "traffic": traffic[0].tolist(),
+        })
+    except Exception as e:
+        if hasattr(e, "status_code"):
+            raise
+        return fail(f"Temporal traffic generation failed: {e}")
+
+
 @router.get("/traffic-patterns", summary="Get traffic patterns")
 async def get_traffic_patterns(request: Request, time_step: int = 12, state: AppState = Depends(get_state)):
     if state.system is None:
