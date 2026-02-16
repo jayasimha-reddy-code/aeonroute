@@ -39,7 +39,12 @@ Phase 01 ──→ Phase 07 (ML Pipeline — semi-independent)
 4. All paths come from Pydantic Settings config — `grep -r "hardcoded"` finds nothing
 5. `pip install -r requirements-lock.txt` in a fresh venv reproduces exact dependency tree
 
-**Estimated Plans:** 2–3 | **Complexity:** Light
+**Plans:** 3 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Python test infrastructure (deps + asyncio fix)
+- [ ] 01-02-PLAN.md — Frontend fixes (TS errors + Vitest + Playwright)
+- [ ] 01-03-PLAN.md — Directory consolidation & Pydantic Settings
 
 ---
 
