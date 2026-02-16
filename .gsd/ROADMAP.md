@@ -106,7 +106,11 @@ Plans:
 4. Energy consumption visualized as color gradient along route (green → yellow → red)
 5. Two or three alternative routes displayed simultaneously with distinguishable colors and legend
 
-**Estimated Plans:** 2–3 | **Complexity:** Medium-Heavy
+**Plans:** 2 plans (0/2 complete)
+
+Plans:
+- [ ] 04-01-PLAN.md — MapLibre GL foundation: deps, geo utils, MapView component, node interactivity, theme switching
+- [ ] 04-02-PLAN.md — Route visualization: animated drawing, energy gradient, multi-route comparison, legend
 
 ---
 
@@ -185,7 +189,7 @@ Plans:
 | 01 | Foundation & Stability | 2–3 | Light | None |
 | 02 | Backend Restructure | 4 | Heavy | 01 |
 | 03 | Design System & UI Polish | 2–3 | Medium | 01 |
-| 04 | Map & Route Visualization | 2–3 | Medium-Heavy | 03 |
+| 04 | Map & Route Visualization | 2 | Medium-Heavy | 03 |
 | 05 | Live Data & Training | 2–3 | Medium-Heavy | 02 |
 | 06 | EV Simulation & Interactivity | 2 | Hard | 04 |
 | 07 | ML Pipeline Upgrade | 2–3 | Medium | 01 |
