@@ -85,7 +85,12 @@ class EVRoutingSystem:
         
         # Timestamp for this run
         self.timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    
+
+    @property
+    def is_demo_mode(self):
+        """Check if system is running in demo mode (fast training from checkpoints)."""
+        return self.config.get("demo_mode", False)
+
     def _default_config(self) -> dict:
         """Get default configuration."""
         return {
@@ -548,7 +553,13 @@ class EVRoutingSystem:
         print("\n" + "[=EV ROUTING SYSTEM=]" * 10)
         print("EV ROUTING SYSTEM - FULL TRAINING PIPELINE")
         print("[=EV ROUTING SYSTEM=]" * 10)
-        
+
+        if self.is_demo_mode:
+            print("\n[DEMO MODE] Fast training with reduced epochs and checkpoint loading")
+            print(f"   GAN epochs: {self.config.get('gan_epochs', 100)}")
+            print(f"   RL episodes: {self.config.get('rl_episodes', 500)}")
+            print(f"   GNN epochs: {self.config.get('gnn_epochs', 50)}")
+
         start_time = datetime.now()
         
         # Execute all steps
