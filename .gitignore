@@ -31,8 +31,8 @@ htmlcov/
 .tox/
 
 # Models & Data
-models/*.h5
-models/*.keras
+# Pre-trained checkpoints (.keras, .pkl) are intentionally tracked for instant demo
+models/**/*.h5
 data/training_data/*.npy
 data/generated_traffic/*.npy
 results/plots/*.png
