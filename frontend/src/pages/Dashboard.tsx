@@ -38,7 +38,7 @@ function Dashboard() {
   }, [addToast]);
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto">
+    <div className="p-4 sm:p-6 lg:p-8 xl:p-10 max-w-[1600px] mx-auto">
       <PageHeader
         title="Dashboard"
         subtitle="Real-time EV routing system status and performance metrics"
@@ -47,7 +47,7 @@ function Dashboard() {
 
       {/* ── Key Metrics ─────────────────────────────── */}
       <m.div
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 mb-8"
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 xl:gap-6 mb-8"
         variants={staggerContainer}
         initial="hidden"
         animate="show"
@@ -88,7 +88,7 @@ function Dashboard() {
                 </span>
               </div>
             </div>
-            <div className="h-[420px]">
+            <div className="h-[420px] xl:h-[500px]">
               {roadNetwork ? (
                 <NetworkMap network={roadNetwork} />
               ) : (

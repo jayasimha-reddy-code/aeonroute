@@ -1108,3 +1108,74 @@
     opacity: 1 !important;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PRESENTATION MODE
+   Activated via Ctrl+Shift+P — optimized for projector display
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Light mode presentation overrides */
+.presentation {
+  --glass-bg: rgba(255, 255, 255, 0.88);
+  --glass-border: rgba(226, 232, 240, 0.9);
+  --glass-blur: 12px;
+}
+
+/* Dark mode presentation overrides */
+.presentation.dark {
+  --glass-bg: rgba(15, 23, 42, 0.85);
+  --glass-border: rgba(148, 163, 184, 0.2);
+  --glass-blur: 14px;
+}
+
+/* Thicker borders for visibility at distance */
+.presentation .card,
+.presentation .glass,
+.presentation .glass-surface {
+  border-width: 2px;
+}
+
+/* Larger stat values */
+.presentation .stat-value {
+  font-size: 2rem;
+  line-height: 1.2;
+}
+
+/* Larger page headings */
+.presentation h1,
+.presentation .page-title {
+  font-size: 2rem;
+}
+
+.presentation h2 {
+  font-size: 1.5rem;
+}
+
+/* Increased spacing */
+.presentation .page-container {
+  padding: 2rem;
+}
+
+/* Simplified CSS animations in presentation mode */
+.presentation *,
+.presentation *::before,
+.presentation *::after {
+  animation-duration: 0.1s !important;
+  transition-duration: 150ms !important;
+}
+
+/* Hide non-essential UI in presentation mode */
+.presentation .hide-in-presentation {
+  display: none !important;
+}
+
+/* Higher contrast text */
+.presentation {
+  --color-text: #020617;
+  --color-text-secondary: #334155;
+}
+
+.presentation.dark {
+  --color-text: #ffffff;
+  --color-text-secondary: #e2e8f0;
+}

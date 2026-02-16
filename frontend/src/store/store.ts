@@ -63,6 +63,10 @@ interface SystemState {
   };
   setEVState: (state: { battery_soc: number; current_node: number; battery_capacity_kwh: number }) => void;
 
+  // ── Presentation Mode ──
+  presentationMode: boolean;
+  togglePresentationMode: () => void;
+
   // ── Toast Notifications ──
   toasts: Toast[];
   addToast: (toast: Omit<Toast, 'id'>) => void;
@@ -128,6 +132,10 @@ export const useSystemStore = create<SystemState>()(
       },
       setEVState: (state) => set({ currentEVState: state }),
 
+      // Presentation Mode
+      presentationMode: false,
+      togglePresentationMode: () => set((s) => ({ presentationMode: !s.presentationMode })),
+
       // Toasts
       toasts: [],
       addToast: (toast) => {
@@ -148,6 +156,7 @@ export const useSystemStore = create<SystemState>()(
       partialize: (state) => ({
         themeMode: state.themeMode,
         sidebarCollapsed: state.sidebarCollapsed,
+        presentationMode: state.presentationMode,
       }),
     }
   )
@@ -197,4 +206,10 @@ export const useLoading = () => useSystemStore((s) => ({
   isLoading: s.isLoading,
   setIsLoading: s.setIsLoading,
 }));
+
+export const usePresentationMode = () =>
+  useSystemStore((s) => ({
+    presentationMode: s.presentationMode,
+    togglePresentationMode: s.togglePresentationMode,
+  }));
 

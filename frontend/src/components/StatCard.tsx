@@ -23,7 +23,7 @@ const iconBg: Record<string, string> = {
 
 function renderValue(value: string | number) {
   if (typeof value === 'number') {
-    return <AnimatedNumber value={value} className="text-2xl font-bold text-surface-900 dark:text-surface-50 tracking-tight" />;
+    return <AnimatedNumber value={value} className="stat-value text-2xl xl:text-3xl font-bold text-surface-900 dark:text-surface-50 tracking-tight" />;
   }
   // Try to parse "42.5 kWh" or "— min" style strings
   const match = String(value).match(/^([^0-9]*?)([\d,.]+)(.*?)$/);
@@ -38,13 +38,13 @@ function renderValue(value: string | number) {
           prefix={prefix}
           suffix={suffix}
           decimals={decimals}
-          className="text-2xl font-bold text-surface-900 dark:text-surface-50 tracking-tight"
+          className="stat-value text-2xl xl:text-3xl font-bold text-surface-900 dark:text-surface-50 tracking-tight"
         />
       );
     }
   }
   // Fallback: non-numeric string
-  return <span className="text-2xl font-bold text-surface-900 dark:text-surface-50 tracking-tight">{value}</span>;
+  return <span className="stat-value text-2xl xl:text-3xl font-bold text-surface-900 dark:text-surface-50 tracking-tight">{value}</span>;
 }
 
 const StatCard = memo(function StatCard({ title, value, icon: Icon, color, change, subtitle }: StatCardProps) {
@@ -61,7 +61,7 @@ const StatCard = memo(function StatCard({ title, value, icon: Icon, color, chang
           </div>
         )}
       </div>
-      <p className="text-xs font-medium text-surface-500 dark:text-surface-400 uppercase tracking-wider mb-1">
+      <p className="text-xs xl:text-sm font-medium text-surface-500 dark:text-surface-400 uppercase tracking-wider mb-1">
         {title}
       </p>
       {renderValue(value)}
