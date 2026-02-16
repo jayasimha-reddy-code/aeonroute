@@ -84,7 +84,12 @@ Plans:
 4. Light/dark toggle switches theme with smooth crossfade — no flash of unstyled content
 5. All data-loading states show skeleton shimmer screens, never blank white space
 
-**Estimated Plans:** 2–3 | **Complexity:** Medium
+**Plans:** 3 plans (0/3 complete)
+
+Plans:
+- [ ] 03-01-PLAN.md — Glass components + theme polish + skeleton screens (Wave 1)
+- [ ] 03-02-PLAN.md — Framer Motion integration + page transitions + animated counters (Wave 2)
+- [ ] 03-03-PLAN.md — Responsive layout + presentation mode (Wave 3)
 
 ---
 
