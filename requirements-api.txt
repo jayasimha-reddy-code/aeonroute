@@ -9,3 +9,5 @@ tensorflow>=2.14.0
 gymnasium==0.29.1
 slowapi>=0.1.9
 python-json-logger>=2.0
+sse-starlette>=2.0
+cachetools>=5.3
