@@ -90,6 +90,10 @@
   --space-card: 20px;
   --space-inline: 8px;
   --space-stack: 12px;
+
+  /* ── Glass Elevation Variants ── */
+  --glass-bg-elevated: rgba(255, 255, 255, 0.82);
+  --glass-bg-sunken: rgba(255, 255, 255, 0.55);
 }
 
 /* Responsive spacing overrides — mobile */
@@ -130,6 +134,10 @@
   --focus-ring: rgba(46, 201, 221, 0.45);
   --glow-primary: rgba(46, 201, 221, 0.2);
   --glow-accent: rgba(251, 191, 36, 0.15);
+
+  /* ── Glass Elevation Variants — Dark ── */
+  --glass-bg-elevated: rgba(15, 23, 42, 0.78);
+  --glass-bg-sunken: rgba(15, 23, 42, 0.45);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -211,6 +219,45 @@
    ═══════════════════════════════════════════════════════════════════════════ */
 
 @layer components {
+
+  /* ─────────────────────────────────────────────────────────────────────────
+     NOISE TEXTURE — Subtle SVG noise overlay for glass surfaces
+     ───────────────────────────────────────────────────────────────────────── */
+  .glass-noise {
+    position: relative;
+  }
+
+  .glass-noise::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E") repeat;
+    opacity: 0.04;
+    pointer-events: none;
+    border-radius: inherit;
+    z-index: 0;
+  }
+
+  .dark .glass-noise::before {
+    opacity: 0.06;
+  }
+
+  /* ─────────────────────────────────────────────────────────────────────────
+     SURFACE TRANSITIONS — Smooth theme crossfade on surface elements
+     ───────────────────────────────────────────────────────────────────────── */
+  .card,
+  .glass,
+  .glass-surface,
+  .surface-raised,
+  .surface-float,
+  .btn-secondary,
+  .input-field,
+  .badge {
+    transition: background-color var(--duration-slow, 300ms) var(--ease-out-expo, ease),
+      border-color var(--duration-normal, 200ms) ease,
+      color var(--duration-normal, 200ms) ease,
+      box-shadow var(--duration-normal, 200ms) ease;
+  }
 
   /* ─────────────────────────────────────────────────────────────────────────
      SKIP NAVIGATION LINK — Accessibility first

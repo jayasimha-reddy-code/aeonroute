@@ -268,5 +268,26 @@ export default {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    function({ addUtilities }: any) {
+      addUtilities({
+        '.glass-bg': {
+          background: 'var(--glass-bg)',
+        },
+        '.glass-border': {
+          'border-color': 'var(--glass-border)',
+        },
+        '.glass-blur': {
+          'backdrop-filter': 'blur(var(--glass-blur)) saturate(var(--glass-saturate))',
+          '-webkit-backdrop-filter': 'blur(var(--glass-blur)) saturate(var(--glass-saturate))',
+        },
+        '.glass-surface': {
+          'background': 'var(--glass-bg)',
+          'border-color': 'var(--glass-border)',
+          'backdrop-filter': 'blur(var(--glass-blur)) saturate(var(--glass-saturate))',
+          '-webkit-backdrop-filter': 'blur(var(--glass-blur)) saturate(var(--glass-saturate))',
+        },
+      });
+    },
+  ],
 }

@@ -10,6 +10,17 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
     <title>EV Routing System — AI-Powered Route Optimization</title>
+    <script>
+      try {
+        const p = JSON.parse(localStorage.getItem('ev-routing-preferences') || '{}');
+        const m = p?.state?.themeMode;
+        if (m === 'dark' || (m !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      } catch (e) {}
+    </script>
   </head>
   <body class="min-h-screen">
     <div id="root"></div>
