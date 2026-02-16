@@ -149,7 +149,11 @@ Plans:
 4. Route timeline panel shows distance, estimated time, and energy at each segment
 5. Hovering network nodes shows stats popup; clicking edges reveals weight details
 
-**Estimated Plans:** 2 | **Complexity:** Hard
+**Plans:** 2 plans
+
+Plans:
+- [ ] 06-01-PLAN.md — EV simulation engine + map animation (EVMarker, BatteryGauge, ChargingOverlay)
+- [ ] 06-02-PLAN.md — Route timeline + network interactivity (edge weights, node stats, segment breakdown)
 
 ---
 
