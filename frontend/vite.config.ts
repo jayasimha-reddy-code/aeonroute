@@ -33,7 +33,7 @@ export default defineConfig({
         manualChunks: {
           'vendor-react': ['react', 'react-dom'],
           'vendor-motion': ['framer-motion'],
-          'vendor-map': ['leaflet', 'react-leaflet'],
+          'vendor-map': ['maplibre-gl', 'react-map-gl/maplibre'],
           'vendor-charts': ['recharts'],
           'vendor-state': ['zustand', 'axios'],
         }

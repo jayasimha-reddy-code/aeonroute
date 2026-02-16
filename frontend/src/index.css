@@ -882,35 +882,65 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   LEAFLET MAP OVERRIDES — Cinematic dark theme
+   MAPLIBRE GL OVERRIDES — Glass-themed popups & controls
    ═══════════════════════════════════════════════════════════════════════════ */
 
-.leaflet-container {
-  background: #0B1120 !important;
-  font-family: 'Inter', system-ui, sans-serif !important;
-}
-
-.dark .leaflet-control-zoom a {
-  background: rgba(30, 41, 59, 0.9) !important;
+.maplibregl-popup-content {
+  background: rgba(30, 41, 59, 0.92) !important;
   color: #E2E8F0 !important;
-  border-color: rgba(148, 163, 184, 0.15) !important;
-  backdrop-filter: blur(12px);
-  transition: all 0.15s ease;
+  border: 1px solid rgba(148, 163, 184, 0.12) !important;
+  border-radius: 12px !important;
+  padding: 10px 14px !important;
+  font-family: 'Inter', system-ui, sans-serif !important;
+  font-size: 13px !important;
+  backdrop-filter: blur(16px) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
 }
 
-.dark .leaflet-control-zoom a:hover {
-  background: rgba(51, 65, 85, 0.95) !important;
-  color: #F8FAFC !important;
+.maplibregl-popup-anchor-bottom .maplibregl-popup-tip {
+  border-top-color: rgba(30, 41, 59, 0.92) !important;
 }
 
-.dark .leaflet-control-attribution {
-  background: rgba(11, 17, 32, 0.9) !important;
+.maplibregl-popup-anchor-top .maplibregl-popup-tip {
+  border-bottom-color: rgba(30, 41, 59, 0.92) !important;
+}
+
+.maplibregl-popup-close-button {
+  color: #94A3B8 !important;
+  font-size: 16px !important;
+  padding: 2px 6px !important;
+}
+
+.maplibregl-popup-close-button:hover {
+  color: #E2E8F0 !important;
+  background: transparent !important;
+}
+
+.maplibregl-ctrl-group {
+  background: rgba(30, 41, 59, 0.9) !important;
+  border: 1px solid rgba(148, 163, 184, 0.12) !important;
+  border-radius: 10px !important;
+  backdrop-filter: blur(12px) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+}
+
+.maplibregl-ctrl-group button {
+  color: #E2E8F0 !important;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.08) !important;
+}
+
+.maplibregl-ctrl-group button:hover {
+  background: rgba(51, 65, 85, 0.8) !important;
+}
+
+.maplibregl-ctrl-attrib {
+  background: rgba(11, 17, 32, 0.8) !important;
   color: #64748B !important;
   font-size: 9px !important;
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px) !important;
 }
 
-.dark .leaflet-control-attribution a {
+.maplibregl-ctrl-attrib a {
   color: #94A3B8 !important;
 }
 
