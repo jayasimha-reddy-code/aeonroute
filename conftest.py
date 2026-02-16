@@ -46,3 +46,69 @@ def _windows_event_loop_policy():
     # Restore default policy on teardown
     if sys.platform == "win32":
         asyncio.set_event_loop_policy(None)
+
+
+# ---------------------------------------------------------------------------
+# Backend DI mock fixtures — isolate API tests from TensorFlow / real models
+# ---------------------------------------------------------------------------
+
+from unittest.mock import MagicMock
+from fastapi.testclient import TestClient
+from backend.app.state import AppState, get_state
+from backend_api import app
+
+
+@pytest.fixture
+def mock_app_state() -> AppState:
+    """Lightweight AppState with mocked system — no TF or real models needed."""
+    state = AppState()
+
+    mock_system = MagicMock()
+
+    # Road-graph mock — returns realistic structures so fetch_road_network() works
+    mock_graph = MagicMock()
+    mock_graph.nodes.return_value = [
+        (i, {"x": float(i % 5), "y": float(i // 5)}) for i in range(25)
+    ]
+    mock_graph.number_of_nodes.return_value = 25
+    mock_graph.number_of_edges.return_value = 40
+    mock_graph.edges.return_value = [
+        (i, i + 1, {
+            "distance_km": 1.0,
+            "base_energy_kwh_per_km": 0.15,
+            "base_time_minutes": 2.0,
+            "road_type": "local",
+        })
+        for i in range(0, 40)
+    ]
+
+    mock_road_graph = MagicMock()
+    mock_road_graph.graph = mock_graph
+    mock_road_graph.num_nodes = 25
+    mock_road_graph.charging_stations = [3, 7, 12]
+
+    mock_system.road_graph = mock_road_graph
+    # Models not trained
+    mock_system.gan = None
+    mock_system.agent = None
+    mock_system.gnn_gan = None
+    mock_system.route_generator = None
+
+    state.system = mock_system
+    return state
+
+
+@pytest.fixture
+def client(mock_app_state: AppState):
+    """Test client with DI-overridden mock state (no real TF models)."""
+    app.dependency_overrides[get_state] = lambda: mock_app_state
+    with TestClient(app, raise_server_exceptions=False) as c:
+        yield c
+    app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def real_client():
+    """Test client using the real AppState (lifespan-initialised system)."""
+    with TestClient(app) as c:
+        yield c

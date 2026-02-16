@@ -3,6 +3,8 @@ Backend API Integration Tests
 ==============================
 Tests FastAPI endpoints using httpx TestClient.
 Includes regression tests for the Phase 02 backend restructure.
+
+Uses DI-overridden mock state from conftest.py — no real TF models needed.
 """
 
 import pathlib
@@ -13,15 +15,8 @@ import os
 # Add project root to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from fastapi.testclient import TestClient
-from backend_api import app
-
-
-@pytest.fixture
-def client():
-    """Create a test client for the FastAPI app."""
-    with TestClient(app) as c:
-        yield c
+# NOTE: `client` fixture comes from root conftest.py (DI mock state).
+#       `real_client` fixture is available for tests needing the real system.
 
 
 # ==================== Original Tests (14) ====================
