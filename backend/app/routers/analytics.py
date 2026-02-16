@@ -1,4 +1,5 @@
 ﻿from fastapi import APIRouter, Depends, Request
+import asyncio
 import numpy as np
 from backend.app.state import AppState, get_state
 from backend.app.models.responses import ok, fail
@@ -76,3 +77,54 @@ async def get_route_metrics(request: Request, num_samples: int = 10, state: AppS
         if hasattr(e, "status_code"):
             raise
         fail(f"Metrics generation failed: {e}")
+
+
+@router.get("/analytics/gan-evaluation", summary="GAN training quality metrics")
+async def get_gan_evaluation(request: Request, state: AppState = Depends(get_state)):
+    if state.system is None or state.system.gan is None:
+        return fail("GAN not trained yet", 503)
+    from src.evaluate import SystemEvaluator
+    evaluator = SystemEvaluator()
+    evaluator.road_graph = state.system.road_graph
+    evaluator.gan = state.system.gan
+    results = await asyncio.get_event_loop().run_in_executor(
+        None, lambda: evaluator.evaluate_gan(num_samples=50)
+    )
+    return ok(results)
+
+
+@router.get("/analytics/agent-performance", summary="Q-Learning agent performance")
+async def get_agent_performance(request: Request, state: AppState = Depends(get_state)):
+    if state.system is None or state.system.agent is None:
+        return fail("Agent not trained yet", 503)
+    from src.evaluate import SystemEvaluator
+    evaluator = SystemEvaluator()
+    evaluator.road_graph = state.system.road_graph
+    evaluator.agent = state.system.agent
+    results = await asyncio.get_event_loop().run_in_executor(
+        None, lambda: evaluator.evaluate_agent(num_episodes=20)
+    )
+    return ok(results)
+
+
+@router.get("/analytics/training-history", summary="Training loss and reward history")
+async def get_training_history(request: Request, state: AppState = Depends(get_state)):
+    return ok({
+        "loss_history": state.training_status.get("loss_history", []),
+        "reward_history": state.training_status.get("reward_history", []),
+        "metrics": state.training_status.get("metrics", {}),
+    })
+
+
+@router.get("/analytics/route-evaluation", summary="Route generation quality metrics")
+async def get_route_evaluation(request: Request, state: AppState = Depends(get_state)):
+    if state.system is None or state.system.route_generator is None:
+        return fail("Route generator not ready", 503)
+    from src.evaluate import SystemEvaluator
+    evaluator = SystemEvaluator()
+    evaluator.road_graph = state.system.road_graph
+    evaluator.route_generator = state.system.route_generator
+    results = await asyncio.get_event_loop().run_in_executor(
+        None, lambda: evaluator.evaluate_route_generation(num_tests=10)
+    )
+    return ok(results)
