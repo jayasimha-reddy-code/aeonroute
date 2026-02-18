@@ -68,9 +68,9 @@ export default memo(function StatCard({ title, value, unit, subtitle, trend, ico
               <Icon className={cn('w-4 h-4', accentMap[resolvedAccent])} />
             </div>
           )}
-          <span className="text-xs font-medium text-label uppercase tracking-wider">{title}</span>
+          <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">{title}</span>
         </div>
-        <button className="opacity-0 group-hover:opacity-100 text-label hover:text-white transition-all duration-300">
+        <button className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-white transition-all duration-300">
           <MoreHorizontal className="w-4 h-4" />
         </button>
       </div>
@@ -94,7 +94,7 @@ export default memo(function StatCard({ title, value, unit, subtitle, trend, ico
             return value;
           })()}
         </span>
-        {unit && <span className="text-sm text-label">{unit}</span>}
+        {unit && <span className="text-sm text-slate-400">{unit}</span>}
       </div>
 
       {/* Subtitle / Trend */}

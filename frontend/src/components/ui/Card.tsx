@@ -32,8 +32,9 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(({
 }, ref) => (
   <div
     ref={ref}
+    style={{ backgroundColor: 'rgba(15, 20, 26, 0.6)' }}
     className={cn(
-      'bg-white/[0.035] backdrop-blur-2xl border border-white/[0.07] rounded-2xl shadow-card',
+      'backdrop-blur-[40px] border border-white/[0.03] border-t-white/[0.15] rounded-2xl shadow-card',
       hover && 'glass-hover',
       glowMap[glow],
       paddingMap[padding],

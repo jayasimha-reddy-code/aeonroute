@@ -34,19 +34,21 @@
    2. COMPONENTS — Reusable patterns (minimal)
    ═══════════════════════════════════════════════════════ */
 @layer components {
-  /* Glass surface — THE card foundation */
+  /* Glass surface — THE card foundation (smoked glass, not white haze) */
   .glass {
-    @apply bg-white/[0.035] backdrop-blur-2xl border border-white/[0.07] rounded-2xl;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 0 rgba(255,255,255,0.04);
+    @apply backdrop-blur-[40px] border border-white/[0.03] border-t-white/[0.15] rounded-2xl;
+    background-color: rgba(15, 20, 26, 0.6);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255,255,255,0.03);
   }
 
   .glass-hover {
     @apply transition-all duration-500 ease-out;
   }
   .glass-hover:hover {
-    @apply -translate-y-1 border-white/[0.12];
-    background-color: rgba(255, 255, 255, 0.055);
-    box-shadow: 0 0 35px rgba(16, 185, 129, 0.25), 0 16px 56px rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255,255,255,0.06);
+    @apply -translate-y-1 border-white/[0.06];
+    border-top-color: rgba(255, 255, 255, 0.2);
+    background-color: rgba(20, 28, 38, 0.7);
+    box-shadow: 0 0 35px rgba(16, 185, 129, 0.25), 0 16px 56px rgba(0, 0, 0, 0.6), inset 0 1px 0 0 rgba(255,255,255,0.05);
   }
 
   /* Skeleton shimmer */

@@ -14,10 +14,10 @@ const config: Config = {
         // ── Core surfaces ──
         midnight: '#0a0f16',
         surface: {
-          DEFAULT: 'rgba(255, 255, 255, 0.035)',
-          raised: 'rgba(255, 255, 255, 0.06)',
-          inset: 'rgba(0, 0, 0, 0.2)',
-          hover: 'rgba(255, 255, 255, 0.08)',
+          DEFAULT: 'rgba(15, 20, 26, 0.6)',
+          raised: 'rgba(15, 20, 26, 0.7)',
+          inset: 'rgba(0, 0, 0, 0.3)',
+          hover: 'rgba(20, 28, 38, 0.65)',
         },
         // ── Accent palette ──
         emerald: {
@@ -50,8 +50,8 @@ const config: Config = {
         '4xl': '2rem',
       },
       boxShadow: {
-        card: '0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 0 rgba(255,255,255,0.04)',
-        'card-hover': '0 16px 56px rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255,255,255,0.06)',
+        card: '0 8px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255,255,255,0.03)',
+        'card-hover': '0 16px 56px rgba(0, 0, 0, 0.6), inset 0 1px 0 0 rgba(255,255,255,0.05)',
         'glow-emerald': '0 0 30px rgba(16, 185, 129, 0.25), 0 0 60px rgba(16, 185, 129, 0.08)',
         'glow-emerald-lg': '0 0 50px rgba(16, 185, 129, 0.35), 0 0 100px rgba(16, 185, 129, 0.12)',
         'glow-amber': '0 0 30px rgba(245, 158, 11, 0.25), 0 0 60px rgba(245, 158, 11, 0.08)',
@@ -107,20 +107,22 @@ const config: Config = {
     plugin(({ addUtilities }) => {
       addUtilities({
         '.glass': {
-          backgroundColor: 'rgba(255, 255, 255, 0.035)',
+          backgroundColor: 'rgba(15, 20, 26, 0.6)',
           backdropFilter: 'blur(40px)',
           WebkitBackdropFilter: 'blur(40px)',
-          border: '1px solid rgba(255, 255, 255, 0.07)',
+          border: '1px solid rgba(255, 255, 255, 0.03)',
+          borderTop: '1px solid rgba(255, 255, 255, 0.15)',
           borderRadius: '1rem',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 0 rgba(255,255,255,0.04)',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255,255,255,0.03)',
         },
         '.glass-hover': {
           transition: 'all 500ms cubic-bezier(0.4, 0, 0.2, 1)',
           '&:hover': {
             transform: 'translateY(-4px)',
-            backgroundColor: 'rgba(255, 255, 255, 0.055)',
-            borderColor: 'rgba(255, 255, 255, 0.12)',
-            boxShadow: '0 0 35px rgba(16, 185, 129, 0.25), 0 16px 56px rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255,255,255,0.06)',
+            backgroundColor: 'rgba(20, 28, 38, 0.7)',
+            borderColor: 'rgba(255, 255, 255, 0.06)',
+            borderTopColor: 'rgba(255, 255, 255, 0.2)',
+            boxShadow: '0 0 35px rgba(16, 185, 129, 0.25), 0 16px 56px rgba(0, 0, 0, 0.6), inset 0 1px 0 0 rgba(255,255,255,0.05)',
           },
         },
       });
