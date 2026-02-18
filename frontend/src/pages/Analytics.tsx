@@ -5,7 +5,7 @@ import PageHeader from '../components/PageHeader';
 import { Card, Badge } from '../components/ui';
 import { StatCardSkeleton } from '../components/ui/Skeleton';
 import {
-  LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area,
+  BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts';
 import { Activity, TrendingUp, Zap, Timer, Route, Gauge, Network, Cpu } from 'lucide-react';
@@ -290,15 +290,25 @@ function Analytics() {
             <h3 className="text-sm font-semibold text-white uppercase tracking-wider">GAN Training Loss</h3>
           </div>
           <ResponsiveContainer width="100%" height={260}>
-            <LineChart data={trainingConvergence}>
+            <AreaChart data={trainingConvergence}>
+              <defs>
+                <linearGradient id="gDLoss" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#EF4444" stopOpacity={0.25} />
+                  <stop offset="95%" stopColor="#EF4444" stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id="gGLoss" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#14A8C0" stopOpacity={0.25} />
+                  <stop offset="95%" stopColor="#14A8C0" stopOpacity={0} />
+                </linearGradient>
+              </defs>
               <CartesianGrid stroke="rgba(255,255,255,0.03)" />
               <XAxis dataKey="epoch" tick={axisStyle} axisLine={false} tickLine={false} label={{ value: 'Epoch', position: 'insideBottom', offset: -5, fill: 'rgba(255,255,255,0.3)', fontSize: 11 }} />
               <YAxis tick={axisStyle} axisLine={false} tickLine={false} />
               <Tooltip contentStyle={tooltipStyle} />
               <Legend iconType="circle" wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
-              <Line type="monotone" dataKey="dLoss" stroke="#EF4444" strokeWidth={2} dot={{ r: 3 }} name="Discriminator" />
-              <Line type="monotone" dataKey="gLoss" stroke="#14A8C0" strokeWidth={2} dot={{ r: 3 }} name="Generator" />
-            </LineChart>
+              <Area type="monotone" dataKey="dLoss" stroke="#EF4444" strokeWidth={2} fill="url(#gDLoss)" dot={{ r: 3 }} name="Discriminator" />
+              <Area type="monotone" dataKey="gLoss" stroke="#14A8C0" strokeWidth={2} fill="url(#gGLoss)" dot={{ r: 3 }} name="Generator" />
+            </AreaChart>
           </ResponsiveContainer>
         </Card>
       </div>

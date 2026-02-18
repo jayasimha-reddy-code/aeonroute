@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 import {
   ResponsiveContainer,
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -51,7 +51,17 @@ export function RewardCurveChart({ data, rlEpisode, rlTotalEpisodes }: RewardCur
         <p className="text-xs text-muted mb-2">Episode {rlEpisode}/{rlTotalEpisodes}</p>
       )}
       <ResponsiveContainer width="100%" height={280}>
-        <LineChart data={chartData} margin={{ top: 4, right: 12, left: 0, bottom: 4 }}>
+        <AreaChart data={chartData} margin={{ top: 4, right: 12, left: 0, bottom: 4 }}>
+          <defs>
+            <linearGradient id="gRawReward" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.2} />
+              <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
+            </linearGradient>
+            <linearGradient id="gAvgReward" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#10B981" stopOpacity={0.3} />
+              <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
+            </linearGradient>
+          </defs>
           <CartesianGrid stroke="rgba(255,255,255,0.03)" />
           <XAxis
             dataKey="episode"
@@ -77,26 +87,28 @@ export function RewardCurveChart({ data, rlEpisode, rlTotalEpisodes }: RewardCur
             }}
           />
           <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
-          <Line
+          <Area
             type="monotone"
             dataKey="reward"
             name="Raw Reward"
             stroke="#3B82F6"
             strokeWidth={1}
             strokeOpacity={0.4}
+            fill="url(#gRawReward)"
             dot={false}
             animationDuration={300}
           />
-          <Line
+          <Area
             type="monotone"
             dataKey="avg_reward"
             name="Moving Avg (20)"
             stroke="#10B981"
             strokeWidth={2}
+            fill="url(#gAvgReward)"
             dot={false}
             animationDuration={300}
           />
-        </LineChart>
+        </AreaChart>
       </ResponsiveContainer>
     </div>
   );

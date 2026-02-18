@@ -56,11 +56,18 @@ function App() {
       </a>
 
       <div className="flex h-screen bg-midnight overflow-hidden relative">
-        {/* Glass refraction light sources — massive, subtle radial gradients */}
+        {/* Glass refraction light sources — MASSIVE radial gradients for backdrop-blur refraction */}
         <div className="pointer-events-none fixed inset-0 z-0">
-          <div className="absolute -top-[20%] -right-[10%] w-[70%] h-[70%] rounded-full bg-[radial-gradient(circle,rgba(16,185,129,0.07)_0%,transparent_70%)]" />
-          <div className="absolute -bottom-[20%] -left-[10%] w-[60%] h-[60%] rounded-full bg-[radial-gradient(circle,rgba(20,184,166,0.05)_0%,transparent_70%)]" />
-          <div className="absolute top-[40%] left-[30%] w-[40%] h-[40%] rounded-full bg-[radial-gradient(circle,rgba(245,158,11,0.03)_0%,transparent_70%)]" />
+          {/* Primary emerald wash — top-right */}
+          <div className="absolute -top-[30%] -right-[20%] w-[90%] h-[90%] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(16,185,129,0.18)_0%,rgba(16,185,129,0.06)_40%,transparent_70%)]" />
+          {/* Secondary cyan wash — bottom-left */}
+          <div className="absolute -bottom-[25%] -left-[15%] w-[80%] h-[80%] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(20,168,192,0.14)_0%,rgba(20,168,192,0.05)_40%,transparent_70%)]" />
+          {/* Accent amber wash — center */}
+          <div className="absolute top-[30%] left-[20%] w-[60%] h-[60%] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(245,158,11,0.08)_0%,rgba(245,158,11,0.03)_40%,transparent_70%)]" />
+          {/* Deep blue undertone — full screen */}
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.06)_0%,transparent_60%)]" />
+          {/* Rose accent — bottom-right corner */}
+          <div className="absolute -bottom-[10%] -right-[10%] w-[50%] h-[50%] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(239,68,68,0.05)_0%,transparent_60%)]" />
         </div>
         <Sidebar />
         <div className="flex-1 flex flex-col min-w-0 relative z-10">

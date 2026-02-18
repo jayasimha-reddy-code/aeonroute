@@ -20,8 +20,8 @@ export const RouteLegend = memo(function RouteLegend({
 
   return (
     <div
-      className="absolute bottom-3 left-3 z-10 rounded-2xl backdrop-blur-[40px] border border-white/[0.03] border-t-white/[0.15] shadow-[0_8px_32px_rgba(0,0,0,0.5)] p-2.5 space-y-1"
-      style={{ minWidth: 160, backgroundColor: 'rgba(15, 20, 26, 0.7)' }}
+      className="absolute bottom-3 left-3 z-10 rounded-2xl bg-white/[0.04] backdrop-blur-3xl border border-white/10 border-t-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.4)] p-2.5 space-y-1"
+      style={{ minWidth: 160 }}
     >
       <p className="text-[10px] uppercase tracking-wider font-semibold text-muted mb-1.5 px-1">
         Routes
