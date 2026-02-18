@@ -1,71 +1,53 @@
-import React from 'react';
+import { forwardRef, type ButtonHTMLAttributes } from 'react';
+import { Loader2, type LucideIcon } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import { Loader2, LucideIcon } from 'lucide-react';
 
-type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'accent';
-type ButtonSize = 'sm' | 'md' | 'lg';
-
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: ButtonVariant;
-  size?: ButtonSize;
-  loading?: boolean;
+interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'outline';
+  size?: 'sm' | 'md' | 'lg';
   icon?: LucideIcon;
   iconRight?: LucideIcon;
+  loading?: boolean;
   fullWidth?: boolean;
 }
 
-const variantStyles: Record<ButtonVariant, string> = {
-  primary:   'bg-emerald text-white hover:bg-emerald-600 shadow-sm hover:shadow-md hover:shadow-emerald/20 focus-visible:outline-emerald',
-  secondary: 'bg-surface-raised text-white hover:bg-surface-hover border border-white/[0.05]',
-  ghost:     'text-label hover:bg-surface-hover',
-  danger:    'bg-red-600 text-white hover:bg-red-700 shadow-sm focus-visible:outline-red-500',
-  accent:    'bg-amber text-white hover:bg-amber-600 shadow-sm hover:shadow-md hover:shadow-amber/20 focus-visible:outline-amber',
+const variants = {
+  primary: 'bg-emerald text-midnight font-semibold hover:shadow-glow-emerald active:scale-[0.97]',
+  secondary: 'bg-white/[0.04] text-white border border-white/[0.06] hover:bg-white/[0.08] active:scale-[0.97]',
+  ghost: 'text-label hover:text-white hover:bg-white/[0.04]',
+  danger: 'bg-rose-dim text-rose border border-rose/20 hover:bg-rose/20 active:scale-[0.97]',
+  outline: 'border border-white/[0.08] text-label hover:text-white hover:border-white/[0.15] hover:bg-white/[0.03]',
 };
 
-const sizeStyles: Record<ButtonSize, string> = {
-  sm: 'px-3 py-1.5 text-xs rounded-lg gap-1.5',
-  md: 'px-4 py-2.5 text-sm rounded-xl gap-2',
-  lg: 'px-6 py-3 text-base rounded-xl gap-2.5',
+const sizes = {
+  sm: 'text-xs px-3 py-1.5 gap-1.5',
+  md: 'text-sm px-4 py-2.5 gap-2',
+  lg: 'text-base px-6 py-3 gap-2.5',
 };
 
-function Button({
-  variant = 'primary',
-  size = 'md',
-  loading = false,
-  icon: Icon,
-  iconRight: IconRight,
-  fullWidth = false,
-  className,
-  children,
-  disabled,
-  ...props
-}: ButtonProps) {
-  return (
-    <button
-      className={cn(
-        'inline-flex items-center justify-center font-semibold transition-all duration-200',
-        'focus-visible:outline-2 focus-visible:outline-offset-2',
-        'disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none',
-        'active:scale-[0.98]',
-        variantStyles[variant],
-        sizeStyles[size],
-        fullWidth && 'w-full',
-        className,
-      )}
-      disabled={disabled || loading}
-      {...props}
-    >
-      {loading ? (
-        <Loader2 className={cn('animate-spin', size === 'sm' ? 'w-3.5 h-3.5' : 'w-4 h-4')} />
-      ) : Icon ? (
-        <Icon className={cn(size === 'sm' ? 'w-3.5 h-3.5' : 'w-4 h-4')} />
-      ) : null}
-      {children}
-      {IconRight && !loading && (
-        <IconRight className={cn(size === 'sm' ? 'w-3.5 h-3.5' : 'w-4 h-4')} />
-      )}
-    </button>
-  );
-}
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
+  variant = 'primary', size = 'md', icon: Icon, iconRight: IconRight,
+  loading, fullWidth, className, children, disabled, ...props
+}, ref) => (
+  <button
+    ref={ref}
+    disabled={disabled || loading}
+    className={cn(
+      'inline-flex items-center justify-center rounded-xl font-medium',
+      'transition-all duration-500 ease-out',
+      'disabled:opacity-40 disabled:pointer-events-none',
+      variants[variant],
+      sizes[size],
+      fullWidth && 'w-full',
+      className,
+    )}
+    {...props}
+  >
+    {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : Icon && <Icon className="w-4 h-4" />}
+    {children}
+    {IconRight && !loading && <IconRight className="w-4 h-4" />}
+  </button>
+));
 
+Button.displayName = 'Button';
 export default Button;
