@@ -202,6 +202,48 @@ Plans:
 
 ---
 
+### Phase 10: Nuclear UI Rebuild
+**Goal:** Nuke the conflicting CSS variable system and grey-washed styling from Phase 09. Rebuild from scratch with a locked deep-dark midnight background (#0b0f19), semi-opaque glass surfaces (rgba(17,21,28,0.85)), and neon-green (#2ecc71) / neon-gold (#f1c40f) / neon-cyan (#1abc9c) accent palette. Permanent dark mode — no theme toggle.
+**Status:** ⊘ Superseded by Phase 11
+**Dependencies:** Phase 09
+**Requirements:** UI-01, UI-03
+
+_Superseded: Phase 10 was deemed too basic. Replaced by Phase 11 (Ultra-Premium Bento UI Rebuild) with higher visual fidelity, CSS Grid bento layouts, advanced primitives, and reference-image-matched page compositions._
+
+---
+
+### Phase 11: Ultra-Premium Bento UI Rebuild
+**Goal:** Rebuild the entire frontend UI to ultra-premium bento-box cockpit quality matching 4-panel reference images. Replace all CSS variable systems with flat design tokens, implement CSS Grid 12-column bento layouts, next-gen glassmorphism (bg-white/[0.02], backdrop-blur-2xl), fluid micro-interactions (500ms ease-out), advanced map visuals (glowing polylines, pulse markers), rich analytics (gradient charts, hidden gridlines, dark tooltips), and complex UI primitives (custom toggles, sliders, progress rings, circular gauges). Permanent dark mode on midnight slate (#0a0f16).
+**Status:** ◐ In progress — 1/5 plans complete
+**Dependencies:** Phase 09 (codebase state)
+**Requirements:** UI-01, UI-03
+
+**Success Criteria:**
+1. Bento-Box Grid Architecture — CSS Grid `grid-cols-12` layouts on every page, variable `col-span` cards creating mosaic compositions. No flexbox column hacks.
+2. Next-Gen Glassmorphism — Cards: `bg-white/[0.02] backdrop-blur-2xl border border-white/[0.05] rounded-2xl`. Background: `#0a0f16` with radial emerald gradient overlay.
+3. Fluid Micro-Interactions — All interactive elements: `transition-all duration-500 ease-out`. Hover lift `-translate-y-1`, emerald glow border, press `active:scale-[0.97]`.
+4. Typography — Inter font, `text-slate-400` labels, `text-white` values, massive contrast ratio.
+5. Advanced Map — Borderless `rounded-3xl`, glowing neon polyline routes (emerald-to-cyan gradient), pulse CSS keyframes on markers, dark CartoDB tiles.
+6. Rich Analytics — Gradient area chart fills, hidden gridlines, dark glass tooltips `rgba(10,15,22,0.95)`, emerald/amber/cyan/red data palette.
+7. Complex UI Primitives — Custom toggle switches, custom sliders with accent-glow thumbs, SVG progress rings, circular gauges, pipeline flow diagrams, real-time logs terminal.
+8. `index.css` under 200 lines. All color authority in `tailwind.config.ts`.
+9. Zero `var(--color-*)`, zero `dark:` prefixes, zero theme toggling.
+10. Dashboard matches reference: 4 stat cards → large map (8/12) + AI Status panel (4/12) → Recent Activity.
+11. Route Planner: tab pills + left controls (3/12) + map (9/12) + 4 bottom result cards.
+12. Training: config panel (3/12) + pipeline flow diagram (9/12) + real-time logs terminal.
+13. Analytics: date range → heatmap (6/12) + charts (6/12) → AI Insights full-width.
+
+**Plans:** 5 plans (5 waves, sequential)
+
+Plans:
+- [x] 11-01-PLAN.md — Core CSS/Tokens & Bento Grid Setup: Nuke index.css + tailwind.config.ts, flat token system, dark mode lock, purge dark:/var(-- from codebase (Wave 1)
+- [ ] 11-02-PLAN.md — App Shell & Navigation: Rebuild App.tsx, 224px Sidebar with branding + user status, transparent Header with page title + actions (Wave 2)
+- [ ] 11-03-PLAN.md — Interactive Primitives & Micro-Animations: Rebuild Card, Button, Input, Badge, Spinner, Skeleton + new ToggleSwitch, Slider, ProgressRing, StatCard (Wave 3)
+- [ ] 11-04-PLAN.md — Map Overhaul: Borderless rounded-3xl container, glowing neon routes, pulse markers, dark-only tiles, glass popups (Wave 4)
+- [ ] 11-05-PLAN.md — Dashboard, Analytics & All Page Rebuilds: Bento grid page compositions matching reference images, chart restyling, Training pipeline flow, logs terminal (Wave 5)
+
+---
+
 ### Phase Sizing Summary
 
 | Phase | Name | Plans | Complexity | Dependencies |
@@ -214,13 +256,11 @@ Plans:
 | 06 | EV Simulation & Interactivity | 2 | Hard | 04 |
 | 07 | ML Pipeline Upgrade | 2–3 | Medium | 01 |
 | 08 | Testing & Demo Hardening | 2 | Light-Medium | 02, 03, 04, 05, 06, 07 |
-
-**Parallel Opportunities (mode: yolo, parallelization: true):**
-- Phase 02 + Phase 03 can execute in parallel (both depend only on Phase 01)
-- Phase 07 can run alongside Phase 03/04/05 (semi-independent after Phase 01)
-- Phase 04 + Phase 05 can overlap if Phase 02 and Phase 03 are both complete
+| 09 | UI Polish & Bug Fixes | 7 | Medium-Heavy | 03, 04, 05, 08 |
+| 10 | Nuclear UI Rebuild | 3 | Medium | 09 | ⊘ Superseded |
+| 11 | Ultra-Premium Bento UI Rebuild | 5 | Heavy | 09 |
 
 ---
 
 _Roadmap created: 2026-02-16_
-_Last updated: 2026-02-16_
+_Last updated: 2026-02-19 (11-01 complete)_
