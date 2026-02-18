@@ -19,9 +19,9 @@ const RouteCard = React.memo(function RouteCard({ route, rank, selected = false,
     <div
       onClick={onSelect}
       className={cn(
-        'card group cursor-pointer transition-all duration-250',
-        'hover:shadow-card-hover hover:-translate-y-0.5',
-        selected && 'ring-2 ring-emerald border-emerald/30',
+        'glass glass-hover group cursor-pointer',
+        'hover:-translate-y-0.5',
+        selected && 'ring-2 ring-emerald/40 shadow-[0_0_20px_rgba(16,185,129,0.2)]',
         isTop && 'border-l-4 border-l-emerald',
       )}
     >
@@ -108,7 +108,7 @@ function MetricPill({
   valueClass?: string;
 }) {
   return (
-    <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-raised">
+    <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.03]">
       <Icon className="w-3.5 h-3.5 text-label flex-shrink-0" />
       <div className="min-w-0">
         <p className="text-[10px] text-label uppercase tracking-wider leading-none mb-0.5">{label}</p>

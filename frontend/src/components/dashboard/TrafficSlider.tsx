@@ -145,7 +145,7 @@ export default function TrafficSlider() {
       <div className="flex justify-center">
         <div
           className="inline-grid gap-[2px] rounded-xl overflow-hidden p-1
-            bg-surface-raised"
+            bg-white/[0.03]"
           style={{
             gridTemplateColumns: `repeat(${grid_size}, 1fr)`,
             maxWidth: `${Math.min(grid_size * 36, 400)}px`,

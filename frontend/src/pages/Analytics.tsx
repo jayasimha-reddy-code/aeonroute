@@ -13,16 +13,14 @@ import { Activity, TrendingUp, Zap, Timer, Route, Gauge, Network, Cpu } from 'lu
 /* ── Chart Styling Tokens ────────────────────────── */
 const CHART_COLORS = ['#14A8C0', '#F59E0B', '#10B981', '#EF4444', '#8B5CF6', '#3B82F6'];
 const tooltipStyle = {
-  backgroundColor: 'rgba(15, 23, 42, 0.95)',
-  backdropFilter: 'blur(20px)',
-  border: '1px solid rgba(148, 163, 184, 0.1)',
-  borderRadius: '14px',
-  color: '#f1f5f9',
+  backgroundColor: 'rgba(10, 15, 22, 0.95)',
+  border: '1px solid rgba(255,255,255,0.05)',
+  borderRadius: '12px',
+  color: '#fff',
   fontSize: '12px',
-  boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
-  padding: '12px 16px',
+  boxShadow: '0 4px 30px rgba(0,0,0,0.3)',
 };
-const axisStyle = { fontSize: 11, fill: '#64748b' };
+const axisStyle = { fontSize: 11, fill: 'rgba(255,255,255,0.3)' };
 
 /* ── Metric Pill ─────────────────────────────────── */
 function MetricTile({
@@ -31,8 +29,8 @@ function MetricTile({
   icon: React.ComponentType<{ className?: string }>;
   label: string; value: string; unit?: string; color: string;
 }) {
-  const bg = { success: 'bg-emerald/10', info: 'bg-blue/10', warning: 'bg-amber/10', accent: 'bg-amber/10', danger: 'bg-rose/10', primary: 'bg-emerald/10' }[color] || 'bg-surface-raised';
-  const text = { success: 'text-emerald', info: 'text-blue', warning: 'text-amber', accent: 'text-amber', danger: 'text-rose', primary: 'text-emerald' }[color] || 'text-muted';
+  const bg = { success: 'bg-emerald/10', info: 'bg-blue/10', warning: 'bg-amber/10', accent: 'bg-amber/10', danger: 'bg-rose/10', primary: 'bg-emerald/10' }[color] || 'bg-white/[0.03]';
+  const text = { success: 'text-emerald', info: 'text-blue', warning: 'text-amber', accent: 'text-amber', danger: 'text-rose', primary: 'text-emerald' }[color] || 'text-slate-500';
   return (
     <Card className="flex items-center gap-4">
       <div className={`p-3 rounded-xl ${bg}`}><Icon className={`w-6 h-6 ${text}`} /></div>
@@ -174,9 +172,9 @@ function Analytics() {
       </div>
 
       {/* ── Charts Row 1 ─────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 mb-5">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 mb-5">
         {/* Agent Reward / Energy Timeline (wider) */}
-        <Card className="lg:col-span-3">
+        <Card className="col-span-12 lg:col-span-7">
           <div className="flex items-center gap-2.5 mb-5">
             <div className="p-1.5 rounded-lg bg-amber/10"><Zap className="w-3.5 h-3.5 text-amber" /></div>
             <h3 className="text-sm font-semibold text-white uppercase tracking-wider">
@@ -194,7 +192,7 @@ function Analytics() {
                     <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#334155" strokeOpacity={0.2} />
+                <CartesianGrid stroke="rgba(255,255,255,0.03)" />
                 <XAxis dataKey="episode" tick={axisStyle} axisLine={false} tickLine={false} />
                 <YAxis tick={axisStyle} axisLine={false} tickLine={false} />
                 <Tooltip contentStyle={tooltipStyle} />
@@ -223,7 +221,7 @@ function Analytics() {
                     <stop offset="95%" stopColor="#14A8C0" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#334155" strokeOpacity={0.2} />
+                <CartesianGrid stroke="rgba(255,255,255,0.03)" />
                 <XAxis dataKey="time" tick={axisStyle} axisLine={false} tickLine={false} />
                 <YAxis tick={axisStyle} axisLine={false} tickLine={false} />
                 <Tooltip contentStyle={tooltipStyle} />
@@ -236,7 +234,7 @@ function Analytics() {
         </Card>
 
         {/* Route Quality Donut (narrower) */}
-        <Card className="lg:col-span-2">
+        <Card className="col-span-12 lg:col-span-5">
           <div className="flex items-center gap-2.5 mb-5">
             <div className="p-1.5 rounded-lg bg-emerald/10"><TrendingUp className="w-3.5 h-3.5 text-emerald" /></div>
             <h3 className="text-sm font-semibold text-white uppercase tracking-wider">Route Quality</h3>
@@ -273,7 +271,7 @@ function Analytics() {
           ) : (
             <ResponsiveContainer width="100%" height={260}>
               <BarChart data={ganQualityBars}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#334155" strokeOpacity={0.2} />
+                <CartesianGrid stroke="rgba(255,255,255,0.03)" />
                 <XAxis dataKey="label" tick={axisStyle} axisLine={false} tickLine={false} />
                 <YAxis tick={axisStyle} axisLine={false} tickLine={false} />
                 <Tooltip contentStyle={tooltipStyle} />
@@ -293,8 +291,8 @@ function Analytics() {
           </div>
           <ResponsiveContainer width="100%" height={260}>
             <LineChart data={trainingConvergence}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#334155" strokeOpacity={0.2} />
-              <XAxis dataKey="epoch" tick={axisStyle} axisLine={false} tickLine={false} label={{ value: 'Epoch', position: 'insideBottom', offset: -5, fill: '#64748b', fontSize: 11 }} />
+              <CartesianGrid stroke="rgba(255,255,255,0.03)" />
+              <XAxis dataKey="epoch" tick={axisStyle} axisLine={false} tickLine={false} label={{ value: 'Epoch', position: 'insideBottom', offset: -5, fill: 'rgba(255,255,255,0.3)', fontSize: 11 }} />
               <YAxis tick={axisStyle} axisLine={false} tickLine={false} />
               <Tooltip contentStyle={tooltipStyle} />
               <Legend iconType="circle" wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
@@ -318,7 +316,7 @@ function Analytics() {
               { label: 'Q-Learning Agent', ready: systemStats?.models?.agent_trained },
               { label: 'GNN Route GAN',    ready: systemStats?.models?.gnn_gan_trained },
             ].map((m) => (
-              <div key={m.label} className="flex items-center justify-between p-3 rounded-xl bg-surface-raised border border-white/[0.04]">
+              <div key={m.label} className="flex items-center justify-between p-3 rounded-xl bg-white/[0.03] border border-white/[0.05]">
                 <span className="text-sm font-medium text-label">{m.label}</span>
                 {m.ready ? <Badge variant="success" dot>Active</Badge> : <Badge variant="neutral" dot>Inactive</Badge>}
               </div>
@@ -336,7 +334,7 @@ function Analytics() {
               { label: 'Total Nodes', val: systemStats?.road_network?.nodes ?? 0 },
               { label: 'Total Edges', val: systemStats?.road_network?.edges ?? 0 },
             ].map((s) => (
-              <div key={s.label} className="p-3 rounded-xl bg-surface-raised border border-white/[0.04]">
+              <div key={s.label} className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.05]">
                 <p className="text-[10px] text-muted uppercase tracking-wider mb-1">{s.label}</p>
                 <p className="text-2xl font-bold text-white">{s.val}</p>
               </div>
@@ -354,7 +352,7 @@ function Analytics() {
               { label: 'Agent Success Rate', val: agentPerf ? `${(agentPerf.success_rate * 100).toFixed(0)}` : '—', unit: '%' },
               { label: 'Energy Improvement', val: routeEval ? `${(routeEval.energy_improvement * 100).toFixed(1)}` : '—', unit: '%' },
             ].map((s) => (
-              <div key={s.label} className="p-3 rounded-xl bg-surface-raised border border-white/[0.04]">
+              <div key={s.label} className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.05]">
                 <p className="text-[10px] text-muted uppercase tracking-wider mb-1">{s.label}</p>
                 <p className="text-2xl font-bold text-white">{s.val}{s.unit && <span className="text-sm font-medium text-label ml-1">{s.unit}</span>}</p>
               </div>

@@ -7,7 +7,6 @@ import { useTrainingStream } from '../hooks/useTrainingStream';
 import { LossCurveChart } from '../components/training/LossCurveChart';
 import { RewardCurveChart } from '../components/training/RewardCurveChart';
 import { PipelineStepper } from '../components/training/PipelineStepper';
-import { motion } from 'framer-motion';
 import { Brain, Play, Square, CheckCircle, Circle, Loader2, Settings2, Workflow, BarChart3, TrendingUp } from 'lucide-react';
 import { cn } from '../lib/utils';
 
@@ -90,9 +89,9 @@ function Training() {
         }
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-12 gap-6">
         {/* ── Config Panel ──────────────────────────────── */}
-        <div className="lg:col-span-1">
+        <div className="col-span-12 lg:col-span-3">
           <Card className="sticky top-20">
             <div className="flex items-center gap-2.5 mb-5">
               <div className="p-1.5 rounded-lg bg-emerald-dim"><Settings2 className="w-3.5 h-3.5 text-emerald" /></div>
@@ -127,16 +126,16 @@ function Training() {
         </div>
 
         {/* ── Progress Panel ────────────────────────────── */}
-        <div className="lg:col-span-2 space-y-5">
+        <div className="col-span-12 lg:col-span-9 space-y-5">
           {/* Overall Progress */}
           <Card>
             <div className="flex items-center gap-3 mb-5">
               {trainingProgress.is_training ? (
-                <div className="p-2 rounded-xl bg-emerald-dim"><Loader2 className="w-5 h-5 text-emerald animate-spin" /></div>
+                <div className="p-2 rounded-xl bg-emerald/10"><Loader2 className="w-5 h-5 text-emerald animate-spin" /></div>
               ) : trainingProgress.progress >= 100 ? (
-                <div className="p-2 rounded-xl bg-emerald-dim"><CheckCircle className="w-5 h-5 text-emerald" /></div>
+                <div className="p-2 rounded-xl bg-emerald/10"><CheckCircle className="w-5 h-5 text-emerald" /></div>
               ) : (
-                <div className="p-2 rounded-xl bg-surface-raised"><Circle className="w-5 h-5 text-label" /></div>
+                <div className="p-2 rounded-xl bg-white/[0.03]"><Circle className="w-5 h-5 text-slate-500" /></div>
               )}
               <div>
                 <h3 className="text-sm font-semibold text-white">
@@ -169,7 +168,7 @@ function Training() {
 
           {/* GAN Loss Curves */}
           {(lossHistory.length > 0 || trainingProgress.current_step.toLowerCase().includes('gan')) && (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+            <div>
               <Card>
                 <div className="flex items-center gap-2.5 mb-4">
                   <div className="p-1.5 rounded-lg bg-amber-500/10"><BarChart3 className="w-3.5 h-3.5 text-amber-500" /></div>
@@ -177,12 +176,12 @@ function Training() {
                 </div>
                 <LossCurveChart data={lossHistory} ganEpoch={trainingProgress.gan_epoch} ganTotalEpochs={trainingProgress.gan_total_epochs} />
               </Card>
-            </motion.div>
+            </div>
           )}
 
           {/* Q-Learning Reward */}
           {(rewardHistory.length > 0 || trainingProgress.current_step.toLowerCase().includes('agent')) && (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+            <div>
               <Card>
                 <div className="flex items-center gap-2.5 mb-4">
                   <div className="p-1.5 rounded-lg bg-emerald-dim"><TrendingUp className="w-3.5 h-3.5 text-emerald" /></div>
@@ -190,7 +189,7 @@ function Training() {
                 </div>
                 <RewardCurveChart data={rewardHistory} rlEpisode={trainingProgress.rl_episode} rlTotalEpisodes={trainingProgress.rl_total_episodes} />
               </Card>
-            </motion.div>
+            </div>
           )}
 
           {/* Results */}
@@ -202,7 +201,7 @@ function Training() {
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {Object.entries(trainingProgress.metrics).map(([key, value]) => (
-                  <div key={key} className="p-3 rounded-xl bg-surface-raised border border-white/[0.05]">
+                  <div key={key} className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.05]">
                     <p className="text-[10px] text-muted uppercase tracking-wider mb-1">{key.replace(/_/g, ' ')}</p>
                     <p className="text-lg font-bold text-white">
                       {typeof value === 'object' ? JSON.stringify(value) : String(value)}

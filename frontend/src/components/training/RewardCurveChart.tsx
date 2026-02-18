@@ -52,27 +52,28 @@ export function RewardCurveChart({ data, rlEpisode, rlTotalEpisodes }: RewardCur
       )}
       <ResponsiveContainer width="100%" height={280}>
         <LineChart data={chartData} margin={{ top: 4, right: 12, left: 0, bottom: 4 }}>
-          <CartesianGrid stroke="#334155" strokeOpacity={0.2} />
+          <CartesianGrid stroke="rgba(255,255,255,0.03)" />
           <XAxis
             dataKey="episode"
-            tick={{ fontSize: 11, fill: '#64748B' }}
+            tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.3)' }}
             tickLine={false}
-            axisLine={{ stroke: '#334155', strokeOpacity: 0.3 }}
-            label={{ value: 'Episode', position: 'insideBottomRight', offset: -4, fontSize: 10, fill: '#64748B' }}
+            axisLine={{ stroke: 'rgba(255,255,255,0.06)' }}
+            label={{ value: 'Episode', position: 'insideBottomRight', offset: -4, fontSize: 10, fill: 'rgba(255,255,255,0.3)' }}
           />
           <YAxis
-            tick={{ fontSize: 11, fill: '#64748B' }}
+            tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.3)' }}
             tickLine={false}
-            axisLine={{ stroke: '#334155', strokeOpacity: 0.3 }}
-            label={{ value: 'Reward', angle: -90, position: 'insideLeft', offset: 10, fontSize: 10, fill: '#64748B' }}
+            axisLine={{ stroke: 'rgba(255,255,255,0.06)' }}
+            label={{ value: 'Reward', angle: -90, position: 'insideLeft', offset: 10, fontSize: 10, fill: 'rgba(255,255,255,0.3)' }}
           />
           <Tooltip
             contentStyle={{
-              background: 'rgba(15,23,42,0.9)',
-              border: '1px solid rgba(51,65,85,0.5)',
-              borderRadius: 8,
-              fontSize: 12,
-              color: '#e2e8f0',
+              backgroundColor: 'rgba(10, 15, 22, 0.95)',
+              border: '1px solid rgba(255,255,255,0.05)',
+              borderRadius: '12px',
+              color: '#fff',
+              fontSize: '12px',
+              boxShadow: '0 4px 30px rgba(0,0,0,0.3)',
             }}
           />
           <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />

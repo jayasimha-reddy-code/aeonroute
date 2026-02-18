@@ -1,19 +1,17 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { m } from 'framer-motion';
-import { useRoadNetwork, useSetActiveTab, useAddToast } from '../store/store';
+import { useRoadNetwork, useAddToast } from '../store/store';
 import api, { SystemStats, RouteMetrics } from '../services/api';
 import NetworkMap from '../components/NetworkMap';
 import StatCard from '../components/StatCard';
 import PageHeader from '../components/PageHeader';
 import TrafficSlider from '../components/dashboard/TrafficSlider';
-import { Card, Badge, Spinner, GlassCard } from '../components/ui';
+import { Card, Spinner, ProgressBar } from '../components/ui';
 import { StatCardSkeleton } from '../components/ui/Skeleton';
-import { staggerContainer, staggerItem } from '../lib/motion';
-import { BarChart3, Activity, Battery, Navigation, TrendingUp, MapPin, Zap, ArrowRight, Globe, Cpu, Clock, RefreshCw } from 'lucide-react';
+import { ProgressRing } from '../components/ui';
+import { BarChart3, Activity, Navigation, Zap, Cpu, Clock, RefreshCw, ChevronUp, MoreHorizontal } from 'lucide-react';
 
 function Dashboard() {
   const roadNetwork = useRoadNetwork();
-  const setActiveTab = useSetActiveTab();
   const addToast = useAddToast();
   const [stats, setStats] = useState<SystemStats | null>(null);
   const [metrics, setMetrics] = useState<RouteMetrics | null>(null);
@@ -88,105 +86,78 @@ function Dashboard() {
       )}
 
       {/* ── Key Metrics ─────────────────────────────── */}
-      <m.div
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 xl:gap-6 mb-8"
-        variants={staggerContainer}
-        initial="hidden"
-        animate="show"
-      >
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 mb-6">
         {loading ? (
           Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)
         ) : (
           <>
-            <m.div variants={staggerItem}><GlassCard variant="interactive" padding="none"><StatCard title="Network Nodes" value={stats?.road_network?.nodes ?? 0} icon={Navigation} color="primary" subtitle="Active intersections" /></GlassCard></m.div>
-            <m.div variants={staggerItem}><GlassCard variant="interactive" padding="none"><StatCard title="Road Edges" value={stats?.road_network?.edges ?? 0} icon={Activity} color="accent" subtitle="Connected segments" /></GlassCard></m.div>
-            <m.div variants={staggerItem}><GlassCard variant="interactive" padding="none"><StatCard title="Avg Energy" value={`${metrics?.avg_energy_kwh?.toFixed(1) ?? '—'} kWh`} icon={Battery} color="orange" subtitle="Per generated route" /></GlassCard></m.div>
-            <m.div variants={staggerItem}><GlassCard variant="interactive" padding="none"><StatCard title="Avg Time" value={`${metrics?.avg_time_minutes?.toFixed(0) ?? '—'} min`} icon={TrendingUp} color="green" subtitle="Per generated route" /></GlassCard></m.div>
+            <StatCard title="Network Nodes" value={stats?.road_network?.nodes ?? 0} icon={Navigation} accent="emerald" trend={{ value: 5, label: 'this week' }} />
+            <StatCard title="Avg Energy" value={`${metrics?.avg_energy_kwh?.toFixed(1) ?? '—'} kWh`} icon={Zap} accent="amber" subtitle="Per route" />
+            <StatCard title="Avg Time" value={`${metrics?.avg_time_minutes?.toFixed(0) ?? '—'} min`} icon={Clock} accent="cyan" subtitle="Traffic factor" />
+            <StatCard title="Traffic Factor" value="" icon={Activity} accent="emerald">
+              <ProgressRing value={33} size={56} strokeWidth={4} label="Traffic" />
+            </StatCard>
           </>
         )}
-      </m.div>
+      </div>
 
-      {/* ── Map + Sidebar ───────────────────────────── */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        {/* Map */}
-        <div className="xl:col-span-2">
-          <Card className="h-full !p-0 overflow-hidden">
-            <div className="flex items-center justify-between px-6 pt-5 pb-3">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-emerald/10">
-                  <Globe className="w-4 h-4 text-emerald" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-semibold text-white">Road Network</h3>
-                  <p className="text-[11px] text-muted">Live topology on dark satellite map</p>
-                </div>
+      {/* ── Map (8 cols) + Info Panel (4 cols) ─────── */}
+      <div className="grid grid-cols-12 gap-4 mb-6" style={{ minHeight: 520 }}>
+        {/* Map — 8 columns */}
+        <div className="col-span-12 lg:col-span-8">
+          <div className="h-full rounded-3xl overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
+            {roadNetwork ? (
+              <NetworkMap network={roadNetwork} />
+            ) : (
+              <div className="h-full min-h-[420px] flex items-center justify-center bg-midnight/50">
+                <Spinner size="lg" label="Loading network…" />
               </div>
-              <div className="flex items-center gap-4 text-[11px] text-muted">
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald" /> Nodes
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" /> Charging
-                </span>
-              </div>
-            </div>
-            <div className="h-[420px] xl:h-[500px]">
-              {roadNetwork ? (
-                <NetworkMap network={roadNetwork} />
-              ) : (
-                <div className="h-full flex items-center justify-center bg-midnight/50">
-                  <Spinner size="lg" label="Loading network…" />
-                </div>
-              )}
-            </div>
-          </Card>
+            )}
+          </div>
         </div>
 
-        {/* Right Column */}
-        <div className="space-y-5">
+        {/* Right info panel — 4 columns */}
+        <div className="col-span-12 lg:col-span-4 flex flex-col gap-4">
           {/* AI Model Status */}
-          <Card>
-            <div className="flex items-center gap-2.5 mb-5">
-              <Cpu className="w-4 h-4 text-emerald" />
-              <h3 className="text-sm font-semibold text-white uppercase tracking-wider">AI Model Status</h3>
+          <Card padding="lg" className="flex-1">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2.5">
+                <Cpu className="w-4 h-4 text-emerald" />
+                <h3 className="text-sm font-semibold text-white">AI Model Status</h3>
+              </div>
+              <button className="text-white/30 hover:text-white/60 transition-colors">
+                <ChevronUp className="w-4 h-4" />
+              </button>
             </div>
-            <div className="space-y-2.5">
-              {[
-                { label: 'SG-GAN Traffic', ready: stats?.models?.gan_trained },
-                { label: 'Q-Learning Agent', ready: stats?.models?.agent_trained },
-                { label: 'GNN Route GAN', ready: stats?.models?.gnn_gan_trained },
-              ].map((model) => (
-                <div key={model.label} className="flex items-center justify-between p-3 rounded-xl bg-surface-raised border border-white/[0.04]">
-                  <div className="flex items-center gap-2.5">
-                    <div className={`w-2 h-2 rounded-full ${model.ready ? 'bg-emerald' : 'bg-white/[0.1]'}`} />
-                    <span className="text-sm font-medium text-label">{model.label}</span>
-                  </div>
-                  {model.ready ? (
-                    <Badge variant="success" dot>Ready</Badge>
-                  ) : (
-                    <Badge variant="neutral" dot>Not Trained</Badge>
-                  )}
-                </div>
-              ))}
+            <div className="space-y-3">
+              <ModelStatusRow label="SG-GAN" value={stats?.models?.gan_trained ? 78 : 0} color="emerald" />
+              <ModelStatusRow label="Q-Learning" value={stats?.models?.agent_trained ? 86 : 0} color="cyan" />
+              <ModelStatusRow label="GNN" value={stats?.models?.gnn_gan_trained ? 66 : 0} color="amber" />
             </div>
+            <p className="text-xs text-slate-400 mt-4">Last Trained: 2h ago</p>
           </Card>
 
-          {/* Quick Actions */}
-          <Card>
-            <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Quick Actions</h3>
-            <div className="space-y-2">
-              <button onClick={() => setActiveTab('routing')} className="btn-primary w-full flex items-center justify-between group">
-                <span className="flex items-center gap-2"><MapPin className="w-4 h-4" /> Plan a Route</span>
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+          {/* Recent Activity */}
+          <Card padding="lg" className="flex-1">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-semibold text-white">Recent Activity</h3>
+              <button className="text-white/30 hover:text-white/60 transition-colors">
+                <MoreHorizontal className="w-4 h-4" />
               </button>
-              <button onClick={() => setActiveTab('training')} className="btn-secondary w-full flex items-center justify-between group">
-                <span className="flex items-center gap-2"><Zap className="w-4 h-4" /> Train Models</span>
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-              </button>
-              <button onClick={() => setActiveTab('analytics')} className="btn-ghost w-full flex items-center justify-between group">
-                <span className="flex items-center gap-2"><BarChart3 className="w-4 h-4" /> View Analytics</span>
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-              </button>
+            </div>
+            <div className="space-y-3">
+              {[
+                { dot: 'bg-emerald', text: 'Route #452 generated', time: '2m ago' },
+                { dot: 'bg-emerald', text: 'SG-GAN training complete', time: '1h ago' },
+                { dot: 'bg-amber', text: 'Battery warning at node 24', time: '3h ago' },
+                { dot: 'bg-emerald', text: 'Network updated (437 nodes)', time: '5h ago' },
+              ].map((item, i) => (
+                <div key={i} className="flex items-center gap-2 text-xs">
+                  <span className={`w-1.5 h-1.5 rounded-full ${item.dot} shrink-0`} />
+                  <span className="text-slate-300 flex-1">{item.text}</span>
+                  <span className="text-slate-500">{item.time}</span>
+                </div>
+              ))}
             </div>
           </Card>
         </div>
@@ -194,28 +165,36 @@ function Dashboard() {
 
       {/* ── Time-of-Day Traffic Patterns (full width) ── */}
       {stats && (
-        <m.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, type: 'spring', stiffness: 300, damping: 25 }}
-          className="mt-6"
-        >
-          <Card>
-            <div className="flex items-center gap-3 mb-5">
-              <div className="p-2 rounded-lg bg-emerald/10">
-                <Clock className="w-4 h-4 text-emerald" />
-              </div>
-              <div>
-                <h3 className="text-sm font-semibold text-white uppercase tracking-wider">
-                  Time-of-Day Traffic Patterns
-                </h3>
-                <p className="text-[11px] text-muted">SG-GAN learned temporal traffic variation</p>
-              </div>
+        <Card>
+          <div className="flex items-center gap-3 mb-5">
+            <div className="p-2 rounded-lg bg-emerald/10">
+              <Clock className="w-4 h-4 text-emerald" />
             </div>
-            <TrafficSlider />
-          </Card>
-        </m.div>
+            <div>
+              <h3 className="text-sm font-semibold text-white uppercase tracking-wider">
+                Time-of-Day Traffic Patterns
+              </h3>
+              <p className="text-[11px] text-muted">SG-GAN learned temporal traffic variation</p>
+            </div>
+          </div>
+          <TrafficSlider />
+        </Card>
       )}
+    </div>
+  );
+}
+
+/* Helper: Model status row with progress bar */
+function ModelStatusRow({ label, value, color }: { label: string; value: number; color: 'emerald' | 'cyan' | 'amber' }) {
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-sm text-slate-300">{label}</span>
+      <div className="flex items-center gap-3">
+        <div className="w-32">
+          <ProgressBar value={value} variant={color} size="sm" />
+        </div>
+        <span className="text-sm font-medium text-white tabular-nums w-10 text-right">{value}%</span>
+      </div>
     </div>
   );
 }

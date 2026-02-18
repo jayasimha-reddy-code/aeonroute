@@ -34,7 +34,7 @@ export function PipelineStepper({
   return (
     <div className="relative">
       {/* Vertical connector line in gutter */}
-      <div className="absolute left-[17px] top-4 bottom-4 w-px bg-white/[0.05]" />
+      <div className="absolute left-[17px] top-4 bottom-4 w-px bg-white/[0.06]" />
 
       <div className="space-y-0.5">
         {PIPELINE_STEPS.map((step, idx) => {
@@ -50,7 +50,7 @@ export function PipelineStepper({
                 'relative z-10 w-[34px] h-[34px] rounded-full flex items-center justify-center flex-shrink-0 transition-all border-2',
                 isDone ? 'bg-emerald/10 border-emerald/30 text-emerald'
                   : isCurrent ? 'bg-emerald/10 border-emerald/30 text-emerald'
-                    : 'bg-surface border-white/[0.05] text-label',
+                    : 'bg-white/[0.03] border-white/[0.05] text-slate-500',
               )}>
                 {isDone ? <CheckCircle className="w-4 h-4" /> : isCurrent ? <Loader2 className="w-4 h-4 animate-spin" /> : <span className="text-xs font-bold">{idx + 1}</span>}
               </div>

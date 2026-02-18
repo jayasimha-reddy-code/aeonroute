@@ -5,7 +5,7 @@ import NetworkMap from '../components/NetworkMap';
 import RouteCard from '../components/RouteCard';
 import PageHeader from '../components/PageHeader';
 import { Card, Button, EmptyState, Spinner, ProgressBar } from '../components/ui';
-import { Map, MapPin, Navigation, Sparkles, Zap, Globe, Play, Pause, RotateCcw } from 'lucide-react';
+import { Map, MapPin, Navigation, Sparkles, Zap, Play, Pause, RotateCcw } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { RouteCardSkeleton } from '../components/ui/Skeleton';
 import { buildPosLookup } from '../lib/geo';
@@ -165,28 +165,8 @@ function RoutePlanner() {
         {/* ── Results ─────────────────────────────────── */}
         <div className="lg:col-span-9 space-y-5">
           {/* Map Visualization */}
-          <Card className="!p-0 overflow-hidden">
-            <div className="flex items-center justify-between px-6 pt-5 pb-3">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-emerald/10"><Globe className="w-4 h-4 text-emerald" /></div>
-                <div>
-                  <h3 className="text-sm font-semibold text-white">Route Visualization</h3>
-                  <p className="text-[11px] text-muted">Click nodes on the map to set waypoints</p>
-                </div>
-              </div>
-              {generatedRoutes.length > 0 && (
-                <div className="flex items-center gap-2 text-xs text-muted">
-                  {generatedRoutes.slice(0, 3).map((_, idx) => (
-                    <button key={idx} onClick={() => { setHighlightIdx(idx); setSelectedRoute(generatedRoutes[idx]); }}
-                      className={cn('flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-all', highlightIdx === idx ? 'bg-surface-raised font-medium text-white shadow-sm' : 'hover:bg-surface-hover')}>
-                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: ['#10b981', '#6366f1', '#f59e0b'][idx] }} />
-                      Route {idx + 1}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-            <div className="h-[420px]">
+          <Card className="!p-0 overflow-hidden rounded-3xl">
+            <div className="h-[460px]">
               {loading && !generatedRoutes.length ? (
                 <div className="h-full flex items-center justify-center bg-midnight/50">
                   <Spinner size="lg" label="Generating routes…" />
