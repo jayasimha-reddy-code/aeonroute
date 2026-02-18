@@ -1,7 +1,7 @@
 import React from 'react';
 import { cn } from '../../lib/utils';
 
-type BadgeVariant = 'success' | 'warning' | 'error' | 'info' | 'neutral' | 'primary';
+type BadgeVariant = 'emerald' | 'amber' | 'rose' | 'cyan' | 'blue' | 'neutral';
 
 interface BadgeProps {
   variant?: BadgeVariant;
@@ -11,34 +11,25 @@ interface BadgeProps {
 }
 
 const variantStyles: Record<BadgeVariant, string> = {
-  success: 'bg-emerald-dim text-emerald',
-  warning: 'bg-amber-dim text-amber',
-  error:   'bg-rose-dim text-rose',
-  info:    'bg-blue-dim text-blue',
-  neutral: 'bg-surface-raised text-label',
-  primary: 'bg-emerald-dim text-emerald',
-};
-
-const dotColors: Record<BadgeVariant, string> = {
-  success: 'bg-emerald',
-  warning: 'bg-amber',
-  error:   'bg-rose',
-  info:    'bg-blue',
-  neutral: 'bg-white/[0.1]',
-  primary: 'bg-emerald',
+  emerald: 'bg-emerald-dim text-emerald',
+  amber:   'bg-amber-dim text-amber',
+  rose:    'bg-rose-dim text-rose',
+  cyan:    'bg-cyan-dim text-cyan',
+  blue:    'bg-blue-dim text-blue',
+  neutral: 'bg-white/[0.06] text-label',
 };
 
 function Badge({ variant = 'neutral', dot = false, children, className }: BadgeProps) {
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold',
+        'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium',
         variantStyles[variant],
         className,
       )}
     >
       {dot && (
-        <span className={cn('w-1.5 h-1.5 rounded-full', dotColors[variant])} />
+        <span className="w-1.5 h-1.5 rounded-full bg-current" />
       )}
       {children}
     </span>

@@ -6,22 +6,22 @@ interface ProgressBarProps {
   label?: string;
   showValue?: boolean;
   size?: 'sm' | 'md' | 'lg';
-  variant?: 'primary' | 'accent' | 'success' | 'warning' | 'gradient';
+  variant?: 'emerald' | 'amber' | 'rose' | 'cyan' | 'gradient';
   animated?: boolean;
   className?: string;
 }
 
 const sizeStyles: Record<string, string> = {
-  sm: 'h-1.5',
-  md: 'h-2.5',
-  lg: 'h-4',
+  sm: 'h-1',
+  md: 'h-1.5',
+  lg: 'h-2.5',
 };
 
 const colorStyles: Record<string, string> = {
-  primary:  'bg-emerald',
-  accent:   'bg-amber',
-  success:  'bg-emerald',
-  warning:  'bg-amber',
+  emerald:  'bg-emerald',
+  amber:    'bg-amber',
+  rose:     'bg-rose',
+  cyan:     'bg-cyan',
   gradient: 'bg-gradient-to-r from-emerald via-amber to-emerald',
 };
 
@@ -31,7 +31,7 @@ function ProgressBar({
   label,
   showValue = false,
   size = 'md',
-  variant = 'primary',
+  variant = 'emerald',
   animated = true,
   className,
 }: ProgressBarProps) {
@@ -41,15 +41,17 @@ function ProgressBar({
     <div className={cn('w-full', className)}>
       {(label || showValue) && (
         <div className="flex items-center justify-between mb-2">
-          {label && <span className="text-sm font-medium text-label">{label}</span>}
+          {label && <span className="text-xs font-medium text-label">{label}</span>}
           {showValue && (
-            <span className="text-sm font-bold text-white">
+            <span className="text-xs font-bold text-white">
               {Math.round(percentage)}%
             </span>
           )}
         </div>
       )}
-      <div className={cn('w-full bg-white/[0.04] rounded-full overflow-hidden', sizeStyles[size])}>
+      <div
+        className={cn('w-full bg-white/[0.06] rounded-full overflow-hidden', sizeStyles[size])}
+      >
         <div
           className={cn(
             'h-full rounded-full',
