@@ -8,10 +8,10 @@ interface GlassButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantStyles: Record<string, string> = {
-  default: 'glass-surface border glass-border hover:bg-white/90 dark:hover:bg-slate-800/80',
+  default: 'glass hover:bg-surface-hover',
   primary:
-    'glass-blur bg-primary-500/80 border border-primary-400/30 text-white hover:bg-primary-500/95 shadow-btn-primary',
-  ghost: 'glass-blur bg-transparent border border-transparent hover:glass-bg hover:border-[var(--glass-border)]',
+    'backdrop-blur-2xl bg-emerald/80 border border-emerald/30 text-white hover:bg-emerald/95 shadow-glow-emerald',
+  ghost: 'backdrop-blur-2xl bg-transparent border border-transparent hover:bg-white/[0.02] hover:border-white/[0.05]',
 };
 
 const sizeStyles: Record<string, string> = {
@@ -27,7 +27,7 @@ const GlassButton = forwardRef<HTMLButtonElement, GlassButtonProps>(
       className={cn(
         variantStyles[variant],
         sizeStyles[size],
-        'font-medium transition-all duration-200 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent',
+        'font-medium transition-all duration-200 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent',
         className,
       )}
       {...props}

@@ -88,13 +88,13 @@ function Sidebar() {
                 'group w-full flex items-center gap-3 rounded-xl font-medium transition-all duration-200 relative',
                 sidebarCollapsed ? 'justify-center px-3 py-3' : 'px-3 py-2.5',
                 isActive
-                  ? 'bg-primary-600 text-white shadow-md shadow-primary-500/20'
-                  : 'text-surface-600 dark:text-surface-400 hover:bg-surface-100 dark:hover:bg-surface-800 hover:text-surface-900 dark:hover:text-surface-200',
+                  ? 'bg-emerald text-white shadow-md shadow-emerald/20'
+                  : 'text-label hover:bg-surface-hover hover:text-white',
               )}
             >
               {/* Active indicator bar */}
               {isActive && (
-                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-primary-400 rounded-r-full -ml-3" />
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-emerald rounded-r-full -ml-3" />
               )}
 
               <Icon className={cn('w-5 h-5 flex-shrink-0', isActive ? '' : 'group-hover:scale-110 transition-transform')} />
@@ -103,7 +103,7 @@ function Sidebar() {
                 <div className="flex-1 text-left min-w-0">
                   <span className="block text-sm leading-tight">{item.label}</span>
                   {!isActive && (
-                    <span className="block text-[10px] text-surface-400 dark:text-surface-500 truncate">
+                    <span className="block text-[10px] text-label truncate">
                       {item.description}
                     </span>
                   )}
@@ -120,11 +120,11 @@ function Sidebar() {
 
       {/* Collapse Toggle (Desktop) */}
       {!mobileSidebarOpen && (
-        <div className="hidden lg:block px-3 py-2 border-t border-surface-200/40 dark:border-white/[0.06]">
+        <div className="hidden lg:block px-3 py-2 border-t border-white/[0.06]">
           <button
             onClick={toggleSidebar}
             aria-expanded={!sidebarCollapsed}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-medium text-surface-500 dark:text-surface-400 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors"
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-medium text-label hover:bg-surface-hover"
           >
             <ChevronLeft className={cn('w-4 h-4 transition-transform duration-300', sidebarCollapsed && 'rotate-180')} />
             {!sidebarCollapsed && <span>Collapse</span>}
@@ -134,15 +134,15 @@ function Sidebar() {
 
       {/* Footer Info */}
       {!sidebarCollapsed && (
-        <div className="px-4 py-4 border-t border-surface-200/40 dark:border-white/[0.06]">
+        <div className="px-4 py-4 border-t border-white/[0.06]">
           <div className="flex items-center gap-2 mb-3">
-            <Cpu className="w-3.5 h-3.5 text-primary-500" />
-            <span className="text-[11px] font-semibold text-surface-700 dark:text-surface-300 uppercase tracking-wider">AI Stack</span>
+            <Cpu className="w-3.5 h-3.5 text-emerald" />
+            <span className="text-[11px] font-semibold text-label uppercase tracking-wider">AI Stack</span>
           </div>
           <div className="space-y-1.5">
             {['GNN Route Generator', 'SG-GAN Traffic', 'Q-Learning Agent'].map((item) => (
-              <div key={item} className="flex items-center gap-2 text-[11px] text-surface-500 dark:text-surface-400">
-                <div className="w-1 h-1 rounded-full bg-primary-500/60" />
+              <div key={item} className="flex items-center gap-2 text-[11px] text-label">
+                <div className="w-1 h-1 rounded-full bg-emerald/60" />
                 {item}
               </div>
             ))}
@@ -157,8 +157,8 @@ function Sidebar() {
       {/* Desktop Sidebar */}
       <aside
         className={cn(
-          'hidden lg:flex flex-col sticky top-16 h-[calc(100vh-4rem)] bg-white/80 dark:bg-surface-900/80 backdrop-blur-xl',
-          'border-r border-surface-200/40 dark:border-white/[0.06] transition-all duration-300',
+          'hidden lg:flex flex-col sticky top-16 h-[calc(100vh-4rem)] bg-midnight/80 backdrop-blur-xl',
+          'border-r border-white/[0.06] transition-all duration-300',
           sidebarCollapsed ? 'w-[72px]' : 'w-[260px]',
         )}
       >
@@ -174,20 +174,20 @@ function Sidebar() {
           aria-modal="true"
         >
           <aside
-            className="w-72 h-full bg-white dark:bg-surface-900 border-r border-surface-200 dark:border-surface-700 shadow-elevated flex flex-col animate-slide-in-left"
+            className="w-72 h-full bg-midnight border-r border-white/[0.05] shadow-elevated flex flex-col animate-slide-in-left"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Mobile Header */}
-            <div className="flex items-center justify-between px-4 py-4 border-b border-surface-200 dark:border-surface-700">
+              <div className="flex items-center justify-between px-4 py-4 border-b border-white/[0.05]">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-500 to-accent-600 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald to-amber flex items-center justify-center">
                   <Zap className="w-4 h-4 text-white" />
                 </div>
-                <span className="font-bold text-surface-900 dark:text-white">Navigation</span>
+                <span className="font-bold text-white">Navigation</span>
               </div>
               <button
                 onClick={() => setMobileSidebarOpen(false)}
-                className="p-1.5 rounded-lg text-surface-500 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors"
+                className="p-1.5 rounded-lg text-muted hover:bg-surface-hover"
               >
                 <X className="w-5 h-5" />
               </button>

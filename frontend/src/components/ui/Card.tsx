@@ -12,11 +12,11 @@ interface CardProps {
 }
 
 const variantStyles: Record<CardVariant, string> = {
-  default:     'bg-white dark:bg-surface-800/80 border border-surface-200/80 dark:border-surface-700/50 shadow-card',
-  bordered:    'bg-white dark:bg-surface-800/80 border-2 border-surface-200 dark:border-surface-700',
-  elevated:    'bg-white dark:bg-surface-800/90 border border-surface-200/60 dark:border-surface-700/40 shadow-elevated',
-  glow:        'bg-white dark:bg-surface-800/80 border border-surface-200/80 dark:border-surface-700/50 shadow-card hover:shadow-glow hover:border-primary-500/30 dark:hover:border-primary-500/30',
-  interactive: 'bg-white dark:bg-surface-800/80 border border-surface-200/80 dark:border-surface-700/50 shadow-card cursor-pointer hover:shadow-card-hover hover:border-surface-300 dark:hover:border-surface-600 hover:-translate-y-0.5 active:translate-y-0',
+  default:     'bg-surface border border-white/[0.05] shadow-card',
+  bordered:    'bg-surface border-2 border-white/[0.08]',
+  elevated:    'bg-surface border border-white/[0.05] shadow-elevated',
+  glow:        'bg-surface border border-white/[0.05] shadow-card hover:shadow-glow-emerald hover:border-emerald/30',
+  interactive: 'bg-surface border border-white/[0.05] shadow-card cursor-pointer hover:shadow-card-hover hover:border-white/[0.1] hover:-translate-y-0.5 active:translate-y-0',
 };
 
 const paddingStyles: Record<string, string> = {

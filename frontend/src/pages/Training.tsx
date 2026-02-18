@@ -79,7 +79,7 @@ function Training() {
           <>
             {trainingProgress.is_training && (
               <div className="flex items-center gap-2">
-                <span className={cn('w-2 h-2 rounded-full', sseConnected ? 'bg-success-500' : 'bg-red-500')} />
+                <span className={cn('w-2 h-2 rounded-full', sseConnected ? 'bg-emerald' : 'bg-rose')} />
                 <Badge variant="success" dot>Training in Progress</Badge>
               </div>
             )}
@@ -95,8 +95,8 @@ function Training() {
         <div className="lg:col-span-1">
           <Card className="sticky top-20">
             <div className="flex items-center gap-2.5 mb-5">
-              <div className="p-1.5 rounded-lg bg-primary-500/10"><Settings2 className="w-3.5 h-3.5 text-primary-500" /></div>
-              <h3 className="text-sm font-semibold text-surface-900 dark:text-surface-100 uppercase tracking-wider">Configuration</h3>
+              <div className="p-1.5 rounded-lg bg-emerald-dim"><Settings2 className="w-3.5 h-3.5 text-emerald" /></div>
+              <h3 className="text-sm font-semibold text-white uppercase tracking-wider">Configuration</h3>
             </div>
 
             <div className="space-y-3">
@@ -132,17 +132,17 @@ function Training() {
           <Card>
             <div className="flex items-center gap-3 mb-5">
               {trainingProgress.is_training ? (
-                <div className="p-2 rounded-xl bg-primary-500/10"><Loader2 className="w-5 h-5 text-primary-500 animate-spin" /></div>
+                <div className="p-2 rounded-xl bg-emerald-dim"><Loader2 className="w-5 h-5 text-emerald animate-spin" /></div>
               ) : trainingProgress.progress >= 100 ? (
-                <div className="p-2 rounded-xl bg-success-500/10"><CheckCircle className="w-5 h-5 text-success-500" /></div>
+                <div className="p-2 rounded-xl bg-emerald-dim"><CheckCircle className="w-5 h-5 text-emerald" /></div>
               ) : (
-                <div className="p-2 rounded-xl bg-surface-100 dark:bg-surface-800"><Circle className="w-5 h-5 text-surface-400" /></div>
+                <div className="p-2 rounded-xl bg-surface-raised"><Circle className="w-5 h-5 text-label" /></div>
               )}
               <div>
-                <h3 className="text-sm font-semibold text-surface-900 dark:text-surface-100">
+                <h3 className="text-sm font-semibold text-white">
                   {trainingProgress.is_training ? 'Training in Progress' : trainingProgress.progress >= 100 ? 'Training Complete' : 'Ready to Train'}
                 </h3>
-                <p className="text-[11px] text-surface-500">{trainingProgress.current_step || 'Waiting to start…'}</p>
+                <p className="text-[11px] text-muted">{trainingProgress.current_step || 'Waiting to start…'}</p>
               </div>
             </div>
 
@@ -152,8 +152,8 @@ function Training() {
           {/* Pipeline Timeline */}
           <Card>
             <div className="flex items-center gap-2.5 mb-5">
-              <div className="p-1.5 rounded-lg bg-accent-500/10"><Workflow className="w-3.5 h-3.5 text-accent-500" /></div>
-              <h3 className="text-sm font-semibold text-surface-900 dark:text-surface-100 uppercase tracking-wider">Training Pipeline</h3>
+              <div className="p-1.5 rounded-lg bg-amber-dim"><Workflow className="w-3.5 h-3.5 text-amber" /></div>
+              <h3 className="text-sm font-semibold text-white uppercase tracking-wider">Training Pipeline</h3>
             </div>
 
             <PipelineStepper
@@ -173,7 +173,7 @@ function Training() {
               <Card>
                 <div className="flex items-center gap-2.5 mb-4">
                   <div className="p-1.5 rounded-lg bg-amber-500/10"><BarChart3 className="w-3.5 h-3.5 text-amber-500" /></div>
-                  <h3 className="text-sm font-semibold text-surface-900 dark:text-surface-100 uppercase tracking-wider">GAN Loss Curves</h3>
+                  <h3 className="text-sm font-semibold text-white uppercase tracking-wider">GAN Loss Curves</h3>
                 </div>
                 <LossCurveChart data={lossHistory} ganEpoch={trainingProgress.gan_epoch} ganTotalEpochs={trainingProgress.gan_total_epochs} />
               </Card>
@@ -185,8 +185,8 @@ function Training() {
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
               <Card>
                 <div className="flex items-center gap-2.5 mb-4">
-                  <div className="p-1.5 rounded-lg bg-primary-500/10"><TrendingUp className="w-3.5 h-3.5 text-primary-500" /></div>
-                  <h3 className="text-sm font-semibold text-surface-900 dark:text-surface-100 uppercase tracking-wider">Q-Learning Reward</h3>
+                  <div className="p-1.5 rounded-lg bg-emerald-dim"><TrendingUp className="w-3.5 h-3.5 text-emerald" /></div>
+                  <h3 className="text-sm font-semibold text-white uppercase tracking-wider">Q-Learning Reward</h3>
                 </div>
                 <RewardCurveChart data={rewardHistory} rlEpisode={trainingProgress.rl_episode} rlTotalEpisodes={trainingProgress.rl_total_episodes} />
               </Card>
@@ -198,13 +198,13 @@ function Training() {
             <Card>
               <div className="flex items-center gap-2.5 mb-4">
                 <div className="p-1.5 rounded-lg bg-amber-500/10"><BarChart3 className="w-3.5 h-3.5 text-amber-500" /></div>
-                <h3 className="text-sm font-semibold text-surface-900 dark:text-surface-100 uppercase tracking-wider">Training Results</h3>
+                <h3 className="text-sm font-semibold text-white uppercase tracking-wider">Training Results</h3>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {Object.entries(trainingProgress.metrics).map(([key, value]) => (
-                  <div key={key} className="p-3 rounded-xl bg-surface-50 dark:bg-surface-800/40 border border-surface-100 dark:border-white/[0.04]">
-                    <p className="text-[10px] text-surface-500 uppercase tracking-wider mb-1">{key.replace(/_/g, ' ')}</p>
-                    <p className="text-lg font-bold text-surface-900 dark:text-surface-100">
+                  <div key={key} className="p-3 rounded-xl bg-surface-raised border border-white/[0.05]">
+                    <p className="text-[10px] text-muted uppercase tracking-wider mb-1">{key.replace(/_/g, ' ')}</p>
+                    <p className="text-lg font-bold text-white">
                       {typeof value === 'object' ? JSON.stringify(value) : String(value)}
                     </p>
                   </div>

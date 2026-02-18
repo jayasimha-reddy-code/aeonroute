@@ -28,14 +28,14 @@ export const RouteTimeline = memo(function RouteTimeline({
     return (
       <Card className={cn('mt-4', className)}>
         <div className="flex items-center gap-2.5 mb-3">
-          <div className="p-1.5 rounded-lg bg-primary-500/10">
-            <RouteIcon className="w-3.5 h-3.5 text-primary-500" />
+          <div className="p-1.5 rounded-lg bg-emerald/10">
+            <RouteIcon className="w-3.5 h-3.5 text-emerald" />
           </div>
-          <h3 className="text-sm font-semibold text-surface-900 dark:text-surface-100 uppercase tracking-wider">
+          <h3 className="text-sm font-semibold text-white uppercase tracking-wider">
             Route Timeline
           </h3>
         </div>
-        <p className="text-xs text-surface-500 text-center py-4">Select a route to view segment details</p>
+        <p className="text-xs text-muted text-center py-4">Select a route to view segment details</p>
       </Card>
     );
   }
@@ -44,14 +44,14 @@ export const RouteTimeline = memo(function RouteTimeline({
     <Card className={cn('mt-4', className)}>
       {/* Header */}
       <div className="flex items-center gap-2.5 mb-4">
-        <div className="p-1.5 rounded-lg bg-primary-500/10">
-          <RouteIcon className="w-3.5 h-3.5 text-primary-500" />
+        <div className="p-1.5 rounded-lg bg-emerald/10">
+          <RouteIcon className="w-3.5 h-3.5 text-emerald" />
         </div>
         <div>
-          <h3 className="text-sm font-semibold text-surface-900 dark:text-surface-100 uppercase tracking-wider">
+          <h3 className="text-sm font-semibold text-white uppercase tracking-wider">
             Route Timeline
           </h3>
-          <p className="text-[11px] text-surface-500">{segments.length} segments</p>
+          <p className="text-[11px] text-muted">{segments.length} segments</p>
         </div>
       </div>
 
@@ -68,7 +68,7 @@ export const RouteTimeline = memo(function RouteTimeline({
               key={idx}
               className={cn(
                 'flex items-start gap-3 py-2 px-2 rounded-lg transition-all relative',
-                isActive && 'bg-primary-500/10 border-l-2 border-primary-500',
+                isActive && 'bg-emerald/10 border-l-2 border-emerald',
                 !isActive && 'border-l-2 border-transparent',
               )}
             >
@@ -98,14 +98,14 @@ export const RouteTimeline = memo(function RouteTimeline({
               {/* Segment info */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5 text-xs">
-                  <span className="font-medium text-surface-900 dark:text-surface-100">
+                  <span className="font-medium text-white">
                     {seg.fromNode} → {seg.toNode}
                   </span>
                   {seg.isChargingStop && (
                     <span className="text-[10px] text-amber-500 font-medium">CHARGE</span>
                   )}
                 </div>
-                <div className="flex items-center gap-3 mt-0.5 text-[11px] text-surface-500">
+                <div className="flex items-center gap-3 mt-0.5 text-[11px] text-muted">
                   <span className="flex items-center gap-0.5">
                     <MapPin className="w-2.5 h-2.5" />
                     {formatDistance(seg.distance_km)}
@@ -126,10 +126,10 @@ export const RouteTimeline = memo(function RouteTimeline({
       </div>
 
       {/* Summary row */}
-      <div className="mt-3 pt-3 border-t border-surface-200 dark:border-surface-700">
+      <div className="mt-3 pt-3 border-t border-white/[0.05]">
         <div className="flex items-center justify-between text-xs">
-          <span className="text-surface-500">Total</span>
-          <div className="flex items-center gap-3 text-surface-700 dark:text-surface-300 font-medium">
+          <span className="text-muted">Total</span>
+          <div className="flex items-center gap-3 text-label font-medium">
             <span>{formatDistance(route.distance_km)}</span>
             <span>{formatEnergy(route.energy_kwh)}</span>
             <span>{formatDuration(route.time_minutes)}</span>

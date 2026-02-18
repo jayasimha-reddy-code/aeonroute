@@ -4,7 +4,6 @@ import type { LineLayerSpecification } from 'maplibre-gl';
 
 interface NetworkEdgesLayerProps {
   edgesGeoJSON: GeoJSON.FeatureCollection<GeoJSON.LineString> | null;
-  isDarkMode: boolean;
 }
 
 const edgesHitArea: LineLayerSpecification = {
@@ -18,12 +17,12 @@ const edgesHitArea: LineLayerSpecification = {
   },
 };
 
-const edgesLayerStyle = (isDark: boolean): LineLayerSpecification => ({
+const edgesLayerStyle = (): LineLayerSpecification => ({
   id: 'edges-layer',
   type: 'line',
   source: 'network-edges',
   paint: {
-    'line-color': isDark ? '#475569' : '#cbd5e1',
+    'line-color': '#475569',
     'line-width': 1.2,
     'line-opacity': 0.18,
   },
@@ -33,13 +32,13 @@ const edgesLayerStyle = (isDark: boolean): LineLayerSpecification => ({
   },
 });
 
-const edgesHoverStyle = (isDark: boolean): LineLayerSpecification => ({
+const edgesHoverStyle = (): LineLayerSpecification => ({
   id: 'edges-hover',
   type: 'line',
   source: 'network-edges',
   filter: ['==', ['get', 'source'], -1],
   paint: {
-    'line-color': isDark ? '#818cf8' : '#6366f1',
+    'line-color': '#818cf8',
     'line-width': 3,
     'line-opacity': 0.8,
   },
@@ -47,15 +46,14 @@ const edgesHoverStyle = (isDark: boolean): LineLayerSpecification => ({
 
 export const NetworkEdgesLayer = memo(function NetworkEdgesLayer({
   edgesGeoJSON,
-  isDarkMode,
 }: NetworkEdgesLayerProps) {
   if (!edgesGeoJSON) return null;
 
   return (
     <Source id="network-edges" type="geojson" data={edgesGeoJSON}>
       <Layer {...edgesHitArea} />
-      <Layer {...edgesLayerStyle(isDarkMode)} />
-      <Layer {...edgesHoverStyle(isDarkMode)} />
+      <Layer {...edgesLayerStyle()} />
+      <Layer {...edgesHoverStyle()} />
     </Source>
   );
 });

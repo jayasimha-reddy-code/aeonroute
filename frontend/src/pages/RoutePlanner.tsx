@@ -61,7 +61,7 @@ function RoutePlanner() {
     setDestination(nodeId);
   }, [source]);
 
-  const batteryColor = currentEVState.battery_soc > 50 ? 'bg-success-500' : currentEVState.battery_soc > 20 ? 'bg-warning-500' : 'bg-danger-500';
+  const batteryColor = currentEVState.battery_soc > 50 ? 'bg-emerald' : currentEVState.battery_soc > 20 ? 'bg-amber' : 'bg-rose';
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto">
@@ -72,14 +72,14 @@ function RoutePlanner() {
         <div className="lg:col-span-3">
           <Card className="sticky top-20">
             <div className="flex items-center gap-2.5 mb-5">
-              <div className="p-1.5 rounded-lg bg-primary-500/10"><Navigation className="w-3.5 h-3.5 text-primary-500" /></div>
-              <h3 className="text-sm font-semibold text-surface-900 dark:text-surface-100 uppercase tracking-wider">Route Parameters</h3>
+              <div className="p-1.5 rounded-lg bg-emerald/10"><Navigation className="w-3.5 h-3.5 text-emerald" /></div>
+              <h3 className="text-sm font-semibold text-white uppercase tracking-wider">Route Parameters</h3>
             </div>
 
             {/* Source */}
             <div className="mb-4">
               <label className="input-label flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-success-500" /> Start Node
+                <span className="w-2 h-2 rounded-full bg-emerald" /> Start Node
               </label>
               <input type="number" min={0} max={(roadNetwork?.nodes ?? 100) - 1} value={source} onChange={(e) => setSource(parseInt(e.target.value) || 0)} className="input-field" />
             </div>
@@ -87,7 +87,7 @@ function RoutePlanner() {
             {/* Destination */}
             <div className="mb-4">
               <label className="input-label flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-danger-500" /> Destination Node
+                <span className="w-2 h-2 rounded-full bg-rose" /> Destination Node
               </label>
               <input type="number" min={0} max={(roadNetwork?.nodes ?? 100) - 1} value={destination} onChange={(e) => setDestination(parseInt(e.target.value) || 0)} className="input-field" />
             </div>
@@ -101,14 +101,14 @@ function RoutePlanner() {
                 <input
                   type="range" min={0} max={100} value={currentEVState.battery_soc}
                   onChange={(e) => setEVState({ ...currentEVState, battery_soc: parseFloat(e.target.value) })}
-                  className="w-full h-2 rounded-full appearance-none cursor-pointer bg-surface-200 dark:bg-surface-700 accent-primary-500"
+                  className="w-full h-2 rounded-full appearance-none cursor-pointer bg-white/[0.04] accent-emerald"
                 />
                 <div className="flex items-center justify-between mt-2.5">
                   <div className="flex items-center gap-2">
                     <div className={cn('h-5 rounded-sm transition-all', batteryColor)} style={{ width: `${Math.max(currentEVState.battery_soc * 0.4, 4)}px` }} />
-                    <span className="text-base font-bold text-surface-900 dark:text-surface-100">{currentEVState.battery_soc}%</span>
+                    <span className="text-base font-bold text-white">{currentEVState.battery_soc}%</span>
                   </div>
-                  <span className="text-xs text-surface-500 font-mono">{currentEVState.battery_capacity_kwh} kWh</span>
+                  <span className="text-xs text-muted font-mono">{currentEVState.battery_capacity_kwh} kWh</span>
                 </div>
               </div>
             </div>
@@ -120,7 +120,7 @@ function RoutePlanner() {
             </Button>
 
             {generatedRoutes.length > 0 && (
-              <p className="text-xs text-center text-surface-500 mt-3">{generatedRoutes.length} routes found</p>
+              <p className="text-xs text-center text-muted mt-3">{generatedRoutes.length} routes found</p>
             )}
 
             {/* ── Simulation Controls ──────────────── */}
@@ -129,7 +129,7 @@ function RoutePlanner() {
                 <div className="divider mb-4" />
                 <div className="flex items-center gap-2.5 mb-3">
                   <div className="p-1.5 rounded-lg bg-amber-500/10"><Zap className="w-3.5 h-3.5 text-amber-500" /></div>
-                  <h3 className="text-sm font-semibold text-surface-900 dark:text-surface-100 uppercase tracking-wider">Simulation</h3>
+                  <h3 className="text-sm font-semibold text-white uppercase tracking-wider">Simulation</h3>
                 </div>
                 <BatteryGauge
                   soc={simState.currentSOC}
@@ -152,7 +152,7 @@ function RoutePlanner() {
                 {simState.isSimulating && (
                   <div className="mt-3">
                     <ProgressBar value={simState.progress * 100} size="sm" variant={simState.isCharging ? 'warning' : 'primary'} />
-                    <p className="text-xs text-surface-500 mt-1.5 text-center">
+                    <p className="text-xs text-muted mt-1.5 text-center">
                       {simState.isCharging ? 'Charging…' : `Segment ${simState.currentSegmentIndex + 1}/${(selectedRoute?.path?.length ?? 1) - 1}`}
                     </p>
                   </div>
@@ -168,17 +168,17 @@ function RoutePlanner() {
           <Card className="!p-0 overflow-hidden">
             <div className="flex items-center justify-between px-6 pt-5 pb-3">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-primary-500/10"><Globe className="w-4 h-4 text-primary-500" /></div>
+                <div className="p-2 rounded-lg bg-emerald/10"><Globe className="w-4 h-4 text-emerald" /></div>
                 <div>
-                  <h3 className="text-sm font-semibold text-surface-900 dark:text-surface-100">Route Visualization</h3>
-                  <p className="text-[11px] text-surface-500">Click nodes on the map to set waypoints</p>
+                  <h3 className="text-sm font-semibold text-white">Route Visualization</h3>
+                  <p className="text-[11px] text-muted">Click nodes on the map to set waypoints</p>
                 </div>
               </div>
               {generatedRoutes.length > 0 && (
-                <div className="flex items-center gap-2 text-xs text-surface-500">
+                <div className="flex items-center gap-2 text-xs text-muted">
                   {generatedRoutes.slice(0, 3).map((_, idx) => (
                     <button key={idx} onClick={() => { setHighlightIdx(idx); setSelectedRoute(generatedRoutes[idx]); }}
-                      className={cn('flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-all', highlightIdx === idx ? 'bg-surface-100 dark:bg-surface-700 font-medium text-surface-900 dark:text-surface-100 shadow-sm' : 'hover:bg-surface-50 dark:hover:bg-surface-800')}>
+                      className={cn('flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-all', highlightIdx === idx ? 'bg-surface-raised font-medium text-white shadow-sm' : 'hover:bg-surface-hover')}>
                       <span className="w-2 h-2 rounded-full" style={{ backgroundColor: ['#10b981', '#6366f1', '#f59e0b'][idx] }} />
                       Route {idx + 1}
                     </button>
@@ -188,7 +188,7 @@ function RoutePlanner() {
             </div>
             <div className="h-[420px]">
               {loading && !generatedRoutes.length ? (
-                <div className="h-full flex items-center justify-center bg-surface-50 dark:bg-surface-900/50">
+                <div className="h-full flex items-center justify-center bg-midnight/50">
                   <Spinner size="lg" label="Generating routes…" />
                 </div>
               ) : roadNetwork ? (
@@ -203,7 +203,7 @@ function RoutePlanner() {
                   simulationState={simState}
                 />
               ) : (
-                <div className="h-full flex items-center justify-center bg-surface-50 dark:bg-surface-900/50">
+                <div className="h-full flex items-center justify-center bg-midnight/50">
                   <Spinner size="lg" label="Loading network…" />
                 </div>
               )}
@@ -212,9 +212,9 @@ function RoutePlanner() {
 
           {/* Route Cards */}
           <div>
-            <h3 className="text-sm font-semibold text-surface-900 dark:text-surface-100 uppercase tracking-wider mb-3">
+            <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-3">
               Generated Routes
-              {generatedRoutes.length > 0 && <span className="ml-2 text-surface-500 font-normal normal-case">({generatedRoutes.length})</span>}
+              {generatedRoutes.length > 0 && <span className="ml-2 text-muted font-normal normal-case">({generatedRoutes.length})</span>}
             </h3>
 
             {loading ? (

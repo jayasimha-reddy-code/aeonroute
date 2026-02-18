@@ -64,10 +64,10 @@ export default function TrafficSlider() {
     return (
       <div className="flex flex-col items-center justify-center py-10 text-center">
         <div className="text-3xl mb-3">🧠</div>
-        <p className="text-sm font-medium text-surface-700 dark:text-surface-300">
+        <p className="text-sm font-medium text-label">
           Train a model first to see traffic patterns
         </p>
-        <p className="text-xs text-surface-500 mt-1">
+        <p className="text-xs text-muted mt-1">
           The SG-GAN needs to be trained before temporal traffic data is available.
         </p>
       </div>
@@ -87,7 +87,7 @@ export default function TrafficSlider() {
   if (!trafficData || trafficData.grid_size === 0 || !trafficData.traffic.length) {
     return (
       <div className="flex flex-col items-center justify-center py-10 text-center">
-        <p className="text-sm text-surface-500">No data available</p>
+        <p className="text-sm text-muted">No data available</p>
       </div>
     );
   }
@@ -98,7 +98,7 @@ export default function TrafficSlider() {
     <div className="space-y-5">
       {/* ── Hour label ── */}
       <div className="text-center">
-        <span className="text-2xl font-bold text-surface-900 dark:text-surface-100 tabular-nums">
+        <span className="text-2xl font-bold text-white tabular-nums">
           {formatHour(hour)}
         </span>
       </div>
@@ -113,16 +113,15 @@ export default function TrafficSlider() {
           value={hour}
           onChange={(e) => setHour(Number(e.target.value))}
           className="w-full h-2 rounded-full appearance-none cursor-pointer
-            bg-surface-200 dark:bg-surface-700
-            accent-primary-500
+            bg-white/[0.04]
+            accent-emerald
             [&::-webkit-slider-thumb]:appearance-none
             [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5
             [&::-webkit-slider-thumb]:rounded-full
-            [&::-webkit-slider-thumb]:bg-primary-500
+            [&::-webkit-slider-thumb]:bg-emerald
             [&::-webkit-slider-thumb]:shadow-md
             [&::-webkit-slider-thumb]:border-2
-            [&::-webkit-slider-thumb]:border-white
-            [&::-webkit-slider-thumb]:dark:border-surface-800
+            [&::-webkit-slider-thumb]:border-surface
             [&::-webkit-slider-thumb]:cursor-pointer
             [&::-webkit-slider-thumb]:transition-transform
             [&::-webkit-slider-thumb]:hover:scale-110"
@@ -133,7 +132,7 @@ export default function TrafficSlider() {
           {TICK_HOURS.map((h, i) => (
             <span
               key={h}
-              className="text-[10px] text-surface-500 font-medium"
+              className="text-[10px] text-muted font-medium"
               style={{ width: i === 0 || i === TICK_HOURS.length - 1 ? 'auto' : undefined }}
             >
               {TICK_LABELS[i]}
@@ -146,7 +145,7 @@ export default function TrafficSlider() {
       <div className="flex justify-center">
         <div
           className="inline-grid gap-[2px] rounded-xl overflow-hidden p-1
-            bg-surface-100 dark:bg-surface-800/60"
+            bg-surface-raised"
           style={{
             gridTemplateColumns: `repeat(${grid_size}, 1fr)`,
             maxWidth: `${Math.min(grid_size * 36, 400)}px`,
@@ -170,7 +169,7 @@ export default function TrafficSlider() {
       </div>
 
       {/* ── Legend ── */}
-      <div className="flex items-center justify-center gap-2 text-[11px] text-surface-600 dark:text-surface-400">
+      <div className="flex items-center justify-center gap-2 text-[11px] text-label">
         <span>Low</span>
         <div
           className="h-3 w-32 rounded-full"

@@ -24,7 +24,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
         )}
         <div className="relative">
           {LeftIcon && (
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-surface-400 dark:text-surface-500 pointer-events-none">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-label pointer-events-none">
               <LeftIcon className="w-4 h-4" />
             </div>
           )}
@@ -43,8 +43,8 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           {RightIcon && (
             <div
               className={cn(
-                'absolute right-3 top-1/2 -translate-y-1/2 text-surface-400 dark:text-surface-500',
-                onRightIconClick && 'cursor-pointer hover:text-surface-600 dark:hover:text-surface-300 transition-colors',
+                'absolute right-3 top-1/2 -translate-y-1/2 text-label',
+                onRightIconClick && 'cursor-pointer hover:text-white',
               )}
               onClick={onRightIconClick}
             >
@@ -53,10 +53,10 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           )}
         </div>
         {error && (
-          <p className="mt-1.5 text-xs text-red-500 dark:text-red-400">{error}</p>
+          <p className="mt-1.5 text-xs text-rose">{error}</p>
         )}
         {helperText && !error && (
-          <p className="mt-1.5 text-xs text-surface-500">{helperText}</p>
+          <p className="mt-1.5 text-xs text-muted">{helperText}</p>
         )}
       </div>
     );

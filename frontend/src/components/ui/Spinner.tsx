@@ -17,9 +17,9 @@ const sizeStyles: Record<string, string> = {
 function Spinner({ size = 'md', className, label }: SpinnerProps) {
   return (
     <div className={cn('flex flex-col items-center gap-3', className)} role="status" aria-label={label || 'Loading'}>
-      <Loader2 className={cn('animate-spin text-primary-500', sizeStyles[size])} />
+      <Loader2 className={cn('animate-spin text-emerald', sizeStyles[size])} />
       {label && (
-        <span className="text-sm text-surface-500 dark:text-surface-400 font-medium">{label}</span>
+        <span className="text-sm text-label font-medium">{label}</span>
       )}
     </div>
   );

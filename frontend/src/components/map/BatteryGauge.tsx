@@ -22,22 +22,22 @@ export const BatteryGauge = memo(function BatteryGauge({
 
   const barColor =
     clampedSOC > 50
-      ? 'bg-success-500'
+      ? 'bg-emerald'
       : clampedSOC > 20
-        ? 'bg-warning-500'
-        : 'bg-danger-500';
+        ? 'bg-amber'
+        : 'bg-rose';
 
   const textColor =
     clampedSOC > 50
-      ? 'text-success-600 dark:text-success-400'
+      ? 'text-emerald'
       : clampedSOC > 20
-        ? 'text-warning-600 dark:text-warning-400'
-        : 'text-danger-600 dark:text-danger-400';
+        ? 'text-amber'
+        : 'text-rose';
 
   return (
     <div
       className={cn(
-        'glass-surface border glass-border rounded-xl p-3 transition-all duration-200',
+        'glass rounded-xl p-3 transition-all duration-200',
         !isSimulating && 'opacity-60',
         className,
       )}
@@ -47,16 +47,16 @@ export const BatteryGauge = memo(function BatteryGauge({
         {isCharging ? (
           <BatteryCharging className="w-4 h-4 text-amber-500 animate-pulse" />
         ) : (
-          <Zap className={cn('w-4 h-4', isSimulating ? 'text-amber-500' : 'text-surface-400')} />
+          <Zap className={cn('w-4 h-4', isSimulating ? 'text-amber-500' : 'text-label')} />
         )}
-        <span className="text-xs font-semibold text-surface-600 dark:text-surface-300 uppercase tracking-wider">
+        <span className="text-xs font-semibold text-label uppercase tracking-wider">
           Battery
         </span>
       </div>
 
       {/* Vertical Gauge */}
       <div className="flex items-end gap-3">
-        <div className="relative w-8 h-[100px] rounded-lg bg-surface-200 dark:bg-surface-700 overflow-hidden border border-surface-300 dark:border-surface-600">
+        <div className="relative w-8 h-[100px] rounded-lg bg-white/[0.04] overflow-hidden border border-white/[0.05]">
           {/* Fill */}
           <div
             className={cn(
@@ -74,7 +74,7 @@ export const BatteryGauge = memo(function BatteryGauge({
           {[25, 50, 75].map((tick) => (
             <div
               key={tick}
-              className="absolute left-0 right-0 h-px bg-surface-400/30 dark:bg-surface-500/30"
+              className="absolute left-0 right-0 h-px bg-white/[0.08]"
               style={{ bottom: `${tick}%` }}
             />
           ))}
@@ -85,7 +85,7 @@ export const BatteryGauge = memo(function BatteryGauge({
           <p className={cn('text-2xl font-bold tabular-nums leading-none', textColor)}>
             {Math.round(clampedSOC)}%
           </p>
-          <p className="text-xs text-surface-500 font-mono">
+          <p className="text-xs text-muted font-mono">
             {remainingKWh} kWh
           </p>
           {isCharging && (
@@ -94,7 +94,7 @@ export const BatteryGauge = memo(function BatteryGauge({
             </p>
           )}
           {!isSimulating && (
-            <p className="text-[10px] text-surface-400 uppercase tracking-wide mt-1">
+            <p className="text-[10px] text-label uppercase tracking-wide mt-1">
               Ready
             </p>
           )}

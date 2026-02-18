@@ -11,8 +11,6 @@ import { useSystemStore } from '../store/store';
 beforeEach(() => {
     useSystemStore.setState({
         activeTab: 'dashboard',
-        themeMode: 'system',
-        isDarkMode: window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false,
         sidebarCollapsed: false,
         mobileSidebarOpen: false,
         toasts: [],
@@ -42,42 +40,6 @@ describe('Navigation', () => {
 
     it('should default to dashboard tab', () => {
         expect(useSystemStore.getState().activeTab).toBe('dashboard');
-    });
-});
-
-describe('Theme', () => {
-    it('should cycle through theme modes: light → dark → system → light', () => {
-        const store = useSystemStore.getState();
-
-        // Start with light
-        store.setThemeMode('light');
-        expect(useSystemStore.getState().themeMode).toBe('light');
-        expect(useSystemStore.getState().isDarkMode).toBe(false);
-
-        // Cycle to dark
-        store.cycleTheme();
-        expect(useSystemStore.getState().themeMode).toBe('dark');
-        expect(useSystemStore.getState().isDarkMode).toBe(true);
-
-        // Cycle to system
-        store.cycleTheme();
-        expect(useSystemStore.getState().themeMode).toBe('system');
-
-        // Cycle back to light
-        store.cycleTheme();
-        expect(useSystemStore.getState().themeMode).toBe('light');
-    });
-
-    it('should set theme mode directly', () => {
-        const store = useSystemStore.getState();
-
-        store.setThemeMode('dark');
-        expect(useSystemStore.getState().themeMode).toBe('dark');
-        expect(useSystemStore.getState().isDarkMode).toBe(true);
-
-        store.setThemeMode('light');
-        expect(useSystemStore.getState().themeMode).toBe('light');
-        expect(useSystemStore.getState().isDarkMode).toBe(false);
     });
 });
 

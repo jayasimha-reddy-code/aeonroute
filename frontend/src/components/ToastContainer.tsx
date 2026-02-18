@@ -11,17 +11,17 @@ const iconMap: Record<Toast['type'], React.ComponentType<{ className?: string }>
 };
 
 const colorMap: Record<Toast['type'], string> = {
-  success: 'border-l-success-500 bg-success-50 dark:bg-success-900/20',
-  error: 'border-l-danger-500 bg-danger-50 dark:bg-danger-900/20',
-  warning: 'border-l-warning-500 bg-warning-50 dark:bg-warning-900/20',
-  info: 'border-l-info-500 bg-info-50 dark:bg-info-900/20',
+  success: 'border-l-emerald bg-emerald-dim',
+  error: 'border-l-rose bg-rose-dim',
+  warning: 'border-l-amber bg-amber-dim',
+  info: 'border-l-blue bg-blue-dim',
 };
 
 const iconColorMap: Record<Toast['type'], string> = {
-  success: 'text-success-600 dark:text-success-400',
-  error: 'text-danger-600 dark:text-danger-400',
-  warning: 'text-warning-600 dark:text-warning-400',
-  info: 'text-info-600 dark:text-info-400',
+  success: 'text-emerald',
+  error: 'text-rose',
+  warning: 'text-amber',
+  info: 'text-blue',
 };
 
 function ToastContainer() {
@@ -66,27 +66,27 @@ function ToastContainer() {
               colorMap[toast.type],
             )}
             style={{
-              background: 'var(--glass-bg)',
-              backdropFilter: 'blur(var(--glass-blur)) saturate(var(--glass-saturate))',
-              WebkitBackdropFilter: 'blur(var(--glass-blur)) saturate(var(--glass-saturate))',
+              background: 'rgba(255, 255, 255, 0.02)',
+              backdropFilter: 'blur(40px) saturate(1.8)',
+              WebkitBackdropFilter: 'blur(40px) saturate(1.8)',
             }}
             role={toast.type === 'error' || toast.type === 'warning' ? 'alert' : 'status'}
             onAnimationEnd={(e) => handleAnimationEnd(e, toast.id)}
           >
             <Icon className={cn('w-5 h-5 flex-shrink-0 mt-0.5', iconColorMap[toast.type])} />
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-surface-900 dark:text-surface-100">
+              <p className="text-sm font-semibold text-white">
                 {toast.title}
               </p>
               {toast.message && (
-                <p className="text-xs text-surface-600 dark:text-surface-400 mt-0.5 line-clamp-2">
+                <p className="text-xs text-label mt-0.5 line-clamp-2">
                   {toast.message}
                 </p>
               )}
             </div>
             <button
               onClick={() => handleDismiss(toast.id)}
-              className="flex-shrink-0 p-1 rounded-md text-surface-400 hover:text-surface-600 dark:hover:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-700 transition-colors"
+              className="flex-shrink-0 p-1 rounded-md text-label hover:text-white hover:bg-surface-hover"
               aria-label="Dismiss notification"
             >
               <X className="w-3.5 h-3.5" />

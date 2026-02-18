@@ -20,8 +20,6 @@ vi.mock('../services/api', () => ({
 beforeEach(() => {
     vi.useFakeTimers();
     useSystemStore.setState({
-        themeMode: 'light',
-        isDarkMode: false,
         sidebarCollapsed: false,
         mobileSidebarOpen: false,
     });

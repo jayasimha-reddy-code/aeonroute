@@ -72,7 +72,7 @@ const MapView = memo(function MapView({
   children,
 }: MapViewProps) {
   const mapRef = useRef<MapRef>(null);
-  const { mapStyle, isDarkMode } = useMapTheme();
+  const { mapStyle } = useMapTheme();
   const [cursor, setCursor] = useState('auto');
   const [hoverInfo, setHoverInfo] = useState<HoverInfo | null>(null);
   const [edgeHoverInfo, setEdgeHoverInfo] = useState<EdgeHoverInfo | null>(null);
@@ -159,7 +159,7 @@ const MapView = memo(function MapView({
 
   return (
     <div
-      className={`w-full h-full rounded-2xl overflow-hidden border border-[var(--glass-border)] shadow-card ${className}`}
+      className={`w-full h-full rounded-2xl overflow-hidden border border-white/[0.05] shadow-card ${className}`}
       style={{ minHeight: 300 }}
       role="application"
       aria-label="EV route map"
@@ -183,7 +183,7 @@ const MapView = memo(function MapView({
         <NavigationControl position="top-right" />
 
         {/* Network edges */}
-        <NetworkEdgesLayer edgesGeoJSON={edgesGeoJSON} isDarkMode={isDarkMode} />
+        <NetworkEdgesLayer edgesGeoJSON={edgesGeoJSON} />
 
         {/* Network nodes (rendered on GPU as circles) */}
         <NetworkNodesLayer nodesGeoJSON={nodesGeoJSON} />
@@ -234,7 +234,7 @@ const MapView = memo(function MapView({
                   <Zap className="w-3 h-3" /> Charging Station
                 </p>
               )}
-              <p className="text-surface-500">Connections: {hoverInfo.degree}</p>
+              <p className="text-muted">Connections: {hoverInfo.degree}</p>
             </div>
           </Popup>
         )}
@@ -251,7 +251,7 @@ const MapView = memo(function MapView({
           >
             <div className="text-xs space-y-1.5 min-w-[140px]">
               <p className="font-semibold">Edge {edgeHoverInfo.source} → {edgeHoverInfo.target}</p>
-              <div className="space-y-0.5 text-surface-600 dark:text-surface-400">
+              <div className="space-y-0.5 text-label">
                 <p>Distance: {edgeHoverInfo.distance_km.toFixed(2)} km</p>
                 <p>Energy: {edgeHoverInfo.energy_per_km.toFixed(3)} kWh/km</p>
                 <p>Time: {edgeHoverInfo.time_minutes.toFixed(1)} min</p>

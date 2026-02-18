@@ -81,7 +81,7 @@ function Dashboard() {
 
       {/* ── Auto-refresh indicator ───────────────────── */}
       {lastRefresh && (
-        <div className="flex items-center gap-1.5 mb-4 text-[11px] text-surface-500">
+        <div className="flex items-center gap-1.5 mb-4 text-[11px] text-muted">
           <RefreshCw className={`w-3 h-3 ${isRefreshing ? 'animate-spin' : ''}`} />
           <span>Auto-refreshing every 30s · Last: {lastRefresh.toLocaleTimeString()}</span>
         </div>
@@ -113,17 +113,17 @@ function Dashboard() {
           <Card className="h-full !p-0 overflow-hidden">
             <div className="flex items-center justify-between px-6 pt-5 pb-3">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-primary-500/10">
-                  <Globe className="w-4 h-4 text-primary-500" />
+                <div className="p-2 rounded-lg bg-emerald/10">
+                  <Globe className="w-4 h-4 text-emerald" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-surface-900 dark:text-surface-100">Road Network</h3>
-                  <p className="text-[11px] text-surface-500">Live topology on dark satellite map</p>
+                  <h3 className="text-sm font-semibold text-white">Road Network</h3>
+                  <p className="text-[11px] text-muted">Live topology on dark satellite map</p>
                 </div>
               </div>
-              <div className="flex items-center gap-4 text-[11px] text-surface-500">
+              <div className="flex items-center gap-4 text-[11px] text-muted">
                 <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-primary-500" /> Nodes
+                  <span className="w-2 h-2 rounded-full bg-emerald" /> Nodes
                 </span>
                 <span className="flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" /> Charging
@@ -134,7 +134,7 @@ function Dashboard() {
               {roadNetwork ? (
                 <NetworkMap network={roadNetwork} />
               ) : (
-                <div className="h-full flex items-center justify-center bg-surface-50 dark:bg-surface-900/50">
+                <div className="h-full flex items-center justify-center bg-midnight/50">
                   <Spinner size="lg" label="Loading network…" />
                 </div>
               )}
@@ -147,8 +147,8 @@ function Dashboard() {
           {/* AI Model Status */}
           <Card>
             <div className="flex items-center gap-2.5 mb-5">
-              <Cpu className="w-4 h-4 text-primary-500" />
-              <h3 className="text-sm font-semibold text-surface-900 dark:text-surface-100 uppercase tracking-wider">AI Model Status</h3>
+              <Cpu className="w-4 h-4 text-emerald" />
+              <h3 className="text-sm font-semibold text-white uppercase tracking-wider">AI Model Status</h3>
             </div>
             <div className="space-y-2.5">
               {[
@@ -156,10 +156,10 @@ function Dashboard() {
                 { label: 'Q-Learning Agent', ready: stats?.models?.agent_trained },
                 { label: 'GNN Route GAN', ready: stats?.models?.gnn_gan_trained },
               ].map((model) => (
-                <div key={model.label} className="flex items-center justify-between p-3 rounded-xl bg-surface-50 dark:bg-surface-800/40 border border-surface-100 dark:border-white/[0.04]">
+                <div key={model.label} className="flex items-center justify-between p-3 rounded-xl bg-surface-raised border border-white/[0.04]">
                   <div className="flex items-center gap-2.5">
-                    <div className={`w-2 h-2 rounded-full ${model.ready ? 'bg-success-500' : 'bg-surface-400'}`} />
-                    <span className="text-sm font-medium text-surface-700 dark:text-surface-300">{model.label}</span>
+                    <div className={`w-2 h-2 rounded-full ${model.ready ? 'bg-emerald' : 'bg-white/[0.1]'}`} />
+                    <span className="text-sm font-medium text-label">{model.label}</span>
                   </div>
                   {model.ready ? (
                     <Badge variant="success" dot>Ready</Badge>
@@ -173,7 +173,7 @@ function Dashboard() {
 
           {/* Quick Actions */}
           <Card>
-            <h3 className="text-sm font-semibold text-surface-900 dark:text-surface-100 uppercase tracking-wider mb-4">Quick Actions</h3>
+            <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Quick Actions</h3>
             <div className="space-y-2">
               <button onClick={() => setActiveTab('route-planner')} className="btn-primary w-full flex items-center justify-between group">
                 <span className="flex items-center gap-2"><MapPin className="w-4 h-4" /> Plan a Route</span>
@@ -202,14 +202,14 @@ function Dashboard() {
         >
           <Card>
             <div className="flex items-center gap-3 mb-5">
-              <div className="p-2 rounded-lg bg-primary-500/10">
-                <Clock className="w-4 h-4 text-primary-500" />
+              <div className="p-2 rounded-lg bg-emerald/10">
+                <Clock className="w-4 h-4 text-emerald" />
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-surface-900 dark:text-surface-100 uppercase tracking-wider">
+                <h3 className="text-sm font-semibold text-white uppercase tracking-wider">
                   Time-of-Day Traffic Patterns
                 </h3>
-                <p className="text-[11px] text-surface-500">SG-GAN learned temporal traffic variation</p>
+                <p className="text-[11px] text-muted">SG-GAN learned temporal traffic variation</p>
               </div>
             </div>
             <TrafficSlider />

@@ -21,8 +21,8 @@ const RouteCard = React.memo(function RouteCard({ route, rank, selected = false,
       className={cn(
         'card group cursor-pointer transition-all duration-250',
         'hover:shadow-card-hover hover:-translate-y-0.5',
-        selected && 'ring-2 ring-primary-500 border-primary-500/30',
-        isTop && 'border-l-4 border-l-primary-500',
+        selected && 'ring-2 ring-emerald border-emerald/30',
+        isTop && 'border-l-4 border-l-emerald',
       )}
     >
       {/* Header Row */}
@@ -32,15 +32,15 @@ const RouteCard = React.memo(function RouteCard({ route, rank, selected = false,
             className={cn(
               'w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm',
               isTop
-                ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400'
-                : 'bg-surface-100 dark:bg-surface-700 text-surface-500',
+                ? 'bg-emerald/10 text-emerald'
+                : 'bg-surface-raised text-muted',
             )}
           >
             #{rank}
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <p className="text-sm font-semibold text-surface-900 dark:text-surface-100">
+              <p className="text-sm font-semibold text-white">
                 Route {rank}
               </p>
               {isTop && (
@@ -49,7 +49,7 @@ const RouteCard = React.memo(function RouteCard({ route, rank, selected = false,
                 </Badge>
               )}
             </div>
-            <p className="text-xs text-surface-500 dark:text-surface-400 font-mono mt-0.5">
+            <p className="text-xs text-label font-mono mt-0.5">
               {route.path.slice(0, 3).join(' → ')}
               {route.path.length > 3 && ` → … → ${route.path[route.path.length - 1]}`}
             </p>
@@ -57,8 +57,8 @@ const RouteCard = React.memo(function RouteCard({ route, rank, selected = false,
         </div>
 
         <ChevronRight className={cn(
-          'w-5 h-5 text-surface-400 transition-transform group-hover:translate-x-0.5',
-          selected && 'text-primary-500',
+          'w-5 h-5 text-label transition-transform group-hover:translate-x-0.5',
+          selected && 'text-emerald',
         )} />
       </div>
 
@@ -72,20 +72,20 @@ const RouteCard = React.memo(function RouteCard({ route, rank, selected = false,
           label="Score"
           value={`${(route.feasibility_score * 100).toFixed(0)}%`}
           valueClass={cn(
-            scoreVariant === 'success' && 'text-success-600 dark:text-success-400',
-            scoreVariant === 'warning' && 'text-warning-600 dark:text-warning-400',
-            scoreVariant === 'error' && 'text-danger-500',
+            scoreVariant === 'success' && 'text-emerald',
+            scoreVariant === 'warning' && 'text-amber',
+            scoreVariant === 'error' && 'text-rose',
           )}
         />
       </div>
 
       {/* Charging Stops */}
       {route.charging_stops.length > 0 && (
-        <div className="mt-3 pt-3 border-t border-surface-100 dark:border-surface-700/50 flex items-center gap-2">
+        <div className="mt-3 pt-3 border-t border-white/[0.05] flex items-center gap-2">
           <Zap className="w-3.5 h-3.5 text-amber-500" />
-          <span className="text-xs text-surface-500">
+          <span className="text-xs text-muted">
             {route.charging_stops.length} charging stop{route.charging_stops.length > 1 ? 's' : ''}
-            <span className="text-surface-400 dark:text-surface-500"> — Nodes {route.charging_stops.join(', ')}</span>
+            <span className="text-label"> — Nodes {route.charging_stops.join(', ')}</span>
           </span>
         </div>
       )}
@@ -108,11 +108,11 @@ function MetricPill({
   valueClass?: string;
 }) {
   return (
-    <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-50 dark:bg-surface-800/60">
-      <Icon className="w-3.5 h-3.5 text-surface-400 dark:text-surface-500 flex-shrink-0" />
+    <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-raised">
+      <Icon className="w-3.5 h-3.5 text-label flex-shrink-0" />
       <div className="min-w-0">
-        <p className="text-[10px] text-surface-400 dark:text-surface-500 uppercase tracking-wider leading-none mb-0.5">{label}</p>
-        <p className={cn('text-sm font-bold text-surface-900 dark:text-surface-100 leading-tight', valueClass)}>{value}</p>
+        <p className="text-[10px] text-label uppercase tracking-wider leading-none mb-0.5">{label}</p>
+        <p className={cn('text-sm font-bold text-white leading-tight', valueClass)}>{value}</p>
       </div>
     </div>
   );

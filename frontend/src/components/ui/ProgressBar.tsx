@@ -18,11 +18,11 @@ const sizeStyles: Record<string, string> = {
 };
 
 const colorStyles: Record<string, string> = {
-  primary:  'bg-primary-500',
-  accent:   'bg-accent-500',
-  success:  'bg-success-500',
-  warning:  'bg-warning-500',
-  gradient: 'bg-gradient-to-r from-primary-500 via-accent-500 to-primary-400',
+  primary:  'bg-emerald',
+  accent:   'bg-amber',
+  success:  'bg-emerald',
+  warning:  'bg-amber',
+  gradient: 'bg-gradient-to-r from-emerald via-amber to-emerald',
 };
 
 function ProgressBar({
@@ -41,15 +41,15 @@ function ProgressBar({
     <div className={cn('w-full', className)}>
       {(label || showValue) && (
         <div className="flex items-center justify-between mb-2">
-          {label && <span className="text-sm font-medium text-surface-700 dark:text-surface-300">{label}</span>}
+          {label && <span className="text-sm font-medium text-label">{label}</span>}
           {showValue && (
-            <span className="text-sm font-bold text-surface-900 dark:text-surface-100">
+            <span className="text-sm font-bold text-white">
               {Math.round(percentage)}%
             </span>
           )}
         </div>
       )}
-      <div className={cn('w-full bg-surface-200 dark:bg-surface-700 rounded-full overflow-hidden', sizeStyles[size])}>
+      <div className={cn('w-full bg-white/[0.04] rounded-full overflow-hidden', sizeStyles[size])}>
         <div
           className={cn(
             'h-full rounded-full',

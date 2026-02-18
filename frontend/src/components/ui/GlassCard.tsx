@@ -9,11 +9,11 @@ interface GlassCardProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 const variantStyles: Record<string, string> = {
-  default: 'glass-surface border glass-border rounded-xl shadow-card',
-  elevated: 'border rounded-xl shadow-elevated bg-[var(--glass-bg-elevated)] glass-border glass-blur',
+  default: 'glass border border-white/[0.05] rounded-xl shadow-card',
+  elevated: 'border border-white/[0.05] rounded-xl shadow-card bg-surface-raised backdrop-blur-2xl',
   interactive:
-    'glass-surface border glass-border rounded-xl shadow-card hover:shadow-elevated hover:scale-[1.02] hover:border-primary-400/30 active:scale-[0.99] cursor-pointer',
-  glow: 'glass-surface border glass-border rounded-xl shadow-card hover:shadow-glow hover:border-primary-400/40',
+    'glass border border-white/[0.05] rounded-xl shadow-card hover:shadow-card-hover hover:scale-[1.02] hover:border-white/[0.1] active:scale-[0.99] cursor-pointer',
+  glow: 'glass border border-white/[0.05] rounded-xl shadow-card hover:shadow-glow-emerald hover:border-emerald/40',
 };
 
 const paddingStyles: Record<string, string> = {
@@ -31,7 +31,7 @@ const GlassCard = forwardRef<HTMLDivElement, GlassCardProps>(
         variantStyles[variant],
         paddingStyles[padding],
         'transition-all duration-200',
-        noise && 'glass-noise',
+        noise && '',
         className,
       )}
       {...props}

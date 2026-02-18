@@ -39,7 +39,7 @@ export function RewardCurveChart({ data, rlEpisode, rlTotalEpisodes }: RewardCur
 
   if (data.length === 0) {
     return (
-      <div className="flex items-center justify-center h-64 text-surface-500 text-sm">
+      <div className="flex items-center justify-center h-64 text-muted text-sm">
         Waiting for agent training data…
       </div>
     );
@@ -48,7 +48,7 @@ export function RewardCurveChart({ data, rlEpisode, rlTotalEpisodes }: RewardCur
   return (
     <div>
       {rlEpisode != null && rlTotalEpisodes != null && rlTotalEpisodes > 0 && (
-        <p className="text-xs text-surface-500 mb-2">Episode {rlEpisode}/{rlTotalEpisodes}</p>
+        <p className="text-xs text-muted mb-2">Episode {rlEpisode}/{rlTotalEpisodes}</p>
       )}
       <ResponsiveContainer width="100%" height={280}>
         <LineChart data={chartData} margin={{ top: 4, right: 12, left: 0, bottom: 4 }}>

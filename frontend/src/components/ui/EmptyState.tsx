@@ -21,14 +21,14 @@ function EmptyState({
 }: EmptyStateProps) {
   return (
     <div className={cn('flex flex-col items-center justify-center py-16 px-6 text-center animate-fade-in', className)}>
-      <div className="w-16 h-16 rounded-2xl bg-surface-100 dark:bg-surface-800 flex items-center justify-center mb-5">
-        <Icon className="w-8 h-8 text-surface-400 dark:text-surface-500" />
+      <div className="w-16 h-16 rounded-2xl bg-surface flex items-center justify-center mb-5">
+        <Icon className="w-8 h-8 text-label" />
       </div>
-      <h3 className="text-lg font-semibold text-surface-900 dark:text-surface-100 mb-1.5">
+      <h3 className="text-lg font-semibold text-white mb-1.5">
         {title}
       </h3>
       {description && (
-        <p className="text-sm text-surface-500 dark:text-surface-400 max-w-sm mb-6">
+        <p className="text-sm text-label max-w-sm mb-6">
           {description}
         </p>
       )}

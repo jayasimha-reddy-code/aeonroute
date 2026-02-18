@@ -31,15 +31,15 @@ function MetricTile({
   icon: React.ComponentType<{ className?: string }>;
   label: string; value: string; unit?: string; color: string;
 }) {
-  const bg = { success: 'bg-success-500/10', info: 'bg-info-500/10', warning: 'bg-warning-500/10', accent: 'bg-accent-500/10', danger: 'bg-danger-500/10', primary: 'bg-primary-500/10' }[color] || 'bg-surface-100';
-  const text = { success: 'text-success-500', info: 'text-info-500', warning: 'text-warning-500', accent: 'text-accent-500', danger: 'text-danger-500', primary: 'text-primary-500' }[color] || 'text-surface-500';
+  const bg = { success: 'bg-emerald/10', info: 'bg-blue/10', warning: 'bg-amber/10', accent: 'bg-amber/10', danger: 'bg-rose/10', primary: 'bg-emerald/10' }[color] || 'bg-surface-raised';
+  const text = { success: 'text-emerald', info: 'text-blue', warning: 'text-amber', accent: 'text-amber', danger: 'text-rose', primary: 'text-emerald' }[color] || 'text-muted';
   return (
     <Card className="flex items-center gap-4">
       <div className={`p-3 rounded-xl ${bg}`}><Icon className={`w-6 h-6 ${text}`} /></div>
       <div>
-        <p className="text-[10px] text-surface-500 uppercase tracking-wider mb-0.5">{label}</p>
-        <p className="text-2xl font-bold text-surface-900 dark:text-surface-50">
-          {value}{unit && <span className="text-sm font-medium text-surface-400 ml-1">{unit}</span>}
+        <p className="text-[10px] text-muted uppercase tracking-wider mb-0.5">{label}</p>
+        <p className="text-2xl font-bold text-white">
+          {value}{unit && <span className="text-sm font-medium text-label ml-1">{unit}</span>}
         </p>
       </div>
     </Card>
@@ -154,8 +154,8 @@ function Analytics() {
 
       {/* ── Not-trained banner ───────────────────────────── */}
       {!modelsReady && !evalLoading && (
-        <Card className="mb-6 border-warning-500/30 bg-warning-500/5">
-          <p className="text-sm text-warning-500 font-medium">Models not trained yet — train the system first to see live evaluation data.</p>
+        <Card className="mb-6 border-amber/30 bg-amber/5">
+          <p className="text-sm text-amber font-medium">Models not trained yet — train the system first to see live evaluation data.</p>
         </Card>
       )}
 
@@ -178,13 +178,13 @@ function Analytics() {
         {/* Agent Reward / Energy Timeline (wider) */}
         <Card className="lg:col-span-3">
           <div className="flex items-center gap-2.5 mb-5">
-            <div className="p-1.5 rounded-lg bg-warning-500/10"><Zap className="w-3.5 h-3.5 text-warning-500" /></div>
-            <h3 className="text-sm font-semibold text-surface-900 dark:text-surface-100 uppercase tracking-wider">
+            <div className="p-1.5 rounded-lg bg-amber/10"><Zap className="w-3.5 h-3.5 text-amber" /></div>
+            <h3 className="text-sm font-semibold text-white uppercase tracking-wider">
               {trainingHistory?.reward_history?.length ? 'Agent Reward History' : 'Energy & Distance'}
             </h3>
           </div>
           {evalLoading ? (
-            <div className="h-[280px] flex items-center justify-center text-surface-400 text-sm">Loading…</div>
+            <div className="h-[280px] flex items-center justify-center text-label text-sm">Loading…</div>
           ) : trainingHistory?.reward_history?.length ? (
             <ResponsiveContainer width="100%" height={280}>
               <AreaChart data={trainingHistory.reward_history.map((r, i) => ({ episode: r.episode ?? i + 1, reward: r.reward }))}>
@@ -238,8 +238,8 @@ function Analytics() {
         {/* Route Quality Donut (narrower) */}
         <Card className="lg:col-span-2">
           <div className="flex items-center gap-2.5 mb-5">
-            <div className="p-1.5 rounded-lg bg-success-500/10"><TrendingUp className="w-3.5 h-3.5 text-success-500" /></div>
-            <h3 className="text-sm font-semibold text-surface-900 dark:text-surface-100 uppercase tracking-wider">Route Quality</h3>
+            <div className="p-1.5 rounded-lg bg-emerald/10"><TrendingUp className="w-3.5 h-3.5 text-emerald" /></div>
+            <h3 className="text-sm font-semibold text-white uppercase tracking-wider">Route Quality</h3>
           </div>
           <ResponsiveContainer width="100%" height={280}>
             <PieChart>
@@ -263,13 +263,13 @@ function Analytics() {
         {/* GAN Quality / Distance Distribution */}
         <Card>
           <div className="flex items-center gap-2.5 mb-5">
-            <div className="p-1.5 rounded-lg bg-info-500/10"><Route className="w-3.5 h-3.5 text-info-500" /></div>
-            <h3 className="text-sm font-semibold text-surface-900 dark:text-surface-100 uppercase tracking-wider">
-              {ganEval ? 'GAN Quality Metrics' : 'Distance Distribution'} <span className="text-surface-400 normal-case font-normal">{ganEval ? '' : '(km)'}</span>
+            <div className="p-1.5 rounded-lg bg-blue/10"><Route className="w-3.5 h-3.5 text-blue" /></div>
+            <h3 className="text-sm font-semibold text-white uppercase tracking-wider">
+              {ganEval ? 'GAN Quality Metrics' : 'Distance Distribution'} <span className="text-label normal-case font-normal">{ganEval ? '' : '(km)'}</span>
             </h3>
           </div>
           {evalLoading ? (
-            <div className="h-[260px] flex items-center justify-center text-surface-400 text-sm">Loading…</div>
+            <div className="h-[260px] flex items-center justify-center text-label text-sm">Loading…</div>
           ) : (
             <ResponsiveContainer width="100%" height={260}>
               <BarChart data={ganQualityBars}>
@@ -288,8 +288,8 @@ function Analytics() {
         {/* GAN Training Convergence */}
         <Card>
           <div className="flex items-center gap-2.5 mb-5">
-            <div className="p-1.5 rounded-lg bg-accent-500/10"><Cpu className="w-3.5 h-3.5 text-accent-500" /></div>
-            <h3 className="text-sm font-semibold text-surface-900 dark:text-surface-100 uppercase tracking-wider">GAN Training Loss</h3>
+            <div className="p-1.5 rounded-lg bg-amber/10"><Cpu className="w-3.5 h-3.5 text-amber" /></div>
+            <h3 className="text-sm font-semibold text-white uppercase tracking-wider">GAN Training Loss</h3>
           </div>
           <ResponsiveContainer width="100%" height={260}>
             <LineChart data={trainingConvergence}>
@@ -309,8 +309,8 @@ function Analytics() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <Card>
           <div className="flex items-center gap-2.5 mb-4">
-            <Cpu className="w-4 h-4 text-primary-500" />
-            <h3 className="text-sm font-semibold text-surface-900 dark:text-surface-100 uppercase tracking-wider">AI Models</h3>
+            <Cpu className="w-4 h-4 text-emerald" />
+            <h3 className="text-sm font-semibold text-white uppercase tracking-wider">AI Models</h3>
           </div>
           <div className="space-y-2">
             {[
@@ -318,8 +318,8 @@ function Analytics() {
               { label: 'Q-Learning Agent', ready: systemStats?.models?.agent_trained },
               { label: 'GNN Route GAN',    ready: systemStats?.models?.gnn_gan_trained },
             ].map((m) => (
-              <div key={m.label} className="flex items-center justify-between p-3 rounded-xl bg-surface-50 dark:bg-surface-800/40 border border-surface-100 dark:border-white/[0.04]">
-                <span className="text-sm font-medium text-surface-700 dark:text-surface-300">{m.label}</span>
+              <div key={m.label} className="flex items-center justify-between p-3 rounded-xl bg-surface-raised border border-white/[0.04]">
+                <span className="text-sm font-medium text-label">{m.label}</span>
                 {m.ready ? <Badge variant="success" dot>Active</Badge> : <Badge variant="neutral" dot>Inactive</Badge>}
               </div>
             ))}
@@ -328,17 +328,17 @@ function Analytics() {
 
         <Card>
           <div className="flex items-center gap-2.5 mb-4">
-            <Network className="w-4 h-4 text-primary-500" />
-            <h3 className="text-sm font-semibold text-surface-900 dark:text-surface-100 uppercase tracking-wider">Network</h3>
+            <Network className="w-4 h-4 text-emerald" />
+            <h3 className="text-sm font-semibold text-white uppercase tracking-wider">Network</h3>
           </div>
           <div className="space-y-2">
             {[
               { label: 'Total Nodes', val: systemStats?.road_network?.nodes ?? 0 },
               { label: 'Total Edges', val: systemStats?.road_network?.edges ?? 0 },
             ].map((s) => (
-              <div key={s.label} className="p-3 rounded-xl bg-surface-50 dark:bg-surface-800/40 border border-surface-100 dark:border-white/[0.04]">
-                <p className="text-[10px] text-surface-500 uppercase tracking-wider mb-1">{s.label}</p>
-                <p className="text-2xl font-bold text-surface-900 dark:text-surface-50">{s.val}</p>
+              <div key={s.label} className="p-3 rounded-xl bg-surface-raised border border-white/[0.04]">
+                <p className="text-[10px] text-muted uppercase tracking-wider mb-1">{s.label}</p>
+                <p className="text-2xl font-bold text-white">{s.val}</p>
               </div>
             ))}
           </div>
@@ -346,17 +346,17 @@ function Analytics() {
 
         <Card>
           <div className="flex items-center gap-2.5 mb-4">
-            <Activity className="w-4 h-4 text-primary-500" />
-            <h3 className="text-sm font-semibold text-surface-900 dark:text-surface-100 uppercase tracking-wider">Performance</h3>
+            <Activity className="w-4 h-4 text-emerald" />
+            <h3 className="text-sm font-semibold text-white uppercase tracking-wider">Performance</h3>
           </div>
           <div className="space-y-2">
             {[
               { label: 'Agent Success Rate', val: agentPerf ? `${(agentPerf.success_rate * 100).toFixed(0)}` : '—', unit: '%' },
               { label: 'Energy Improvement', val: routeEval ? `${(routeEval.energy_improvement * 100).toFixed(1)}` : '—', unit: '%' },
             ].map((s) => (
-              <div key={s.label} className="p-3 rounded-xl bg-surface-50 dark:bg-surface-800/40 border border-surface-100 dark:border-white/[0.04]">
-                <p className="text-[10px] text-surface-500 uppercase tracking-wider mb-1">{s.label}</p>
-                <p className="text-2xl font-bold text-surface-900 dark:text-surface-50">{s.val}{s.unit && <span className="text-sm font-medium text-surface-400 ml-1">{s.unit}</span>}</p>
+              <div key={s.label} className="p-3 rounded-xl bg-surface-raised border border-white/[0.04]">
+                <p className="text-[10px] text-muted uppercase tracking-wider mb-1">{s.label}</p>
+                <p className="text-2xl font-bold text-white">{s.val}{s.unit && <span className="text-sm font-medium text-label ml-1">{s.unit}</span>}</p>
               </div>
             ))}
           </div>
