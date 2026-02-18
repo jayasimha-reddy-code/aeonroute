@@ -55,9 +55,15 @@ function App() {
         Skip to content
       </a>
 
-      <div className="flex h-screen bg-midnight overflow-hidden">
+      <div className="flex h-screen bg-midnight overflow-hidden relative">
+        {/* Glass refraction light sources — massive, subtle radial gradients */}
+        <div className="pointer-events-none fixed inset-0 z-0">
+          <div className="absolute -top-[20%] -right-[10%] w-[70%] h-[70%] rounded-full bg-[radial-gradient(circle,rgba(16,185,129,0.07)_0%,transparent_70%)]" />
+          <div className="absolute -bottom-[20%] -left-[10%] w-[60%] h-[60%] rounded-full bg-[radial-gradient(circle,rgba(20,184,166,0.05)_0%,transparent_70%)]" />
+          <div className="absolute top-[40%] left-[30%] w-[40%] h-[40%] rounded-full bg-[radial-gradient(circle,rgba(245,158,11,0.03)_0%,transparent_70%)]" />
+        </div>
         <Sidebar />
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className="flex-1 flex flex-col min-w-0 relative z-10">
           <Header />
           <main id="main" className="flex-1 overflow-y-auto overflow-x-hidden p-4 lg:p-6">
             <Suspense fallback={<PageLoader />}>

@@ -21,7 +21,7 @@ export default function Sidebar() {
   const setActiveTab = useSetActiveTab();
 
   return (
-    <aside className="w-56 h-screen flex flex-col bg-white/[0.02] backdrop-blur-2xl border-r border-white/[0.05] flex-shrink-0">
+    <aside className="w-56 h-screen flex flex-col bg-[rgba(15,20,26,0.7)] backdrop-blur-[40px] border-r border-white/[0.05] flex-shrink-0 relative z-10">
 
       {/* ── Brand ── */}
       <div className="p-5 pb-3">
