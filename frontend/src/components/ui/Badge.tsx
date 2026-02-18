@@ -1,7 +1,8 @@
 import React from 'react';
 import { cn } from '../../lib/utils';
 
-type BadgeVariant = 'emerald' | 'amber' | 'rose' | 'cyan' | 'blue' | 'neutral';
+type BadgeVariant = 'emerald' | 'amber' | 'rose' | 'cyan' | 'blue' | 'neutral'
+  | 'success' | 'warning' | 'error' | 'info' | 'primary'; // backward compat
 
 interface BadgeProps {
   variant?: BadgeVariant;
@@ -17,6 +18,12 @@ const variantStyles: Record<BadgeVariant, string> = {
   cyan:    'bg-cyan-dim text-cyan',
   blue:    'bg-blue-dim text-blue',
   neutral: 'bg-white/[0.06] text-label',
+  // Backward-compat aliases
+  success: 'bg-emerald-dim text-emerald',
+  warning: 'bg-amber-dim text-amber',
+  error:   'bg-rose-dim text-rose',
+  info:    'bg-blue-dim text-blue',
+  primary: 'bg-emerald-dim text-emerald',
 };
 
 function Badge({ variant = 'neutral', dot = false, children, className }: BadgeProps) {

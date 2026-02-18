@@ -1,5 +1,3 @@
-import { cn } from '../../lib/utils';
-
 interface ProgressRingProps {
   value: number;           // 0-100
   size?: number;           // px, default 80

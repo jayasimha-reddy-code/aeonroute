@@ -6,7 +6,8 @@ interface ProgressBarProps {
   label?: string;
   showValue?: boolean;
   size?: 'sm' | 'md' | 'lg';
-  variant?: 'emerald' | 'amber' | 'rose' | 'cyan' | 'gradient';
+  variant?: 'emerald' | 'amber' | 'rose' | 'cyan' | 'gradient'
+    | 'primary' | 'accent' | 'success' | 'warning'; // backward compat
   animated?: boolean;
   className?: string;
 }
@@ -23,6 +24,11 @@ const colorStyles: Record<string, string> = {
   rose:     'bg-rose',
   cyan:     'bg-cyan',
   gradient: 'bg-gradient-to-r from-emerald via-amber to-emerald',
+  // Backward-compat aliases
+  primary:  'bg-emerald',
+  accent:   'bg-amber',
+  success:  'bg-emerald',
+  warning:  'bg-amber',
 };
 
 function ProgressBar({
