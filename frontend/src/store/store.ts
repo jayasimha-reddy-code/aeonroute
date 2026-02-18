@@ -42,10 +42,6 @@ export interface Toast {
 
 export type AppTab = 'dashboard' | 'route-planner' | 'training' | 'analytics';
 
-// ─── Theme Type ───────────────────────────────────────────
-
-export type ThemeMode = 'light' | 'dark' | 'system';
-
 // ─── Store Interface ──────────────────────────────────────
 
 interface SystemState {
@@ -62,12 +58,6 @@ interface SystemState {
   // ── Navigation ──
   activeTab: AppTab;
   setActiveTab: (tab: AppTab) => void;
-
-  // ── Theme ──
-  themeMode: ThemeMode;
-  isDarkMode: boolean;
-  cycleTheme: () => void;
-  setThemeMode: (mode: ThemeMode) => void;
 
   // ── Sidebar ──
   sidebarCollapsed: boolean;
@@ -128,24 +118,6 @@ export const useSystemStore = create<SystemState>()(
       // Navigation
       activeTab: 'dashboard',
       setActiveTab: (tab) => set({ activeTab: tab, mobileSidebarOpen: false }),
-
-      // Theme — default system
-      themeMode: 'system' as ThemeMode,
-      isDarkMode: window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false,
-      cycleTheme: () =>
-        set((s) => {
-          const nextMode: ThemeMode =
-            s.themeMode === 'light' ? 'dark' : s.themeMode === 'dark' ? 'system' : 'light';
-          const systemDark = window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false;
-          const computedDark = nextMode === 'system' ? systemDark : nextMode === 'dark';
-          return { themeMode: nextMode, isDarkMode: computedDark };
-        }),
-      setThemeMode: (mode) =>
-        set(() => {
-          const systemDark = window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false;
-          const computedDark = mode === 'system' ? systemDark : mode === 'dark';
-          return { themeMode: mode, isDarkMode: computedDark };
-        }),
 
       // Sidebar
       sidebarCollapsed: false,
@@ -256,7 +228,6 @@ export const useSystemStore = create<SystemState>()(
       name: 'ev-routing-preferences',
       // Only persist user preferences — not runtime data
       partialize: (state) => ({
-        themeMode: state.themeMode,
         sidebarCollapsed: state.sidebarCollapsed,
         presentationMode: state.presentationMode,
       }),
@@ -273,14 +244,6 @@ export const useSetRoadNetwork = () => useSystemStore((s) => s.setRoadNetwork);
 
 export const useActiveTab = () => useSystemStore((s) => s.activeTab);
 export const useSetActiveTab = () => useSystemStore((s) => s.setActiveTab);
-
-export const useTheme = () =>
-  useSystemStore((s) => ({
-    themeMode: s.themeMode,
-    isDarkMode: s.isDarkMode,
-    cycleTheme: s.cycleTheme,
-    setThemeMode: s.setThemeMode,
-  }));
 
 export const useToasts = () => useSystemStore((s) => ({ toasts: s.toasts, addToast: s.addToast, removeToast: s.removeToast }));
 export const useAddToast = () => useSystemStore((s) => s.addToast);

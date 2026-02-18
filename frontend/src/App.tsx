@@ -1,6 +1,6 @@
 import { useEffect, lazy, Suspense } from 'react';
 import { LazyMotion, domAnimation } from 'framer-motion';
-import { useActiveTab, useTheme, useSetRoadNetwork, useLoading, useAddToast } from './store/store';
+import { useActiveTab, useSetRoadNetwork, useLoading, useAddToast } from './store/store';
 import api from './services/api';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
@@ -8,7 +8,6 @@ import ToastContainer from './components/ToastContainer';
 import PageLoader from './components/ui/PageLoader';
 import PageTransition from './components/ui/PageTransition';
 import { usePresentationModeEffect } from './hooks/usePresentationMode';
-import { cn } from './lib/utils';
 
 // Lazy-load page components for code-splitting
 const DashboardView = lazy(() => import('./pages/Dashboard'));
@@ -18,32 +17,12 @@ const AnalyticsView = lazy(() => import('./pages/Analytics'));
 
 function App() {
   const activeTab = useActiveTab();
-  const { isDarkMode, themeMode, setThemeMode } = useTheme();
   const setRoadNetwork = useSetRoadNetwork();
   const { setIsLoading } = useLoading();
   const addToast = useAddToast();
 
   // Register presentation mode Ctrl+Shift+P shortcut
   usePresentationModeEffect();
-
-  // Apply dark mode class to HTML root
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', isDarkMode);
-  }, [isDarkMode]);
-
-  // System preference listener for themeMode === 'system'
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-color-scheme: dark)');
-    const handler = () => {
-      if (themeMode === 'system') {
-        // When in system mode, sync isDarkMode with OS preference
-        setThemeMode('system');
-      }
-    };
-
-    mq.addEventListener('change', handler);
-    return () => mq.removeEventListener('change', handler);
-  }, [themeMode, setThemeMode]);
 
   useEffect(() => {
     const loadInitialData = async () => {
@@ -77,37 +56,26 @@ function App() {
   };
 
   return (
-    <div className={isDarkMode ? 'dark' : ''}>
-      <div className="flex flex-col h-screen bg-surface-50 dark:bg-surface-950 text-surface-900 dark:text-surface-50 transition-colors duration-300">
-        {/* Skip to main content link */}
-        <a href="#main-content" className="skip-link">
-          Skip to main content
-        </a>
-
+    <div className="flex h-screen bg-midnight">
+      <Sidebar />
+      <div className="flex-1 flex flex-col overflow-hidden">
         <Header />
-        <div className="flex flex-1 overflow-hidden">
-          <Sidebar />
-          <main
-            id="main-content"
-            className={cn(
-              'flex-1 overflow-y-auto transition-all duration-300',
-              // Subtle inset shadow on the main content area
-              'bg-surface-50 dark:bg-surface-950',
-            )}
-          >
-            <LazyMotion features={domAnimation} strict>
-              <Suspense fallback={<PageLoader />}>
-                <PageTransition pageKey={activeTab}>
-                  {renderView()}
-                </PageTransition>
-              </Suspense>
-            </LazyMotion>
-          </main>
-        </div>
-
-        {/* Toast Notifications */}
-        <ToastContainer />
+        <main
+          id="main-content"
+          className="flex-1 overflow-y-auto"
+        >
+          <LazyMotion features={domAnimation} strict>
+            <Suspense fallback={<PageLoader />}>
+              <PageTransition pageKey={activeTab}>
+                {renderView()}
+              </PageTransition>
+            </Suspense>
+          </LazyMotion>
+        </main>
       </div>
+
+      {/* Toast Notifications */}
+      <ToastContainer />
     </div>
   );
 }
