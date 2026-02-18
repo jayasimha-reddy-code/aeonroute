@@ -1,77 +1,109 @@
 import { memo } from 'react';
+import { TrendingUp, TrendingDown, MoreHorizontal, type LucideIcon } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { TrendingUp, TrendingDown, LucideIcon } from 'lucide-react';
 import AnimatedNumber from './ui/AnimatedNumber';
 
 interface StatCardProps {
   title: string;
-  value: string | number;
-  icon: LucideIcon;
-  color: 'primary' | 'accent' | 'orange' | 'blue' | 'purple' | 'green';
-  change?: number;
+  value: number | string;
+  unit?: string;
   subtitle?: string;
+  trend?: { value: number; label?: string };
+  icon?: LucideIcon;
+  accent?: 'emerald' | 'amber' | 'cyan' | 'rose';
+  children?: React.ReactNode; // For inline sparklines or progress rings
+  // Backward-compat aliases
+  color?: string;
+  change?: number;
 }
 
-const iconBg: Record<string, string> = {
-  primary: 'bg-emerald/10 text-emerald',
-  accent: 'bg-amber/10 text-amber',
-  orange: 'bg-amber-500/10 text-amber-600',
-  blue: 'bg-blue/10 text-blue',
-  purple: 'bg-purple-500/10 text-purple-400',
-  green: 'bg-emerald/10 text-emerald',
+const accentMap = {
+  emerald: 'text-emerald',
+  amber: 'text-amber',
+  cyan: 'text-cyan',
+  rose: 'text-rose',
 };
 
-function renderValue(value: string | number) {
-  if (typeof value === 'number') {
-    return <AnimatedNumber value={value} className="stat-value text-2xl xl:text-3xl font-bold text-white tracking-tight" />;
+const bgMap = {
+  emerald: 'bg-emerald-dim',
+  amber: 'bg-amber-dim',
+  cyan: 'bg-cyan-dim',
+  rose: 'bg-rose-dim',
+};
+
+function resolveAccent(accent?: string, color?: string): 'emerald' | 'amber' | 'cyan' | 'rose' {
+  if (accent && accent in accentMap) return accent as 'emerald' | 'amber' | 'cyan' | 'rose';
+  if (color) {
+    const map: Record<string, 'emerald' | 'amber' | 'cyan' | 'rose'> = {
+      primary: 'emerald', green: 'emerald', accent: 'amber',
+      orange: 'amber', blue: 'cyan', purple: 'cyan',
+    };
+    return map[color] || 'emerald';
   }
-  // Try to parse "42.5 kWh" or "— min" style strings
-  const match = String(value).match(/^([^0-9]*?)([\d,.]+)(.*?)$/);
-  if (match) {
-    const [, prefix, numStr, suffix] = match;
-    const num = parseFloat(numStr.replace(/,/g, ''));
-    if (!isNaN(num)) {
-      const decimals = numStr.includes('.') ? numStr.split('.')[1]?.length ?? 0 : 0;
-      return (
-        <AnimatedNumber
-          value={num}
-          prefix={prefix}
-          suffix={suffix}
-          decimals={decimals}
-          className="stat-value text-2xl xl:text-3xl font-bold text-white tracking-tight"
-        />
-      );
-    }
-  }
-  // Fallback: non-numeric string
-  return <span className="stat-value text-2xl xl:text-3xl font-bold text-white tracking-tight">{value}</span>;
+  return 'emerald';
 }
 
-const StatCard = memo(function StatCard({ title, value, icon: Icon, color, change, subtitle }: StatCardProps) {
+export default memo(function StatCard({ title, value, unit, subtitle, trend, icon: Icon, accent, color, change, children }: StatCardProps) {
+  const resolvedAccent = resolveAccent(accent, color);
+  // Support legacy `change` prop → convert to trend
+  const resolvedTrend = trend || (change !== undefined ? { value: change } : undefined);
+
   return (
-    <div className="card group hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-250">
-      <div className="flex items-start justify-between mb-4">
-        <div className={cn('p-2.5 rounded-xl transition-transform group-hover:scale-110', iconBg[color])}>
-          <Icon className="w-5 h-5" />
+    <div className="glass glass-hover p-5 group">
+      {/* Header row */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          {Icon && (
+            <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center', bgMap[resolvedAccent])}>
+              <Icon className={cn('w-4 h-4', accentMap[resolvedAccent])} />
+            </div>
+          )}
+          <span className="text-xs font-medium text-label uppercase tracking-wider">{title}</span>
         </div>
-        {change !== undefined && (
-          <div className={cn('flex items-center gap-1 text-xs font-bold', change >= 0 ? 'text-emerald' : 'text-rose')}>
-            {change >= 0 ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
-            {change >= 0 ? '+' : ''}{change}%
-          </div>
-        )}
+        <button className="opacity-0 group-hover:opacity-100 text-label hover:text-white transition-all duration-300">
+          <MoreHorizontal className="w-4 h-4" />
+        </button>
       </div>
-      <p className="text-xs xl:text-sm font-medium text-label uppercase tracking-wider mb-1">
-        {title}
-      </p>
-      {renderValue(value)}
-      {subtitle && (
-        <p className="text-xs text-label mt-1">{subtitle}</p>
-      )}
+
+      {/* Value */}
+      <div className="flex items-baseline gap-2 mb-1">
+        <span className="text-3xl font-bold text-white tabular-nums">
+          {typeof value === 'number' ? (
+            <AnimatedNumber value={value} />
+          ) : (() => {
+            // Try to parse "42.5 kWh" or "15 min" style strings
+            const match = String(value).match(/^([^0-9]*?)([\d,.]+)(.*?)$/);
+            if (match) {
+              const [, prefix, numStr, suffix] = match;
+              const num = parseFloat(numStr.replace(/,/g, ''));
+              if (!isNaN(num)) {
+                const decimals = numStr.includes('.') ? numStr.split('.')[1]?.length ?? 0 : 0;
+                return <AnimatedNumber value={num} prefix={prefix} suffix={suffix} decimals={decimals} />;
+              }
+            }
+            return value;
+          })()}
+        </span>
+        {unit && <span className="text-sm text-label">{unit}</span>}
+      </div>
+
+      {/* Subtitle / Trend */}
+      <div className="flex items-center gap-2">
+        {resolvedTrend && (
+          <span className={cn(
+            'inline-flex items-center gap-1 text-xs font-medium rounded-full px-2 py-0.5',
+            resolvedTrend.value >= 0 ? 'bg-emerald-dim text-emerald' : 'bg-rose-dim text-rose',
+          )}>
+            {resolvedTrend.value >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+            {resolvedTrend.value >= 0 ? '+' : ''}{resolvedTrend.value}%
+            {resolvedTrend.label && <span className="text-label ml-1">{resolvedTrend.label}</span>}
+          </span>
+        )}
+        {subtitle && !resolvedTrend && <span className="text-xs text-muted">{subtitle}</span>}
+      </div>
+
+      {/* Optional children (sparkline, progress ring) */}
+      {children && <div className="mt-3">{children}</div>}
     </div>
   );
 });
-
-StatCard.displayName = 'StatCard';
-
-export default StatCard;
