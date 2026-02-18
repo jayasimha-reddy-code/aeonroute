@@ -175,7 +175,7 @@ function Dashboard() {
           <Card>
             <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Quick Actions</h3>
             <div className="space-y-2">
-              <button onClick={() => setActiveTab('route-planner')} className="btn-primary w-full flex items-center justify-between group">
+              <button onClick={() => setActiveTab('routing')} className="btn-primary w-full flex items-center justify-between group">
                 <span className="flex items-center gap-2"><MapPin className="w-4 h-4" /> Plan a Route</span>
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
               </button>
