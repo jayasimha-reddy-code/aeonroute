@@ -1,5 +1,4 @@
 import { useEffect, lazy, Suspense } from 'react';
-import { LazyMotion, domAnimation } from 'framer-motion';
 import { useActiveTab, useSetRoadNetwork, useLoading, useAddToast } from './store/store';
 import api from './services/api';
 import Header from './components/Header';
@@ -50,7 +49,7 @@ function App() {
   const Page = pages[activeTab] || DashboardView;
 
   return (
-    <LazyMotion features={domAnimation} strict>
+    <>
       {/* Skip link */}
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-3 focus:bg-emerald focus:text-midnight focus:rounded-lg">
         Skip to content
@@ -69,7 +68,7 @@ function App() {
       </div>
 
       <ToastContainer />
-    </LazyMotion>
+    </>
   );
 }
 
