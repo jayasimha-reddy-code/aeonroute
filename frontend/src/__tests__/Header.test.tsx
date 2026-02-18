@@ -1,32 +1,18 @@
 /**
  * Header Component Tests
  * ======================
- * Verifies Header renders correctly with API mocking.
+ * Verifies Header renders correctly.
  */
 
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen, act } from '@testing-library/react';
 import Header from '../components/Header';
 import { useSystemStore } from '../store/store';
 
-// Mock the api module to prevent network calls
-vi.mock('../services/api', () => ({
-    default: {
-        healthCheck: vi.fn().mockResolvedValue({ status: 'ok' }),
-        getSystemStats: vi.fn().mockResolvedValue({}),
-    },
-}));
-
 beforeEach(() => {
-    vi.useFakeTimers();
     useSystemStore.setState({
-        sidebarCollapsed: false,
-        mobileSidebarOpen: false,
+        activeTab: 'dashboard',
     });
-});
-
-afterEach(() => {
-    vi.useRealTimers();
 });
 
 describe('Header', () => {
@@ -46,26 +32,26 @@ describe('Header', () => {
         expect(header?.tagName).toBe('HEADER');
     });
 
-    it('renders app title text', async () => {
+    it('renders page title for active tab', async () => {
         await act(async () => {
             render(<Header />);
         });
-        expect(screen.getByText(/EV Routing/i)).toBeTruthy();
+        expect(screen.getByText('Dashboard')).toBeTruthy();
     });
 
-    it('renders theme toggle button', async () => {
+    it('renders action buttons', async () => {
         await act(async () => {
             render(<Header />);
         });
-        const themeButton = screen.getByRole('button', { name: /theme.*click to switch/i });
-        expect(themeButton).toBeTruthy();
+        const buttons = screen.getAllByRole('button');
+        expect(buttons.length).toBe(3);
     });
 
-    it('renders mobile menu button', async () => {
+    it('updates title when tab changes', async () => {
+        useSystemStore.setState({ activeTab: 'training' });
         await act(async () => {
             render(<Header />);
         });
-        const menuButton = screen.getByRole('button', { name: /open navigation/i });
-        expect(menuButton).toBeTruthy();
+        expect(screen.getByText('Training')).toBeTruthy();
     });
 });

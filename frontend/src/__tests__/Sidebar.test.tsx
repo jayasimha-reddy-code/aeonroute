@@ -12,8 +12,6 @@ import { useSystemStore } from '../store/store';
 beforeEach(() => {
     useSystemStore.setState({
         activeTab: 'dashboard',
-        sidebarCollapsed: false,
-        mobileSidebarOpen: false,
     });
 });
 
@@ -29,18 +27,19 @@ describe('Sidebar', () => {
         await act(async () => {
             render(<Sidebar />);
         });
-        const nav = screen.getByRole('navigation', { name: /main navigation/i });
+        const nav = screen.getByRole('navigation', { name: /main/i });
         expect(nav).toBeTruthy();
     });
 
-    it('renders all 4 menu items', async () => {
+    it('renders primary nav items', async () => {
         await act(async () => {
             render(<Sidebar />);
         });
         expect(screen.getByText('Dashboard')).toBeTruthy();
-        expect(screen.getByText('Route Planner')).toBeTruthy();
-        expect(screen.getByText('Training')).toBeTruthy();
-        expect(screen.getByText('Analytics')).toBeTruthy();
+        expect(screen.getByText('Map')).toBeTruthy();
+        expect(screen.getByText('Overview')).toBeTruthy();
+        expect(screen.getByText('Stations')).toBeTruthy();
+        expect(screen.getByText('Settings')).toBeTruthy();
     });
 
     it('active tab has aria-current="page"', async () => {
@@ -50,5 +49,12 @@ describe('Sidebar', () => {
         });
         const dashboardButton = screen.getByText('Dashboard').closest('button');
         expect(dashboardButton?.getAttribute('aria-current')).toBe('page');
+    });
+
+    it('renders EV Routing System branding', async () => {
+        await act(async () => {
+            render(<Sidebar />);
+        });
+        expect(screen.getByText('EV Routing System')).toBeTruthy();
     });
 });

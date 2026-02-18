@@ -61,15 +61,11 @@ function ToastContainer() {
           <div
             key={toast.id}
             className={cn(
-              'pointer-events-auto flex items-start gap-3 p-4 rounded-xl border-l-4 shadow-elevated relative overflow-hidden',
+              'pointer-events-auto flex items-start gap-3 p-4 rounded-2xl border-l-4 shadow-elevated relative overflow-hidden',
+              'bg-white/[0.04] backdrop-blur-2xl',
               isDismissing ? 'animate-slide-out-right' : 'animate-slide-in-right',
               colorMap[toast.type],
             )}
-            style={{
-              background: 'rgba(255, 255, 255, 0.02)',
-              backdropFilter: 'blur(40px) saturate(1.8)',
-              WebkitBackdropFilter: 'blur(40px) saturate(1.8)',
-            }}
             role={toast.type === 'error' || toast.type === 'warning' ? 'alert' : 'status'}
             onAnimationEnd={(e) => handleAnimationEnd(e, toast.id)}
           >

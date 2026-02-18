@@ -11,8 +11,6 @@ import { useSystemStore } from '../store/store';
 beforeEach(() => {
     useSystemStore.setState({
         activeTab: 'dashboard',
-        sidebarCollapsed: false,
-        mobileSidebarOpen: false,
         toasts: [],
         roadNetwork: null,
         generatedRoutes: [],
@@ -28,34 +26,16 @@ beforeEach(() => {
 });
 
 describe('Navigation', () => {
-    it('should set active tab and close mobile sidebar', () => {
+    it('should set active tab', () => {
         const store = useSystemStore.getState();
-        store.setMobileSidebarOpen(true);
         store.setActiveTab('training');
 
         const state = useSystemStore.getState();
         expect(state.activeTab).toBe('training');
-        expect(state.mobileSidebarOpen).toBe(false);
     });
 
     it('should default to dashboard tab', () => {
         expect(useSystemStore.getState().activeTab).toBe('dashboard');
-    });
-});
-
-describe('Sidebar', () => {
-    it('should toggle sidebar collapsed state', () => {
-        const store = useSystemStore.getState();
-        expect(store.sidebarCollapsed).toBe(false);
-
-        store.toggleSidebar();
-        expect(useSystemStore.getState().sidebarCollapsed).toBe(true);
-    });
-
-    it('should set mobile sidebar open state', () => {
-        const store = useSystemStore.getState();
-        store.setMobileSidebarOpen(true);
-        expect(useSystemStore.getState().mobileSidebarOpen).toBe(true);
     });
 });
 
