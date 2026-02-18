@@ -12,11 +12,11 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variants = {
-  primary: 'bg-emerald text-midnight font-semibold hover:shadow-glow-emerald active:scale-[0.97]',
-  secondary: 'bg-white/[0.04] text-white border border-white/[0.06] hover:bg-white/[0.08] active:scale-[0.97]',
-  ghost: 'text-label hover:text-white hover:bg-white/[0.04]',
-  danger: 'bg-rose-dim text-rose border border-rose/20 hover:bg-rose/20 active:scale-[0.97]',
-  outline: 'border border-white/[0.08] text-label hover:text-white hover:border-white/[0.15] hover:bg-white/[0.03]',
+  primary: 'bg-emerald text-midnight font-semibold hover:bg-emerald/90 hover:shadow-glow-emerald-lg active:scale-[0.97] shadow-[0_0_20px_rgba(16,185,129,0.2)]',
+  secondary: 'bg-white/[0.06] text-white border border-white/[0.08] hover:bg-white/[0.10] hover:border-white/[0.14] active:scale-[0.97] shadow-card',
+  ghost: 'text-label hover:text-white hover:bg-white/[0.06]',
+  danger: 'bg-rose-dim text-rose border border-rose/25 hover:bg-rose/25 hover:shadow-glow-rose active:scale-[0.97]',
+  outline: 'border border-white/[0.10] text-label hover:text-white hover:border-white/[0.18] hover:bg-white/[0.05] hover:shadow-card',
 };
 
 const sizes = {

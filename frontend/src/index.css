@@ -36,13 +36,17 @@
 @layer components {
   /* Glass surface — THE card foundation */
   .glass {
-    @apply bg-white/[0.02] backdrop-blur-2xl border border-white/[0.05] rounded-2xl;
+    @apply bg-white/[0.035] backdrop-blur-2xl border border-white/[0.07] rounded-2xl;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 0 rgba(255,255,255,0.04);
   }
 
   .glass-hover {
     @apply transition-all duration-500 ease-out;
-    @apply hover:-translate-y-1 hover:border-white/[0.1];
-    @apply hover:shadow-[0_0_20px_rgba(16,185,129,0.15)];
+  }
+  .glass-hover:hover {
+    @apply -translate-y-1 border-white/[0.12];
+    background-color: rgba(255, 255, 255, 0.055);
+    box-shadow: 0 0 35px rgba(16, 185, 129, 0.25), 0 16px 56px rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255,255,255,0.06);
   }
 
   /* Skeleton shimmer */

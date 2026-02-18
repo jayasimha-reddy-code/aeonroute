@@ -43,13 +43,23 @@ function resolveAccent(accent?: string, color?: string): 'emerald' | 'amber' | '
   return 'emerald';
 }
 
+const glowStyle: Record<string, string> = {
+  emerald: 'hover:shadow-[0_0_35px_rgba(16,185,129,0.25),0_16px_56px_rgba(0,0,0,0.5),inset_0_1px_0_0_rgba(16,185,129,0.25)]',
+  amber: 'hover:shadow-[0_0_35px_rgba(245,158,11,0.25),0_16px_56px_rgba(0,0,0,0.5),inset_0_1px_0_0_rgba(245,158,11,0.25)]',
+  cyan: 'hover:shadow-[0_0_35px_rgba(20,184,166,0.25),0_16px_56px_rgba(0,0,0,0.5),inset_0_1px_0_0_rgba(20,184,166,0.25)]',
+  rose: 'hover:shadow-[0_0_35px_rgba(239,68,68,0.25),0_16px_56px_rgba(0,0,0,0.5),inset_0_1px_0_0_rgba(239,68,68,0.25)]',
+};
+
 export default memo(function StatCard({ title, value, unit, subtitle, trend, icon: Icon, accent, color, change, children }: StatCardProps) {
   const resolvedAccent = resolveAccent(accent, color);
   // Support legacy `change` prop → convert to trend
   const resolvedTrend = trend || (change !== undefined ? { value: change } : undefined);
 
   return (
-    <div className="glass glass-hover p-5 group">
+    <div className={cn(
+      'glass glass-hover p-5 group',
+      glowStyle[resolvedAccent],
+    )}>
       {/* Header row */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">

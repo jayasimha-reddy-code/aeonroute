@@ -33,7 +33,7 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(({
   <div
     ref={ref}
     className={cn(
-      'bg-white/[0.02] backdrop-blur-2xl border border-white/[0.05] rounded-2xl shadow-card',
+      'bg-white/[0.035] backdrop-blur-2xl border border-white/[0.07] rounded-2xl shadow-card',
       hover && 'glass-hover',
       glowMap[glow],
       paddingMap[padding],

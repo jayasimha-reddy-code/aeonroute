@@ -14,16 +14,16 @@ const config: Config = {
         // ── Core surfaces ──
         midnight: '#0a0f16',
         surface: {
-          DEFAULT: 'rgba(255, 255, 255, 0.02)',
-          raised: 'rgba(255, 255, 255, 0.04)',
+          DEFAULT: 'rgba(255, 255, 255, 0.035)',
+          raised: 'rgba(255, 255, 255, 0.06)',
           inset: 'rgba(0, 0, 0, 0.2)',
-          hover: 'rgba(255, 255, 255, 0.06)',
+          hover: 'rgba(255, 255, 255, 0.08)',
         },
         // ── Accent palette ──
         emerald: {
           DEFAULT: '#10B981',
-          dim: 'rgba(16, 185, 129, 0.10)',
-          glow: 'rgba(16, 185, 129, 0.15)',
+          dim: 'rgba(16, 185, 129, 0.14)',
+          glow: 'rgba(16, 185, 129, 0.25)',
         },
         amber: {
           DEFAULT: '#F59E0B',
@@ -50,14 +50,14 @@ const config: Config = {
         '4xl': '2rem',
       },
       boxShadow: {
-        card: '0 8px 32px rgba(0, 0, 0, 0.3)',
-        'card-hover': '0 12px 48px rgba(0, 0, 0, 0.4)',
-        'glow-emerald': '0 0 20px rgba(16, 185, 129, 0.15)',
-        'glow-emerald-lg': '0 0 40px rgba(16, 185, 129, 0.2)',
-        'glow-amber': '0 0 20px rgba(245, 158, 11, 0.15)',
-        'glow-amber-top': 'inset 0 1px 0 0 rgba(245, 158, 11, 0.4), 0 0 20px rgba(245, 158, 11, 0.12)',
-        'glow-cyan': '0 0 20px rgba(20, 184, 166, 0.15)',
-        'glow-rose': '0 0 20px rgba(239, 68, 68, 0.15)',
+        card: '0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 0 rgba(255,255,255,0.04)',
+        'card-hover': '0 16px 56px rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255,255,255,0.06)',
+        'glow-emerald': '0 0 30px rgba(16, 185, 129, 0.25), 0 0 60px rgba(16, 185, 129, 0.08)',
+        'glow-emerald-lg': '0 0 50px rgba(16, 185, 129, 0.35), 0 0 100px rgba(16, 185, 129, 0.12)',
+        'glow-amber': '0 0 30px rgba(245, 158, 11, 0.25), 0 0 60px rgba(245, 158, 11, 0.08)',
+        'glow-amber-top': 'inset 0 1px 0 0 rgba(245, 158, 11, 0.5), 0 0 30px rgba(245, 158, 11, 0.2)',
+        'glow-cyan': '0 0 30px rgba(20, 184, 166, 0.25), 0 0 60px rgba(20, 184, 166, 0.08)',
+        'glow-rose': '0 0 30px rgba(239, 68, 68, 0.25), 0 0 60px rgba(239, 68, 68, 0.08)',
       },
       backgroundImage: {
         'radial-glow': 'radial-gradient(ellipse at 50% 0%, rgba(16,185,129,0.03) 0%, transparent 60%)',
@@ -107,18 +107,20 @@ const config: Config = {
     plugin(({ addUtilities }) => {
       addUtilities({
         '.glass': {
-          backgroundColor: 'rgba(255, 255, 255, 0.02)',
+          backgroundColor: 'rgba(255, 255, 255, 0.035)',
           backdropFilter: 'blur(40px)',
           WebkitBackdropFilter: 'blur(40px)',
-          border: '1px solid rgba(255, 255, 255, 0.05)',
+          border: '1px solid rgba(255, 255, 255, 0.07)',
           borderRadius: '1rem',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 0 rgba(255,255,255,0.04)',
         },
         '.glass-hover': {
           transition: 'all 500ms cubic-bezier(0.4, 0, 0.2, 1)',
           '&:hover': {
             transform: 'translateY(-4px)',
-            borderColor: 'rgba(255, 255, 255, 0.1)',
-            boxShadow: '0 0 20px rgba(16, 185, 129, 0.15)',
+            backgroundColor: 'rgba(255, 255, 255, 0.055)',
+            borderColor: 'rgba(255, 255, 255, 0.12)',
+            boxShadow: '0 0 35px rgba(16, 185, 129, 0.25), 0 16px 56px rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255,255,255,0.06)',
           },
         },
       });
