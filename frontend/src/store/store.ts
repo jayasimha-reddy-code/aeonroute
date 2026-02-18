@@ -40,7 +40,7 @@ export interface Toast {
 
 // ─── Tab Type ─────────────────────────────────────────────
 
-export type AppTab = 'dashboard' | 'route-planner' | 'training' | 'analytics';
+export type AppTab = 'dashboard' | 'routing' | 'training' | 'analytics' | 'stations' | 'settings';
 
 // ─── Store Interface ──────────────────────────────────────
 
@@ -59,12 +59,6 @@ interface SystemState {
   activeTab: AppTab;
   setActiveTab: (tab: AppTab) => void;
 
-  // ── Sidebar ──
-  sidebarCollapsed: boolean;
-  toggleSidebar: () => void;
-  mobileSidebarOpen: boolean;
-  setMobileSidebarOpen: (open: boolean) => void;
-
   // ── Loading / Error ──
   isLoading: boolean;
   setIsLoading: (loading: boolean) => void;
@@ -78,10 +72,6 @@ interface SystemState {
     battery_capacity_kwh: number;
   };
   setEVState: (state: { battery_soc: number; current_node: number; battery_capacity_kwh: number }) => void;
-
-  // ── Presentation Mode ──
-  presentationMode: boolean;
-  togglePresentationMode: () => void;
 
   // ── Toast Notifications ──
   toasts: Toast[];
@@ -117,13 +107,7 @@ export const useSystemStore = create<SystemState>()(
 
       // Navigation
       activeTab: 'dashboard',
-      setActiveTab: (tab) => set({ activeTab: tab, mobileSidebarOpen: false }),
-
-      // Sidebar
-      sidebarCollapsed: false,
-      toggleSidebar: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
-      mobileSidebarOpen: false,
-      setMobileSidebarOpen: (open) => set({ mobileSidebarOpen: open }),
+      setActiveTab: (tab) => set({ activeTab: tab }),
 
       // Loading / Error
       isLoading: false,
@@ -138,10 +122,6 @@ export const useSystemStore = create<SystemState>()(
         battery_capacity_kwh: 60,
       },
       setEVState: (state) => set({ currentEVState: state }),
-
-      // Presentation Mode
-      presentationMode: false,
-      togglePresentationMode: () => set((s) => ({ presentationMode: !s.presentationMode })),
 
       // Toasts
       toasts: [],
@@ -228,8 +208,7 @@ export const useSystemStore = create<SystemState>()(
       name: 'ev-routing-preferences',
       // Only persist user preferences — not runtime data
       partialize: (state) => ({
-        sidebarCollapsed: state.sidebarCollapsed,
-        presentationMode: state.presentationMode,
+        activeTab: state.activeTab,
       }),
     }
   )
@@ -248,12 +227,7 @@ export const useSetActiveTab = () => useSystemStore((s) => s.setActiveTab);
 export const useToasts = () => useSystemStore((s) => ({ toasts: s.toasts, addToast: s.addToast, removeToast: s.removeToast }));
 export const useAddToast = () => useSystemStore((s) => s.addToast);
 
-export const useSidebar = () => useSystemStore((s) => ({
-  sidebarCollapsed: s.sidebarCollapsed,
-  toggleSidebar: s.toggleSidebar,
-  mobileSidebarOpen: s.mobileSidebarOpen,
-  setMobileSidebarOpen: s.setMobileSidebarOpen,
-}));
+
 
 export const useRoutes = () => useSystemStore((s) => ({
   generatedRoutes: s.generatedRoutes,
@@ -272,11 +246,7 @@ export const useLoading = () => useSystemStore((s) => ({
   setIsLoading: s.setIsLoading,
 }));
 
-export const usePresentationMode = () =>
-  useSystemStore((s) => ({
-    presentationMode: s.presentationMode,
-    togglePresentationMode: s.togglePresentationMode,
-  }));
+
 
 // ─── Training Stream Selectors ────────────────────────────
 
