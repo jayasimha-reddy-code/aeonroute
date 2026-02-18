@@ -22,8 +22,8 @@ const edgesLayerStyle = (): LineLayerSpecification => ({
   type: 'line',
   source: 'network-edges',
   paint: {
-    'line-color': '#475569',
-    'line-width': 1.2,
+    'line-color': 'rgba(255, 255, 255, 0.08)',
+    'line-width': 1,
     'line-opacity': 0.18,
   },
   layout: {
@@ -38,9 +38,9 @@ const edgesHoverStyle = (): LineLayerSpecification => ({
   source: 'network-edges',
   filter: ['==', ['get', 'source'], -1],
   paint: {
-    'line-color': '#818cf8',
-    'line-width': 3,
-    'line-opacity': 0.8,
+    'line-color': '#10B981',
+    'line-width': 2.5,
+    'line-opacity': 0.6,
   },
 });
 

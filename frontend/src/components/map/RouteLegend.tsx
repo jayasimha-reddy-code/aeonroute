@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import type { Route } from '../../services/api';
-import { ROUTE_COLORS } from './mapStyles';
+import { ROUTE_COLORS_ARRAY } from './mapStyles';
 import { cn } from '../../lib/utils';
 
 interface RouteLegendProps {
@@ -20,15 +20,15 @@ export const RouteLegend = memo(function RouteLegend({
 
   return (
     <div
-      className="absolute bottom-3 left-3 z-10 rounded-xl bg-white/[0.02] backdrop-blur-xl border border-white/[0.05] shadow-lg p-2.5 space-y-1"
-      style={{ minWidth: 160 }}
+      className="absolute bottom-3 left-3 z-10 rounded-2xl backdrop-blur-[40px] border border-white/[0.03] border-t-white/[0.15] shadow-[0_8px_32px_rgba(0,0,0,0.5)] p-2.5 space-y-1"
+      style={{ minWidth: 160, backgroundColor: 'rgba(15, 20, 26, 0.7)' }}
     >
       <p className="text-[10px] uppercase tracking-wider font-semibold text-muted mb-1.5 px-1">
         Routes
       </p>
       {routes.slice(0, 3).map((route, idx) => {
         const isActive = idx === hiIdx;
-        const color = ROUTE_COLORS[idx % ROUTE_COLORS.length];
+        const color = ROUTE_COLORS_ARRAY[idx % ROUTE_COLORS_ARRAY.length];
 
         return (
           <button

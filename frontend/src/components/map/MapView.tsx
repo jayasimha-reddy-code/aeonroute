@@ -159,7 +159,7 @@ const MapView = memo(function MapView({
 
   return (
     <div
-      className={`w-full h-full rounded-2xl overflow-hidden border border-white/[0.05] shadow-card ${className}`}
+      className={`w-full h-full rounded-3xl overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.5)] ${className}`}
       style={{ minHeight: 300 }}
       role="application"
       aria-label="EV route map"

@@ -26,11 +26,11 @@ const nodesStyle: CircleLayerSpecification = {
   type: 'circle',
   source: 'network-nodes',
   paint: {
-    'circle-radius': ['case', ['get', 'isCharging'], 7, 3.5] as any,
+    'circle-radius': ['case', ['get', 'isCharging'], 7, 3] as any,
     'circle-color': ['case', ['get', 'isCharging'], '#f59e0b', '#10b981'] as any,
-    'circle-opacity': ['case', ['get', 'isCharging'], 0.95, 0.7] as any,
-    'circle-stroke-width': ['case', ['get', 'isCharging'], 2, 1] as any,
-    'circle-stroke-color': ['case', ['get', 'isCharging'], '#92400e', '#065f46'] as any,
+    'circle-opacity': ['case', ['get', 'isCharging'], 0.95, 0.4] as any,
+    'circle-stroke-width': ['case', ['get', 'isCharging'], 2, 0] as any,
+    'circle-stroke-color': ['case', ['get', 'isCharging'], '#92400e', 'transparent'] as any,
   },
 };
 

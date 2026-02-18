@@ -16,11 +16,12 @@ const markerStyle = (bg: string, border: string, shadow: string): React.CSSPrope
   borderRadius: '50%',
   background: bg,
   border: `3px solid ${border}`,
-  boxShadow: `0 0 12px ${shadow}`,
+  boxShadow: `0 0 16px ${shadow}, 0 0 0 0 ${shadow}`,
   color: 'white',
   fontWeight: 800,
   fontSize: 11,
   fontFamily: 'Inter, sans-serif',
+  animation: 'charge-pulse 1.5s ease-out infinite',
 });
 
 export const NodeMarkers = memo(function NodeMarkers({

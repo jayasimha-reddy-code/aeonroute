@@ -3,7 +3,7 @@ import { Source, Layer } from 'react-map-gl/maplibre';
 import type { Route } from '../../services/api';
 import { routeToGeoJSON } from '../../lib/geo';
 import { useAnimatedRoute } from '../../hooks/useAnimatedRoute';
-import { ROUTE_COLORS } from './mapStyles';
+import { ROUTE_COLORS, ROUTE_COLORS_ARRAY } from './mapStyles';
 
 interface RouteLayerProps {
   routes: Route[];
@@ -64,7 +64,7 @@ export const RouteLayer = memo(function RouteLayer({
       {routes.map((_, idx) => {
         if (idx === hiIdx) return null;
         if (idx > 2) return null; // max 3 routes displayed
-        const color = ROUTE_COLORS[idx % ROUTE_COLORS.length];
+        const color = ROUTE_COLORS_ARRAY[idx % ROUTE_COLORS_ARRAY.length];
         const geojson = routeGeoJSONs[idx];
         if (!geojson) return null;
 
@@ -80,9 +80,9 @@ export const RouteLayer = memo(function RouteLayer({
               type="line"
               paint={{
                 'line-color': color,
-                'line-width': 2.5,
+                'line-width': 2,
                 'line-opacity': 0.35,
-                'line-dasharray': [6, 4],
+                'line-dasharray': [3, 3],
               }}
               layout={{ 'line-cap': 'round', 'line-join': 'round' }}
             />
@@ -100,10 +100,10 @@ export const RouteLayer = memo(function RouteLayer({
           id="route-highlight-glow-layer"
           type="line"
           paint={{
-            'line-color': ROUTE_COLORS[hiIdx % ROUTE_COLORS.length],
-            'line-width': 10,
-            'line-opacity': 0.15,
-            'line-blur': 4,
+            'line-color': ROUTE_COLORS.glow,
+            'line-width': 14,
+            'line-opacity': 0.4,
+            'line-blur': 8,
           }}
           layout={{ 'line-cap': 'round', 'line-join': 'round' }}
         />
@@ -120,7 +120,7 @@ export const RouteLayer = memo(function RouteLayer({
           id="route-highlight-energy-layer"
           type="line"
           paint={{
-            'line-width': 5,
+            'line-width': 4,
             'line-gradient': [
               'interpolate',
               ['linear'],
