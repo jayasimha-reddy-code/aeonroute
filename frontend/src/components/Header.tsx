@@ -51,7 +51,7 @@ export default function Header() {
   const activeFilterCount = Object.values(filters).filter(Boolean).length;
 
   return (
-    <header className="h-14 flex items-center justify-between px-6 border-b border-white/[0.03] flex-shrink-0">
+    <header className="h-14 flex items-center justify-between px-6 border-b border-white/[0.04] flex-shrink-0">
       {/* Page title */}
       <h1 className="text-lg font-semibold text-white tracking-tight">{title}</h1>
 
@@ -100,7 +100,7 @@ export default function Header() {
             )}
           </button>
           {filterOpen && (
-            <div className="absolute right-0 mt-2 w-48 rounded-xl bg-[#0f141c] border border-white/10 backdrop-blur-3xl shadow-2xl z-50 py-1 animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="absolute right-0 mt-2 w-48 rounded-xl bg-[#0f141c] border border-white/10 backdrop-blur-[40px] shadow-2xl z-50 py-1 animate-in fade-in slide-in-from-top-2 duration-200">
               <p className="px-3 py-1.5 text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Show items</p>
               {[
                 { key: 'showActive' as const, label: 'Active' },

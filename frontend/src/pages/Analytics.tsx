@@ -173,7 +173,7 @@ function Analytics() {
             {dateRange === '7d' ? 'Last 7d' : dateRange === '30d' ? 'Last 30d' : dateRange === '90d' ? '90 days' : 'All time'}
           </button>
           {dateDropdownOpen && (
-            <div className="absolute right-0 mt-2 w-40 rounded-xl bg-[#0f141c] border border-white/10 backdrop-blur-3xl shadow-2xl z-50 py-1">
+            <div className="absolute right-0 mt-2 w-40 rounded-xl bg-[#0f141c] border border-white/10 backdrop-blur-[40px] shadow-2xl z-50 py-1">
               {[
                 { value: '7d', label: 'Last 7 days' },
                 { value: '30d', label: 'Last 30 days' },
