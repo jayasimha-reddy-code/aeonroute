@@ -14,6 +14,7 @@ interface RouteCardProps {
 const RouteCard = React.memo(function RouteCard({ route, rank, selected = false, onSelect }: RouteCardProps) {
   const scoreVariant = getScoreColor(route.feasibility_score);
   const isTop = rank === 1;
+  const routeTypeLabel = route.route_type === 'q_learning' ? 'Q-Learning Optimized' : route.route_type === 'dijkstra' ? 'Dijkstra Shortest' : null;
 
   return (
     <div
@@ -46,6 +47,11 @@ const RouteCard = React.memo(function RouteCard({ route, rank, selected = false,
               {isTop && (
                 <Badge variant="primary" dot>
                   <Award className="w-3 h-3" /> Best
+                </Badge>
+              )}
+              {routeTypeLabel && (
+                <Badge variant={route.route_type === 'q_learning' ? 'success' : 'warning'}>
+                  {routeTypeLabel}
                 </Badge>
               )}
             </div>
@@ -85,7 +91,21 @@ const RouteCard = React.memo(function RouteCard({ route, rank, selected = false,
           <Zap className="w-3.5 h-3.5 text-amber-500" />
           <span className="text-xs text-muted">
             {route.charging_stops.length} charging stop{route.charging_stops.length > 1 ? 's' : ''}
-            <span className="text-label"> — Nodes {route.charging_stops.join(', ')}</span>
+            {route.charging_stop_details && route.charging_stop_details.length > 0 ? (
+              <span className="text-label"> — {route.charging_stop_details.map(s => s.name).join(', ')}</span>
+            ) : (
+              <span className="text-label"> — Nodes {route.charging_stops.join(', ')}</span>
+            )}
+          </span>
+        </div>
+      )}
+
+      {/* Battery Remaining */}
+      {route.battery_remaining_pct != null && (
+        <div className="mt-2 flex items-center gap-2">
+          <Battery className="w-3.5 h-3.5 text-emerald" />
+          <span className="text-xs text-muted">
+            Battery remaining: <span className={cn('font-semibold', route.battery_remaining_pct > 20 ? 'text-emerald' : 'text-rose')}>{route.battery_remaining_pct}%</span>
           </span>
         </div>
       )}

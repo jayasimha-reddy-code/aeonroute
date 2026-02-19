@@ -2,7 +2,7 @@ import { useState, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { hyperStaggerContainer, hyperStaggerItem } from '../lib/motion';
 import { useSystemStore } from '../store/store';
-import api from '../services/api';
+import api, { geoJSONRouteToLegacy } from '../services/api';
 import NetworkMap from '../components/NetworkMap';
 import RouteCard from '../components/RouteCard';
 import PageHeader from '../components/PageHeader';
@@ -16,10 +16,24 @@ import { useEVSimulation } from '../hooks/useEVSimulation';
 import { BatteryGauge } from '../components/map/BatteryGauge';
 import { RouteTimeline } from '../components/map/RouteTimeline';
 
+/** Hyderabad landmark presets */
+const LANDMARKS = [
+  { label: 'Charminar', lat: 17.3616, lon: 78.4747 },
+  { label: 'HITEC City', lat: 17.4435, lon: 78.3772 },
+  { label: 'Secunderabad Stn', lat: 17.4344, lon: 78.5013 },
+  { label: 'Gachibowli', lat: 17.4401, lon: 78.3489 },
+  { label: 'Kukatpally', lat: 17.4849, lon: 78.3903 },
+  { label: 'Begumpet', lat: 17.4437, lon: 78.4672 },
+];
+
 function RoutePlanner() {
   const { roadNetwork, generatedRoutes, setGeneratedRoutes, selectedRoute, setSelectedRoute, currentEVState, setEVState, addToast } = useSystemStore();
-  const [source, setSource] = useState(0);
-  const [destination, setDestination] = useState(10);
+  const [sourceLat, setSourceLat] = useState(17.3616);
+  const [sourceLon, setSourceLon] = useState(78.4747);
+  const [destLat, setDestLat] = useState(17.4435);
+  const [destLon, setDestLon] = useState(78.3772);
+  const [sourceLabel, setSourceLabel] = useState('Charminar');
+  const [destLabel, setDestLabel] = useState('HITEC City');
   const [loading, setLoading] = useState(false);
   const [highlightIdx, setHighlightIdx] = useState<number | undefined>(undefined);
   const [routeType, setRouteType] = useState<'fast' | 'eco' | 'scenic'>('fast');
@@ -39,19 +53,28 @@ function RoutePlanner() {
       addToast({ type: 'warning', title: 'No Network', message: 'Road network must be loaded first.' });
       return;
     }
-    if (source === destination) {
+    if (sourceLat === destLat && sourceLon === destLon) {
       addToast({ type: 'warning', title: 'Invalid Input', message: 'Source and destination must be different.' });
       return;
     }
     setLoading(true);
     setGeneratedRoutes([]);
     try {
-      const result = await api.generateRoute({ source, destination, ev_state: currentEVState, num_candidates: 5 });
-      setGeneratedRoutes(result.routes);
-      if (result.routes.length > 0) {
-        setSelectedRoute(result.routes[0]);
+      const result = await api.generateRoute({
+        source_lat: sourceLat,
+        source_lon: sourceLon,
+        dest_lat: destLat,
+        dest_lon: destLon,
+        battery_soc: currentEVState.battery_soc,
+        battery_capacity_kwh: currentEVState.battery_capacity_kwh,
+      });
+      // Convert GeoJSON routes to legacy Route format
+      const routes = [geoJSONRouteToLegacy(result.route), ...result.alternatives.map(geoJSONRouteToLegacy)];
+      setGeneratedRoutes(routes);
+      if (routes.length > 0) {
+        setSelectedRoute(routes[0]);
         setHighlightIdx(0);
-        addToast({ type: 'success', title: 'Routes Generated', message: `Found ${result.routes.length} candidate routes.` });
+        addToast({ type: 'success', title: 'Routes Generated', message: `Found ${routes.length} candidate route${routes.length > 1 ? 's' : ''} (${result.route.properties.route_type === 'q_learning' ? 'Q-Learning Optimized' : 'Dijkstra'}).` });
       }
     } catch (error: any) {
       addToast({ type: 'error', title: 'Route Generation Failed', message: error?.message });
@@ -61,9 +84,23 @@ function RoutePlanner() {
   };
 
   const handleNodeClick = useCallback((nodeId: number) => {
-    if (!source && source !== 0) { setSource(nodeId); return; }
-    setDestination(nodeId);
-  }, [source]);
+    // Look up lat/lon from posLookup when clicking map nodes
+    if (posLookup) {
+      const coord = posLookup[nodeId.toString()];
+      if (coord) {
+        // coord is [lng, lat]
+        if (!selectedRoute) {
+          setSourceLat(coord[1]);
+          setSourceLon(coord[0]);
+          setSourceLabel(`Node ${nodeId}`);
+        } else {
+          setDestLat(coord[1]);
+          setDestLon(coord[0]);
+          setDestLabel(`Node ${nodeId}`);
+        }
+      }
+    }
+  }, [posLookup, selectedRoute]);
 
   const batteryColor = currentEVState.battery_soc > 50 ? 'bg-emerald' : currentEVState.battery_soc > 20 ? 'bg-amber' : 'bg-rose';
 
@@ -90,17 +127,41 @@ function RoutePlanner() {
             {/* Source */}
             <div className="mb-4">
               <label className="input-label flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald" /> Start Node
+                <span className="w-2 h-2 rounded-full bg-emerald" /> Start Location
               </label>
-              <input type="number" min={0} max={(roadNetwork?.nodes ?? 100) - 1} value={source} onChange={(e) => setSource(parseInt(e.target.value) || 0)} className="input-field" />
+              <select
+                value={sourceLabel}
+                onChange={(e) => {
+                  const lm = LANDMARKS.find(l => l.label === e.target.value);
+                  if (lm) { setSourceLat(lm.lat); setSourceLon(lm.lon); setSourceLabel(lm.label); }
+                }}
+                className="input-field"
+              >
+                {LANDMARKS.map(lm => (
+                  <option key={lm.label} value={lm.label}>{lm.label}</option>
+                ))}
+              </select>
+              <p className="text-[10px] text-muted mt-1 font-mono">{sourceLat.toFixed(4)}, {sourceLon.toFixed(4)}</p>
             </div>
 
             {/* Destination */}
             <div className="mb-4">
               <label className="input-label flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-rose" /> Destination Node
+                <span className="w-2 h-2 rounded-full bg-rose" /> Destination
               </label>
-              <input type="number" min={0} max={(roadNetwork?.nodes ?? 100) - 1} value={destination} onChange={(e) => setDestination(parseInt(e.target.value) || 0)} className="input-field" />
+              <select
+                value={destLabel}
+                onChange={(e) => {
+                  const lm = LANDMARKS.find(l => l.label === e.target.value);
+                  if (lm) { setDestLat(lm.lat); setDestLon(lm.lon); setDestLabel(lm.label); }
+                }}
+                className="input-field"
+              >
+                {LANDMARKS.map(lm => (
+                  <option key={lm.label} value={lm.label}>{lm.label}</option>
+                ))}
+              </select>
+              <p className="text-[10px] text-muted mt-1 font-mono">{destLat.toFixed(4)}, {destLon.toFixed(4)}</p>
             </div>
 
             {/* Battery */}
@@ -187,8 +248,6 @@ function RoutePlanner() {
                   network={roadNetwork}
                   routes={generatedRoutes}
                   highlightIndex={highlightIdx}
-                  sourceNode={source}
-                  destNode={destination}
                   onNodeClick={handleNodeClick}
                   onRouteSelect={(idx) => { setHighlightIdx(idx); setSelectedRoute(generatedRoutes[idx]); }}
                   simulationState={simState}

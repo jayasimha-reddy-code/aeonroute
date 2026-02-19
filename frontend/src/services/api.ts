@@ -310,3 +310,23 @@ class APIClient {
 const api = new APIClient();
 export default api;
 
+/**
+ * Convert a GeoJSON route from the backend to the legacy Route interface
+ * used by RouteCard, RouteLayer, useEVSimulation, etc.
+ */
+export function geoJSONRouteToLegacy(geojson: GeoJSONRoute): Route {
+  const props = geojson.properties;
+  return {
+    path: props.path_node_ids,
+    distance_km: props.distance_km,
+    energy_kwh: props.energy_kwh,
+    time_minutes: props.time_minutes,
+    feasibility_score: props.battery_remaining_pct != null ? props.battery_remaining_pct / 100 : 0.8,
+    charging_stops: (props.charging_stops ?? []).map(s => s.node_id),
+    battery_remaining_pct: props.battery_remaining_pct,
+    route_type: props.route_type,
+    charging_stop_details: props.charging_stops,
+    geojson,
+  };
+}
+

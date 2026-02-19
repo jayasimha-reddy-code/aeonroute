@@ -30,7 +30,18 @@ export const RouteLayer = memo(function RouteLayer({
 
   // Convert all routes to GeoJSON
   const routeGeoJSONs = useMemo(
-    () => routes.map((r) => routeToGeoJSON(r, posLookup)),
+    () => routes.map((r) => {
+      // Use pre-computed GeoJSON from backend if available
+      if (r.geojson?.geometry?.coordinates?.length) {
+        return {
+          type: 'Feature' as const,
+          properties: {},
+          geometry: r.geojson.geometry,
+        } as GeoJSON.Feature<GeoJSON.LineString>;
+      }
+      // Fallback to posLookup conversion
+      return routeToGeoJSON(r, posLookup!);
+    }),
     [routes, posLookup],
   );
 
