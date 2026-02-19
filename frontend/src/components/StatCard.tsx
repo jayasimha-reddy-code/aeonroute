@@ -45,10 +45,10 @@ function resolveAccent(accent?: string, color?: string): 'emerald' | 'amber' | '
 }
 
 const glowStyle: Record<string, string> = {
-  emerald: 'hover:shadow-[0_0_35px_rgba(16,185,129,0.25),0_16px_56px_rgba(0,0,0,0.5),inset_0_1px_0_0_rgba(16,185,129,0.25)]',
-  amber: 'hover:shadow-[0_0_35px_rgba(245,158,11,0.25),0_16px_56px_rgba(0,0,0,0.5),inset_0_1px_0_0_rgba(245,158,11,0.25)]',
-  cyan: 'hover:shadow-[0_0_35px_rgba(20,184,166,0.25),0_16px_56px_rgba(0,0,0,0.5),inset_0_1px_0_0_rgba(20,184,166,0.25)]',
-  rose: 'hover:shadow-[0_0_35px_rgba(239,68,68,0.25),0_16px_56px_rgba(0,0,0,0.5),inset_0_1px_0_0_rgba(239,68,68,0.25)]',
+  emerald: 'hover:shadow-[0_24px_48px_-12px_rgba(0,0,0,0.8),0_0_35px_rgba(16,185,129,0.25),inset_0_1px_0_0_rgba(16,185,129,0.25)]',
+  amber: 'hover:shadow-[0_24px_48px_-12px_rgba(0,0,0,0.8),0_0_35px_rgba(245,158,11,0.25),inset_0_1px_0_0_rgba(245,158,11,0.25)]',
+  cyan: 'hover:shadow-[0_24px_48px_-12px_rgba(0,0,0,0.8),0_0_35px_rgba(20,184,166,0.25),inset_0_1px_0_0_rgba(20,184,166,0.25)]',
+  rose: 'hover:shadow-[0_24px_48px_-12px_rgba(0,0,0,0.8),0_0_35px_rgba(239,68,68,0.25),inset_0_1px_0_0_rgba(239,68,68,0.25)]',
 };
 
 export default memo(function StatCard({ title, value, unit, subtitle, trend, icon: Icon, accent, color, change, children }: StatCardProps) {
