@@ -55,3 +55,33 @@ export const fadeIn: Variants = {
 export const springSnappy = { type: 'spring' as const, stiffness: 400, damping: 25 };
 export const springGentle = { type: 'spring' as const, stiffness: 200, damping: 20 };
 export const springBouncy = { type: 'spring' as const, stiffness: 300, damping: 15 };
+
+/** ── Ultra-premium stagger variants (Phase 12 spec) ── */
+export const hyperStaggerContainer: Variants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+};
+
+export const hyperStaggerItem: Variants = {
+  hidden: { opacity: 0, y: 20 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      type: 'spring',
+      stiffness: 300,
+      damping: 24,
+    },
+  },
+};
+
+/** Card hover preset — use with whileHover on motion.div */
+export const cardHover = {
+  y: -6,
+  transition: { type: 'spring', stiffness: 400, damping: 25 },
+};
