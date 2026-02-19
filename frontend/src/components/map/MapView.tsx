@@ -7,7 +7,7 @@ import { Zap } from 'lucide-react';
 
 import type { RoadNetworkData, Route } from '../../services/api';
 import { useMapTheme } from '../../hooks/useMapTheme';
-import { networkToGeoJSON, buildPosLookup } from '../../lib/geo';
+import { networkToGeoJSON, buildPosLookup, HYDERABAD_CENTER } from '../../lib/geo';
 import { NetworkEdgesLayer } from './NetworkEdgesLayer';
 import { NetworkNodesLayer } from './NetworkNodesLayer';
 import { NodeMarkers } from './NodeMarkers';
@@ -64,8 +64,8 @@ const MapView = memo(function MapView({
   sourceNode,
   destNode,
   className = '',
-  center = [30.2672, -97.7431],
-  zoom = 13,
+  center = HYDERABAD_CENTER,
+  zoom = 12,
   onNodeClick,
   onRouteSelect,
   simulationState,
@@ -151,6 +151,14 @@ const MapView = memo(function MapView({
       mapRef.current.fitBounds(bounds, { padding: 60, duration: 600 });
     }
   }, [routes, posLookup]);
+
+  // ── Fit bounds to network data (Hyderabad auto-center) ──
+  useEffect(() => {
+    if (!mapRef.current || !network?.bounds) return;
+    const { north, south, east, west } = network.bounds;
+    const bounds = new LngLatBounds([west, south], [east, north]);
+    mapRef.current.fitBounds(bounds, { padding: 40, duration: 800 });
+  }, [network?.bounds]);
 
   // ── Determine source / dest from routes or props ──────
   const srcNodeId = routes.length > 0 ? routes[0].path[0] : sourceNode;

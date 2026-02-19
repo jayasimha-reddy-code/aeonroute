@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { RoadNetworkData, Route } from '../services/api';
+import { RoadNetworkData, Route, StationData } from '../services/api';
 
 // ─── Training Stream Types ────────────────────────────────
 
@@ -61,6 +61,10 @@ interface SystemState {
   // ── Road Network ──
   roadNetwork: RoadNetworkData | null;
   setRoadNetwork: (network: RoadNetworkData) => void;
+
+  // ── Stations ──
+  stations: StationData[];
+  setStations: (stations: StationData[]) => void;
 
   // ── Routes ──
   generatedRoutes: Route[];
@@ -124,6 +128,10 @@ export const useSystemStore = create<SystemState>()(
       // Road Network
       roadNetwork: null,
       setRoadNetwork: (network) => set({ roadNetwork: network }),
+
+      // Stations
+      stations: [],
+      setStations: (stations) => set({ stations }),
 
       // Routes
       generatedRoutes: [],
@@ -267,6 +275,9 @@ export const useSystemStore = create<SystemState>()(
 
 export const useRoadNetwork = () => useSystemStore((s) => s.roadNetwork);
 export const useSetRoadNetwork = () => useSystemStore((s) => s.setRoadNetwork);
+
+export const useStations = () => useSystemStore((s) => s.stations);
+export const useSetStations = () => useSystemStore((s) => s.setStations);
 
 export const useActiveTab = () => useSystemStore((s) => s.activeTab);
 export const useSetActiveTab = () => useSystemStore((s) => s.setActiveTab);

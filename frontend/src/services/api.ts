@@ -11,12 +11,35 @@ export interface EdgeData {
   road_type?: string;
 }
 
+export interface RoadNetworkBounds {
+  north: number;
+  south: number;
+  east: number;
+  west: number;
+}
+
 export interface RoadNetworkData {
   nodes: number;
   edges: number;
   charging_stations: number[];
   nodes_pos: Record<string, { x: number; y: number }>;
   edges_list: EdgeData[];
+  /** Present when data is real-world GeoJSON (Hyderabad) */
+  bounds?: RoadNetworkBounds;
+  /** GeoJSON FeatureCollection type indicator */
+  type?: string;
+  features?: GeoJSON.Feature[];
+}
+
+export interface StationData {
+  id: number;
+  name: string;
+  lat: number;
+  lon: number;
+  graph_node_id: number;
+  power_kw: number;
+  num_ports: number;
+  operator: string;
 }
 
 export interface EVState {
@@ -27,12 +50,40 @@ export interface EVState {
 }
 
 export interface RouteRequest {
-  source: number;
-  destination: number;
-  ev_state: EVState;
-  num_candidates: number;
+  source?: number;
+  destination?: number;
+  source_lat?: number;
+  source_lon?: number;
+  dest_lat?: number;
+  dest_lon?: number;
+  battery_soc?: number;
+  battery_capacity_kwh?: number;
+  ev_state?: EVState;
+  num_candidates?: number;
 }
 
+export interface GeoJSONRouteProperties {
+  distance_km: number;
+  energy_kwh: number;
+  time_minutes: number;
+  battery_remaining_pct?: number;
+  charging_stops?: { node_id: number; name: string; lat: number; lon: number }[];
+  path_node_ids: number[];
+  route_type: 'q_learning' | 'dijkstra';
+}
+
+export interface GeoJSONRoute {
+  type: 'Feature';
+  geometry: { type: 'LineString'; coordinates: [number, number][] };
+  properties: GeoJSONRouteProperties;
+}
+
+export interface RouteResponse {
+  route: GeoJSONRoute;
+  alternatives: GeoJSONRoute[];
+}
+
+/** Legacy Route type for backward compat */
 export interface Route {
   path: number[];
   distance_km: number;
@@ -40,15 +91,33 @@ export interface Route {
   time_minutes: number;
   feasibility_score: number;
   charging_stops: number[];
+  /** Extended fields from GeoJSON backend */
+  battery_remaining_pct?: number;
+  route_type?: 'q_learning' | 'dijkstra';
+  charging_stop_details?: { node_id: number; name: string; lat: number; lon: number }[];
+  geojson?: GeoJSONRoute;
 }
 
 export interface TrainingConfig {
-  grid_size: number;
-  gan_epochs: number;
-  rl_episodes: number;
-  traffic_samples: number;
-  gan_batch_size: number;
-  rl_max_steps: number;
+  episodes?: number;
+  learning_rate?: number;
+  discount_factor?: number;
+  max_steps?: number;
+  /** Legacy fields (accepted but ignored by backend) */
+  grid_size?: number;
+  gan_epochs?: number;
+  rl_episodes?: number;
+  traffic_samples?: number;
+  gan_batch_size?: number;
+  rl_max_steps?: number;
+}
+
+export interface SystemConfig {
+  osmnx_radius_meters: number;
+  osmnx_radius_km: number;
+  osmnx_center_lat: number;
+  osmnx_center_lon: number;
+  max_training_episodes: number;
 }
 
 export interface TrainingStatus {
@@ -163,9 +232,15 @@ class APIClient {
     return (await this.client.get('/api/road-network', { params: { grid_size: gridSize } })).data;
   }
 
+  // ─── Stations ─────────────────────────────────────────
+
+  async getStations(): Promise<{ stations: StationData[]; count: number }> {
+    return (await this.client.get('/api/stations')).data;
+  }
+
   // ─── Routes ───────────────────────────────────────────
 
-  async generateRoute(request: RouteRequest): Promise<{ routes: Route[]; count: number }> {
+  async generateRoute(request: RouteRequest): Promise<RouteResponse> {
     return (await this.client.post('/api/generate-route', request)).data;
   }
 
@@ -223,6 +298,12 @@ class APIClient {
 
   async getTrainingHistory() {
     return (await this.client.get('/api/analytics/training-history')).data;
+  }
+
+  // ─── System Config ────────────────────────────────────
+
+  async getSystemConfig(): Promise<SystemConfig> {
+    return (await this.client.get('/api/system/config')).data;
   }
 }
 

@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { useRoadNetwork, useAddToast, useViewMode } from '../store/store';
+import { useRoadNetwork, useAddToast, useViewMode, useSystemStore } from '../store/store';
 import api, { SystemStats, RouteMetrics } from '../services/api';
 import NetworkMap from '../components/NetworkMap';
 import StatCard from '../components/StatCard';
@@ -11,7 +11,7 @@ import { StatCardSkeleton } from '../components/ui/Skeleton';
 import { ProgressRing } from '../components/ui';
 import { OverflowMenu } from '../components/ui/OverflowMenu';
 import { BarChart3, Activity, Navigation, Zap, Cpu, Clock, RefreshCw, ChevronUp } from 'lucide-react';
-import { staggerContainer, staggerItem, hyperStaggerContainer, hyperStaggerItem } from '../lib/motion';
+import { hyperStaggerContainer, hyperStaggerItem } from '../lib/motion';
 import { AreaChart, Area, ResponsiveContainer } from 'recharts';
 import { areaGradient, CHART_COLORS } from '../lib/chartConfig';
 
@@ -36,6 +36,14 @@ function Dashboard() {
       setStats(systemStats);
       setMetrics(routeMetrics);
       setLastRefresh(new Date());
+
+      // Load stations on first fetch
+      if (isInitial) {
+        try {
+          const stationData = await api.getStations();
+          useSystemStore.getState().setStations(stationData.stations);
+        } catch { /* stations optional */ }
+      }
     } catch (error: any) {
       if (isInitial) addToast({ type: 'error', title: 'Failed to load dashboard', message: error?.message });
     } finally {

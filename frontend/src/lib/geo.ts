@@ -1,15 +1,32 @@
 import type { RoadNetworkData, Route } from '../services/api';
 
+/** Default center — Hyderabad, India */
+export const HYDERABAD_CENTER: [number, number] = [17.385, 78.4867];
+
 /**
- * Convert abstract graph coords (0-100) to [lng, lat] (GeoJSON order).
- * Same math as the old Leaflet toLatLng, but returns [lng, lat].
+ * Detect whether a RoadNetworkData has real-world lon/lat coords (from Hyderabad OSM)
+ * vs abstract grid coords (0-100 range). Real data has a `bounds` field.
+ */
+export function isRealWorldCoords(network: RoadNetworkData): boolean {
+  return !!network.bounds;
+}
+
+/**
+ * Convert coordinates to [lng, lat] (GeoJSON order).
+ * - Real-world: x=lon, y=lat → [x, y] directly
+ * - Abstract grid (legacy): maps 0-100 range to lat/lng around center
  */
 export function toLngLat(
   x: number,
   y: number,
-  center: [number, number] = [30.2672, -97.7431],
+  center: [number, number] = HYDERABAD_CENTER,
   spread = 0.045,
+  realWorld = false,
 ): [number, number] {
+  if (realWorld) {
+    // x is already longitude, y is already latitude
+    return [x, y];
+  }
   const lat = center[0] + (y / 100 - 0.5) * spread * 2;
   const lng = center[1] + (x / 100 - 0.5) * spread * 2;
   return [lng, lat];
@@ -20,11 +37,12 @@ export function toLngLat(
  */
 export function buildPosLookup(
   network: RoadNetworkData,
-  center: [number, number] = [30.2672, -97.7431],
+  center: [number, number] = HYDERABAD_CENTER,
 ): Record<string, [number, number]> {
+  const realWorld = isRealWorldCoords(network);
   const lookup: Record<string, [number, number]> = {};
   for (const [id, pos] of Object.entries(network.nodes_pos)) {
-    lookup[id] = toLngLat(pos.x, pos.y, center);
+    lookup[id] = toLngLat(pos.x, pos.y, center, 0.045, realWorld);
   }
   return lookup;
 }
@@ -34,8 +52,10 @@ export function buildPosLookup(
  */
 export function networkToGeoJSON(
   network: RoadNetworkData,
-  center: [number, number] = [30.2672, -97.7431],
+  center: [number, number] = HYDERABAD_CENTER,
 ) {
+  const realWorld = isRealWorldCoords(network);
+
   // Compute node degrees from edges
   const degrees: Record<number, number> = {};
   for (const edge of network.edges_list) {
@@ -54,7 +74,7 @@ export function networkToGeoJSON(
     },
     geometry: {
       type: 'Point' as const,
-      coordinates: toLngLat(pos.x, pos.y, center),
+      coordinates: toLngLat(pos.x, pos.y, center, 0.045, realWorld),
     },
   }));
 
@@ -76,8 +96,8 @@ export function networkToGeoJSON(
         geometry: {
           type: 'LineString' as const,
           coordinates: [
-            toLngLat(from.x, from.y, center),
-            toLngLat(to.x, to.y, center),
+            toLngLat(from.x, from.y, center, 0.045, realWorld),
+            toLngLat(to.x, to.y, center, 0.045, realWorld),
           ],
         },
       };
