@@ -1,7 +1,8 @@
 import { memo } from 'react';
-import { TrendingUp, TrendingDown, MoreHorizontal, type LucideIcon } from 'lucide-react';
+import { TrendingUp, TrendingDown, type LucideIcon } from 'lucide-react';
 import { cn } from '../lib/utils';
 import AnimatedNumber from './ui/AnimatedNumber';
+import { OverflowMenu } from './ui/OverflowMenu';
 
 interface StatCardProps {
   title: string;
@@ -70,9 +71,13 @@ export default memo(function StatCard({ title, value, unit, subtitle, trend, ico
           )}
           <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">{title}</span>
         </div>
-        <button className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-white transition-all duration-300">
-          <MoreHorizontal className="w-4 h-4" />
-        </button>
+        <OverflowMenu
+          items={[
+            { label: 'View Details', onClick: () => console.log('Details:', title) },
+            { label: 'Export Data', onClick: () => console.log('Export:', title) },
+            { label: 'Refresh', onClick: () => console.log('Refresh:', title) },
+          ]}
+        />
       </div>
 
       {/* Value */}
