@@ -6,6 +6,19 @@ interface NetworkNodesLayerProps {
   nodesGeoJSON: GeoJSON.FeatureCollection<GeoJSON.Point> | null;
 }
 
+/* Subtle glow ring behind ALL nodes — gives "alive" breathing feel */
+const nodeGlowStyle: CircleLayerSpecification = {
+  id: 'nodes-glow',
+  type: 'circle',
+  source: 'network-nodes',
+  paint: {
+    'circle-radius': ['case', ['get', 'isCharging'], 12, 8] as any,
+    'circle-color': ['case', ['get', 'isCharging'], '#f59e0b', '#10b981'] as any,
+    'circle-opacity': 0.12,
+    'circle-blur': 0.6,
+  },
+};
+
 const pulseStyle: CircleLayerSpecification = {
   id: 'nodes-pulse',
   type: 'circle',
@@ -26,11 +39,12 @@ const nodesStyle: CircleLayerSpecification = {
   type: 'circle',
   source: 'network-nodes',
   paint: {
-    'circle-radius': ['case', ['get', 'isCharging'], 7, 3] as any,
+    'circle-radius': ['case', ['get', 'isCharging'], 7, 3.5] as any,
     'circle-color': ['case', ['get', 'isCharging'], '#f59e0b', '#10b981'] as any,
-    'circle-opacity': ['case', ['get', 'isCharging'], 0.95, 0.4] as any,
-    'circle-stroke-width': ['case', ['get', 'isCharging'], 2, 0] as any,
-    'circle-stroke-color': ['case', ['get', 'isCharging'], '#92400e', 'transparent'] as any,
+    'circle-opacity': ['case', ['get', 'isCharging'], 0.95, 0.5] as any,
+    'circle-stroke-width': ['case', ['get', 'isCharging'], 2, 0.5] as any,
+    'circle-stroke-color': ['case', ['get', 'isCharging'], '#92400e', '#10b981'] as any,
+    'circle-stroke-opacity': ['case', ['get', 'isCharging'], 1, 0.3] as any,
   },
 };
 
@@ -41,6 +55,7 @@ export const NetworkNodesLayer = memo(function NetworkNodesLayer({
 
   return (
     <Source id="network-nodes" type="geojson" data={nodesGeoJSON}>
+      <Layer {...nodeGlowStyle} />
       <Layer {...pulseStyle} />
       <Layer {...nodesStyle} />
     </Source>
