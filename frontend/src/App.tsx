@@ -1,11 +1,13 @@
 import { useEffect, lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useSetActiveTab, useSetRoadNetwork, useLoading, useAddToast, type AppTab } from './store/store';
 import api from './services/api';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import ToastContainer from './components/ToastContainer';
 import PageLoader from './components/ui/PageLoader';
+import { pageVariants, pageTransition } from './lib/motion';
 
 // Lazy-load page components for code-splitting
 const DashboardView = lazy(() => import('./pages/Dashboard'));
@@ -80,19 +82,30 @@ function App() {
         <div className="flex-1 flex flex-col min-w-0 relative z-10">
           <Header />
           <main id="main" className="flex-1 overflow-y-auto overflow-x-hidden p-4 lg:p-6">
-            <Routes>
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
-              <Route path="/dashboard" element={<Suspense fallback={<PageLoader />}><DashboardView /></Suspense>} />
-              <Route path="/routing" element={<Suspense fallback={<PageLoader />}><RoutePlannerView /></Suspense>} />
-              <Route path="/training" element={<Suspense fallback={<PageLoader />}><TrainingView /></Suspense>} />
-              <Route path="/analytics" element={<Suspense fallback={<PageLoader />}><AnalyticsView /></Suspense>} />
-              <Route path="/stations" element={<Suspense fallback={<PageLoader />}><StationsView /></Suspense>} />
-              <Route path="/settings" element={<Suspense fallback={<PageLoader />}><SettingsView /></Suspense>} />
-              <Route path="/ai-models" element={<Suspense fallback={<PageLoader />}><AIModelsView /></Suspense>} />
-              <Route path="/routing-config" element={<Suspense fallback={<PageLoader />}><RoutingConfigView /></Suspense>} />
-              <Route path="/monitoring" element={<Suspense fallback={<PageLoader />}><MonitoringView /></Suspense>} />
-              <Route path="*" element={<Navigate to="/dashboard" replace />} />
-            </Routes>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={location.pathname}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                variants={pageVariants}
+                transition={pageTransition}
+              >
+                <Routes location={location}>
+                  <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                  <Route path="/dashboard" element={<Suspense fallback={<PageLoader />}><DashboardView /></Suspense>} />
+                  <Route path="/routing" element={<Suspense fallback={<PageLoader />}><RoutePlannerView /></Suspense>} />
+                  <Route path="/training" element={<Suspense fallback={<PageLoader />}><TrainingView /></Suspense>} />
+                  <Route path="/analytics" element={<Suspense fallback={<PageLoader />}><AnalyticsView /></Suspense>} />
+                  <Route path="/stations" element={<Suspense fallback={<PageLoader />}><StationsView /></Suspense>} />
+                  <Route path="/settings" element={<Suspense fallback={<PageLoader />}><SettingsView /></Suspense>} />
+                  <Route path="/ai-models" element={<Suspense fallback={<PageLoader />}><AIModelsView /></Suspense>} />
+                  <Route path="/routing-config" element={<Suspense fallback={<PageLoader />}><RoutingConfigView /></Suspense>} />
+                  <Route path="/monitoring" element={<Suspense fallback={<PageLoader />}><MonitoringView /></Suspense>} />
+                  <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                </Routes>
+              </motion.div>
+            </AnimatePresence>
           </main>
         </div>
       </div>
