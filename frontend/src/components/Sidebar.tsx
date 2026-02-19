@@ -1,7 +1,15 @@
-import { NavLink } from 'react-router-dom';
+import { useState, useRef, useEffect } from 'react';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { useSidebarCollapsed, useToggleSidebar, type AppTab } from '../store/store';
-import { LayoutDashboard, Map, BarChart3, Zap, Settings, Brain, Target, Activity, ChevronDown, PanelLeftClose, PanelLeft } from 'lucide-react';
+import { LayoutDashboard, Map, BarChart3, Zap, Settings, Brain, Target, Activity, ChevronDown, ChevronUp, PanelLeftClose, PanelLeft, Circle, Moon, Clock, MinusCircle } from 'lucide-react';
 import { cn } from '../lib/utils';
+
+const statusOptions = [
+  { value: 'online', label: 'Online', icon: Circle, color: 'bg-emerald' },
+  { value: 'away', label: 'Away', icon: Clock, color: 'bg-amber' },
+  { value: 'dnd', label: 'Do Not Disturb', icon: MinusCircle, color: 'bg-rose' },
+  { value: 'offline', label: 'Offline', icon: Moon, color: 'bg-slate-500' },
+] as const;
 
 const navItems: Array<{ id: AppTab; label: string; icon: React.ComponentType<{ className?: string }> }> = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -20,6 +28,34 @@ const secondaryNav: Array<{ id: string; icon: React.ComponentType<{ className?: 
 export default function Sidebar() {
   const collapsed = useSidebarCollapsed();
   const toggleSidebar = useToggleSidebar();
+  const navigate = useNavigate();
+  const [userStatus, setUserStatus] = useState<'online' | 'away' | 'dnd' | 'offline'>('online');
+  const [statusOpen, setStatusOpen] = useState(false);
+  const statusRef = useRef<HTMLDivElement>(null);
+
+  // Close status dropdown on outside click
+  useEffect(() => {
+    if (!statusOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (statusRef.current && !statusRef.current.contains(e.target as Node)) {
+        setStatusOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [statusOpen]);
+
+  // Close on Escape
+  useEffect(() => {
+    if (!statusOpen) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setStatusOpen(false);
+    };
+    document.addEventListener('keydown', handleKey);
+    return () => document.removeEventListener('keydown', handleKey);
+  }, [statusOpen]);
+
+  const currentStatus = statusOptions.find(s => s.value === userStatus)!;
 
   return (
     <aside className={cn(
@@ -50,14 +86,41 @@ export default function Sidebar() {
 
         {/* User status dropdown */}
         {!collapsed && (
-          <button className="w-full flex items-center gap-2 px-3 py-2 rounded-xl bg-white/[0.03] border border-white/[0.05] hover:bg-white/[0.06] transition-all duration-300">
-            <span className="w-2 h-2 rounded-full bg-emerald animate-pulse-glow" />
-            <div className="flex-1 text-left">
-              <p className="text-xs text-label">User</p>
-              <p className="text-xs font-medium text-white">Status</p>
-            </div>
-            <ChevronDown className="w-3.5 h-3.5 text-label" />
-          </button>
+          <div ref={statusRef} className="relative">
+            <button
+              onClick={() => setStatusOpen(!statusOpen)}
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-xl bg-white/[0.03] border border-white/[0.05] hover:bg-white/[0.06] transition-all duration-300"
+            >
+              <span className={cn('w-2 h-2 rounded-full', currentStatus.color, userStatus === 'online' && 'animate-pulse-glow')} />
+              <div className="flex-1 text-left">
+                <p className="text-xs text-label">User</p>
+                <p className="text-xs font-medium text-white">{currentStatus.label}</p>
+              </div>
+              {statusOpen
+                ? <ChevronUp className="w-3.5 h-3.5 text-label" />
+                : <ChevronDown className="w-3.5 h-3.5 text-label" />
+              }
+            </button>
+            {statusOpen && (
+              <div className="absolute left-0 right-0 mt-1.5 rounded-xl bg-[#0f141c] border border-white/10 backdrop-blur-3xl shadow-2xl z-50 py-1 animate-in fade-in slide-in-from-top-2 duration-200">
+                {statusOptions.map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => { setUserStatus(opt.value); setStatusOpen(false); }}
+                    className={cn(
+                      'w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors duration-150',
+                      userStatus === opt.value
+                        ? 'text-emerald bg-emerald/10'
+                        : 'text-slate-300 hover:bg-white/[0.04] hover:text-white'
+                    )}
+                  >
+                    <span className={cn('w-2 h-2 rounded-full', opt.color)} />
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         )}
       </div>
 
@@ -119,15 +182,21 @@ export default function Sidebar() {
       {/* ── Bottom bar ── */}
       <div className="p-3 border-t border-white/[0.05]">
         <div className={cn('flex items-center gap-2.5 px-3 py-2', collapsed && 'justify-center px-0')}>
-          <span className="w-2 h-2 rounded-full bg-emerald flex-shrink-0" />
+          <span className={cn('w-2 h-2 rounded-full flex-shrink-0', currentStatus.color)} />
           {!collapsed && (
             <div className="flex-1 min-w-0">
               <p className="text-xs font-medium text-white truncate">User status</p>
-              <p className="text-[10px] text-label truncate">Online</p>
+              <p className="text-[10px] text-label truncate">{currentStatus.label}</p>
             </div>
           )}
           {!collapsed && (
-            <Settings className="w-4 h-4 text-label hover:text-white cursor-pointer transition-colors" />
+            <button
+              onClick={() => navigate('/settings')}
+              className="p-1 rounded-lg hover:bg-white/[0.06] transition-all duration-300"
+              title="Settings"
+            >
+              <Settings className="w-4 h-4 text-label hover:text-white cursor-pointer transition-colors" />
+            </button>
           )}
         </div>
       </div>
