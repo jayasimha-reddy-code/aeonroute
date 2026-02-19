@@ -13,18 +13,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts';
 import { Activity, TrendingUp, Zap, Timer, Route, Gauge, Network, Cpu, Calendar, Download, RefreshCw, Maximize2 } from 'lucide-react';
-
-/* ── Chart Styling Tokens ────────────────────────── */
-const CHART_COLORS = ['#14A8C0', '#F59E0B', '#10B981', '#EF4444', '#8B5CF6', '#3B82F6'];
-const tooltipStyle = {
-  backgroundColor: 'rgba(10, 15, 22, 0.95)',
-  border: '1px solid rgba(255,255,255,0.05)',
-  borderRadius: '12px',
-  color: '#fff',
-  fontSize: '12px',
-  boxShadow: '0 4px 30px rgba(0,0,0,0.3)',
-};
-const axisStyle = { fontSize: 11, fill: 'rgba(255,255,255,0.3)' };
+import { tooltipStyle, axisStyle, gridStyle, areaGradient, CHART_COLORS, CHART_PALETTE, cursorStyle } from '../lib/chartConfig';
 
 /* ── Metric Pill ─────────────────────────────────── */
 function MetricTile({
@@ -255,17 +244,14 @@ function Analytics() {
             <ResponsiveContainer width="100%" height={280}>
               <AreaChart data={trainingHistory.reward_history.map((r, i) => ({ episode: r.episode ?? i + 1, reward: r.reward }))}>
                 <defs>
-                  <linearGradient id="gReward" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10B981" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
-                  </linearGradient>
+                  {areaGradient('gReward', CHART_COLORS.emerald, 0.5, 0)}
                 </defs>
-                <CartesianGrid stroke="rgba(255,255,255,0.03)" vertical={false} />
+                <CartesianGrid {...gridStyle} vertical={false} />
                 <XAxis dataKey="episode" tick={axisStyle} axisLine={false} tickLine={false} />
                 <YAxis tick={axisStyle} axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={tooltipStyle} />
+                <Tooltip contentStyle={tooltipStyle} cursor={cursorStyle} />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
-                <Area type="monotone" dataKey="reward" stroke="#10B981" strokeWidth={2.5} fill="url(#gReward)" name="Reward" />
+                <Area type="monotone" dataKey="reward" stroke={CHART_COLORS.emerald} strokeWidth={2.5} fill="url(#gReward)" name="Reward" dot={false} activeDot={{ r: 4, fill: CHART_COLORS.emerald, stroke: '#fff', strokeWidth: 2 }} />
               </AreaChart>
             </ResponsiveContainer>
           ) : (
@@ -280,22 +266,16 @@ function Analytics() {
                 { time: '11 PM', energy: 55, distance: 15 },
               ]}>
                 <defs>
-                  <linearGradient id="gEnergy" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="gDistance" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#14A8C0" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#14A8C0" stopOpacity={0} />
-                  </linearGradient>
+                  {areaGradient('gEnergy', CHART_COLORS.amber, 0.5, 0)}
+                  {areaGradient('gDistance', CHART_COLORS.cyan, 0.5, 0)}
                 </defs>
-                <CartesianGrid stroke="rgba(255,255,255,0.03)" vertical={false} />
+                <CartesianGrid {...gridStyle} vertical={false} />
                 <XAxis dataKey="time" tick={axisStyle} axisLine={false} tickLine={false} />
                 <YAxis tick={axisStyle} axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={tooltipStyle} />
+                <Tooltip contentStyle={tooltipStyle} cursor={cursorStyle} />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
-                <Area type="monotone" dataKey="energy" stroke="#F59E0B" strokeWidth={2.5} fill="url(#gEnergy)" name="Energy (kWh)" />
-                <Area type="monotone" dataKey="distance" stroke="#14A8C0" strokeWidth={2.5} fill="url(#gDistance)" name="Distance (km)" />
+                <Area type="monotone" dataKey="energy" stroke={CHART_COLORS.amber} strokeWidth={2.5} fill="url(#gEnergy)" name="Energy (kWh)" dot={false} activeDot={{ r: 4, fill: CHART_COLORS.amber, stroke: '#fff', strokeWidth: 2 }} />
+                <Area type="monotone" dataKey="distance" stroke={CHART_COLORS.cyan} strokeWidth={2.5} fill="url(#gDistance)" name="Distance (km)" dot={false} activeDot={{ r: 4, fill: CHART_COLORS.cyan, stroke: '#fff', strokeWidth: 2 }} />
               </AreaChart>
             </ResponsiveContainer>
           )}
@@ -325,7 +305,7 @@ function Analytics() {
                 label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                 labelLine={{ stroke: '#64748b', strokeWidth: 1 }}
               >
-                {routeQuality.map((_, idx) => <Cell key={idx} fill={CHART_COLORS[idx]} />)}
+                {routeQuality.map((_, idx) => <Cell key={idx} fill={CHART_PALETTE[idx % CHART_PALETTE.length]} />)}
               </Pie>
               <Tooltip contentStyle={tooltipStyle} />
             </PieChart>
@@ -357,12 +337,12 @@ function Analytics() {
           ) : (
             <ResponsiveContainer width="100%" height={260}>
               <BarChart data={ganQualityBars}>
-                <CartesianGrid stroke="rgba(255,255,255,0.03)" vertical={false} />
+                <CartesianGrid {...gridStyle} vertical={false} />
                 <XAxis dataKey="label" tick={axisStyle} axisLine={false} tickLine={false} />
                 <YAxis tick={axisStyle} axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={tooltipStyle} />
-                <Bar dataKey="value" radius={[8, 8, 0, 0]} barSize={48} name={ganEval ? 'Value' : 'Routes'}>
-                  {ganQualityBars.map((_, idx) => <Cell key={idx} fill={CHART_COLORS[idx % CHART_COLORS.length]} />)}
+                <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'rgba(255,255,255,0.02)' }} />
+                <Bar dataKey="value" radius={[6, 6, 0, 0]} barSize={48} name={ganEval ? 'Value' : 'Routes'}>
+                  {ganQualityBars.map((_, idx) => <Cell key={idx} fill={CHART_PALETTE[idx % CHART_PALETTE.length]} fillOpacity={0.85} />)}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
@@ -387,22 +367,16 @@ function Analytics() {
           <ResponsiveContainer width="100%" height={260}>
             <AreaChart data={trainingConvergence}>
               <defs>
-                <linearGradient id="gDLoss" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#EF4444" stopOpacity={0.25} />
-                  <stop offset="95%" stopColor="#EF4444" stopOpacity={0} />
-                </linearGradient>
-                <linearGradient id="gGLoss" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#14A8C0" stopOpacity={0.25} />
-                  <stop offset="95%" stopColor="#14A8C0" stopOpacity={0} />
-                </linearGradient>
+                {areaGradient('gDLoss', CHART_COLORS.rose, 0.4, 0)}
+                {areaGradient('gGLoss', CHART_COLORS.cyan, 0.4, 0)}
               </defs>
-              <CartesianGrid stroke="rgba(255,255,255,0.03)" vertical={false} />
+              <CartesianGrid {...gridStyle} vertical={false} />
               <XAxis dataKey="epoch" tick={axisStyle} axisLine={false} tickLine={false} label={{ value: 'Epoch', position: 'insideBottom', offset: -5, fill: 'rgba(255,255,255,0.3)', fontSize: 11 }} />
               <YAxis tick={axisStyle} axisLine={false} tickLine={false} />
-              <Tooltip contentStyle={tooltipStyle} />
+              <Tooltip contentStyle={tooltipStyle} cursor={cursorStyle} />
               <Legend iconType="circle" wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
-              <Area type="monotone" dataKey="dLoss" stroke="#EF4444" strokeWidth={2} fill="url(#gDLoss)" dot={{ r: 3 }} name="Discriminator" />
-              <Area type="monotone" dataKey="gLoss" stroke="#14A8C0" strokeWidth={2} fill="url(#gGLoss)" dot={{ r: 3 }} name="Generator" />
+              <Area type="monotone" dataKey="dLoss" stroke={CHART_COLORS.rose} strokeWidth={2} fill="url(#gDLoss)" dot={false} activeDot={{ r: 4, fill: CHART_COLORS.rose, stroke: '#fff', strokeWidth: 2 }} name="Discriminator" />
+              <Area type="monotone" dataKey="gLoss" stroke={CHART_COLORS.cyan} strokeWidth={2} fill="url(#gGLoss)" dot={false} activeDot={{ r: 4, fill: CHART_COLORS.cyan, stroke: '#fff', strokeWidth: 2 }} name="Generator" />
             </AreaChart>
           </ResponsiveContainer>
         </Card>

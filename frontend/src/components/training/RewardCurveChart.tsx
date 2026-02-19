@@ -10,6 +10,7 @@ import {
   Legend,
 } from 'recharts';
 import type { RewardPoint } from '../../store/store';
+import { tooltipStyle, axisStyle, gridStyle, areaGradient, CHART_COLORS, cursorStyle } from '../../lib/chartConfig';
 
 interface RewardCurveChartProps {
   data: RewardPoint[];
@@ -53,47 +54,32 @@ export function RewardCurveChart({ data, rlEpisode, rlTotalEpisodes }: RewardCur
       <ResponsiveContainer width="100%" height={280}>
         <AreaChart data={chartData} margin={{ top: 4, right: 12, left: 0, bottom: 4 }}>
           <defs>
-            <linearGradient id="gRawReward" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.2} />
-              <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
-            </linearGradient>
-            <linearGradient id="gAvgReward" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#10B981" stopOpacity={0.3} />
-              <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
-            </linearGradient>
+            {areaGradient('gRawReward', CHART_COLORS.cyan, 0.4, 0)}
+            {areaGradient('gAvgReward', CHART_COLORS.emerald, 0.5, 0)}
           </defs>
-          <CartesianGrid stroke="rgba(255,255,255,0.03)" vertical={false} />
+          <CartesianGrid {...gridStyle} vertical={false} />
           <XAxis
             dataKey="episode"
-            tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.3)' }}
+            tick={axisStyle}
             tickLine={false}
-            axisLine={{ stroke: 'rgba(255,255,255,0.06)' }}
+            axisLine={false}
             label={{ value: 'Episode', position: 'insideBottomRight', offset: -4, fontSize: 10, fill: 'rgba(255,255,255,0.3)' }}
           />
           <YAxis
-            tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.3)' }}
+            tick={axisStyle}
             tickLine={false}
-            axisLine={{ stroke: 'rgba(255,255,255,0.06)' }}
+            axisLine={false}
             label={{ value: 'Reward', angle: -90, position: 'insideLeft', offset: 10, fontSize: 10, fill: 'rgba(255,255,255,0.3)' }}
           />
-          <Tooltip
-            contentStyle={{
-              backgroundColor: 'rgba(10, 15, 22, 0.95)',
-              border: '1px solid rgba(255,255,255,0.05)',
-              borderRadius: '12px',
-              color: '#fff',
-              fontSize: '12px',
-              boxShadow: '0 4px 30px rgba(0,0,0,0.3)',
-            }}
-          />
+          <Tooltip contentStyle={tooltipStyle} cursor={cursorStyle} />
           <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
           <Area
             type="monotone"
             dataKey="reward"
             name="Raw Reward"
-            stroke="#3B82F6"
-            strokeWidth={1}
-            strokeOpacity={0.4}
+            stroke={CHART_COLORS.cyan}
+            strokeWidth={1.5}
+            strokeOpacity={0.6}
             fill="url(#gRawReward)"
             dot={false}
             animationDuration={300}
@@ -102,10 +88,11 @@ export function RewardCurveChart({ data, rlEpisode, rlTotalEpisodes }: RewardCur
             type="monotone"
             dataKey="avg_reward"
             name="Moving Avg (20)"
-            stroke="#10B981"
+            stroke={CHART_COLORS.emerald}
             strokeWidth={2}
             fill="url(#gAvgReward)"
             dot={false}
+            activeDot={{ r: 4, fill: CHART_COLORS.emerald, stroke: '#fff', strokeWidth: 2 }}
             animationDuration={300}
           />
         </AreaChart>

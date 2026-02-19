@@ -12,6 +12,8 @@ import { ProgressRing } from '../components/ui';
 import { OverflowMenu } from '../components/ui/OverflowMenu';
 import { BarChart3, Activity, Navigation, Zap, Cpu, Clock, RefreshCw, ChevronUp } from 'lucide-react';
 import { staggerContainer, staggerItem } from '../lib/motion';
+import { AreaChart, Area, ResponsiveContainer } from 'recharts';
+import { areaGradient, CHART_COLORS } from '../lib/chartConfig';
 
 function Dashboard() {
   const roadNetwork = useRoadNetwork();
@@ -205,12 +207,34 @@ function Dashboard() {
   );
 }
 
-/* Helper: Model status row with progress bar */
+/* Helper: Model status row with progress bar + sparkline */
+const sparklineCache: Record<string, { v: number }[]> = {};
+function getSparkline(key: string) {
+  if (!sparklineCache[key]) {
+    sparklineCache[key] = Array.from({ length: 20 }, (_, i) => ({
+      v: 60 + Math.sin(i * 0.5 + key.charCodeAt(0)) * 20 + i * 0.8,
+    }));
+  }
+  return sparklineCache[key];
+}
+
 function ModelStatusRow({ label, value, color }: { label: string; value: number; color: 'emerald' | 'cyan' | 'amber' }) {
+  const colorHex = { emerald: CHART_COLORS.emerald, cyan: CHART_COLORS.cyan, amber: CHART_COLORS.amber }[color];
+  const gradId = `spark-${color}`;
   return (
     <div className="flex items-center justify-between">
       <span className="text-sm text-slate-300">{label}</span>
       <div className="flex items-center gap-3">
+        {value > 0 && (
+          <div className="h-7 w-16">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={getSparkline(label)}>
+                <defs>{areaGradient(gradId, colorHex, 0.4, 0)}</defs>
+                <Area type="monotone" dataKey="v" stroke={colorHex} strokeWidth={1.5} fill={`url(#${gradId})`} dot={false} isAnimationActive={false} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        )}
         <div className="w-32">
           <ProgressBar value={value} variant={color} size="sm" />
         </div>

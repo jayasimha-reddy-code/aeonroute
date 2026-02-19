@@ -8,10 +8,10 @@ interface ProgressRingProps {
 }
 
 const colorMap = {
-  emerald: { stroke: '#10B981', glow: 'rgba(16,185,129,0.2)' },
-  amber: { stroke: '#F59E0B', glow: 'rgba(245,158,11,0.2)' },
-  rose: { stroke: '#EF4444', glow: 'rgba(239,68,68,0.2)' },
-  cyan: { stroke: '#14B8A6', glow: 'rgba(20,184,166,0.2)' },
+  emerald: { stroke: '#10B981', glow: 'rgba(16,185,129,0.35)' },
+  amber: { stroke: '#F59E0B', glow: 'rgba(245,158,11,0.35)' },
+  rose: { stroke: '#EF4444', glow: 'rgba(239,68,68,0.35)' },
+  cyan: { stroke: '#14B8A6', glow: 'rgba(20,184,166,0.35)' },
 };
 
 export function ProgressRing({ value, size = 80, strokeWidth = 6, color = 'emerald', label, children }: ProgressRingProps) {
@@ -19,20 +19,35 @@ export function ProgressRing({ value, size = 80, strokeWidth = 6, color = 'emera
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (value / 100) * circumference;
   const c = colorMap[color];
+  const filterId = `glow-${color}-${size}`;
 
   return (
     <div className="inline-flex flex-col items-center gap-2">
       <div className="relative" style={{ width: size, height: size }}>
         <svg width={size} height={size} className="-rotate-90">
+          {/* SVG glow filter */}
+          <defs>
+            <filter id={filterId} x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="3" result="coloredBlur" />
+              <feMerge>
+                <feMergeNode in="coloredBlur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
           {/* Background track */}
           <circle cx={size/2} cy={size/2} r={radius} fill="none"
-            stroke="rgba(255,255,255,0.06)" strokeWidth={strokeWidth} />
+            stroke="rgba(255,255,255,0.08)" strokeWidth={strokeWidth} />
           {/* Progress arc */}
           <circle cx={size/2} cy={size/2} r={radius} fill="none"
             stroke={c.stroke} strokeWidth={strokeWidth}
             strokeDasharray={circumference} strokeDashoffset={offset}
             strokeLinecap="round"
-            style={{ filter: `drop-shadow(0 0 4px ${c.glow})`, transition: 'stroke-dashoffset 500ms ease-out' }}
+            filter={`url(#${filterId})`}
+            style={{
+              filter: `url(#${filterId}) drop-shadow(0 0 6px ${c.glow})`,
+              transition: 'stroke-dashoffset 800ms cubic-bezier(0.4, 0, 0.2, 1)',
+            }}
           />
         </svg>
         {/* Center content */}
