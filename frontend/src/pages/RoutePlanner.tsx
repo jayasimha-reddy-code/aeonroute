@@ -5,7 +5,8 @@ import NetworkMap from '../components/NetworkMap';
 import RouteCard from '../components/RouteCard';
 import PageHeader from '../components/PageHeader';
 import { Card, Button, EmptyState, Spinner, ProgressBar } from '../components/ui';
-import { Map, MapPin, Navigation, Sparkles, Zap, Play, Pause, RotateCcw } from 'lucide-react';
+import { ViewToggle } from '../components/ui/ViewToggle';
+import { Map, MapPin, Navigation, Sparkles, Zap, Play, Pause, RotateCcw, Leaf, Mountain } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { RouteCardSkeleton } from '../components/ui/Skeleton';
 import { buildPosLookup } from '../lib/geo';
@@ -19,6 +20,7 @@ function RoutePlanner() {
   const [destination, setDestination] = useState(10);
   const [loading, setLoading] = useState(false);
   const [highlightIdx, setHighlightIdx] = useState<number | undefined>(undefined);
+  const [routeType, setRouteType] = useState<'fast' | 'eco' | 'scenic'>('fast');
 
   const posLookup = useMemo(() => roadNetwork ? buildPosLookup(roadNetwork) : null, [roadNetwork]);
 
@@ -192,10 +194,22 @@ function RoutePlanner() {
 
           {/* Route Cards */}
           <div>
-            <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-3">
-              Generated Routes
-              {generatedRoutes.length > 0 && <span className="ml-2 text-muted font-normal normal-case">({generatedRoutes.length})</span>}
-            </h3>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-white uppercase tracking-wider">
+                Generated Routes
+                {generatedRoutes.length > 0 && <span className="ml-2 text-muted font-normal normal-case">({generatedRoutes.length})</span>}
+              </h3>
+              <ViewToggle
+                options={[
+                  { value: 'fast' as const, label: 'Fastest', icon: Zap },
+                  { value: 'eco' as const, label: 'Eco', icon: Leaf },
+                  { value: 'scenic' as const, label: 'Scenic', icon: Mountain },
+                ]}
+                value={routeType}
+                onChange={setRouteType}
+                size="sm"
+              />
+            </div>
 
             {loading ? (
               <div className="space-y-3 animate-stagger">{Array.from({ length: 3 }).map((_, i) => <RouteCardSkeleton key={i} />)}</div>
