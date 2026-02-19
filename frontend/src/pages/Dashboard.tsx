@@ -8,7 +8,8 @@ import TrafficSlider from '../components/dashboard/TrafficSlider';
 import { Card, Spinner, ProgressBar } from '../components/ui';
 import { StatCardSkeleton } from '../components/ui/Skeleton';
 import { ProgressRing } from '../components/ui';
-import { BarChart3, Activity, Navigation, Zap, Cpu, Clock, RefreshCw, ChevronUp, MoreHorizontal } from 'lucide-react';
+import { OverflowMenu } from '../components/ui/OverflowMenu';
+import { BarChart3, Activity, Navigation, Zap, Cpu, Clock, RefreshCw, ChevronUp } from 'lucide-react';
 
 function Dashboard() {
   const roadNetwork = useRoadNetwork();
@@ -141,22 +142,30 @@ function Dashboard() {
           <Card padding="lg" className="flex-1">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-semibold text-white">Recent Activity</h3>
-              <button className="text-white/30 hover:text-white/60 transition-colors">
-                <MoreHorizontal className="w-4 h-4" />
-              </button>
+              <OverflowMenu
+                items={[
+                  { label: 'View All Activity', onClick: () => console.log('View all activity') },
+                  { label: 'Export Log', onClick: () => console.log('Export activity log') },
+                  { label: 'Clear History', onClick: () => console.log('Clear history'), variant: 'danger' as const },
+                ]}
+              />
             </div>
-            <div className="space-y-3">
+            <div className="space-y-1">
               {[
-                { dot: 'bg-emerald', text: 'Route #452 generated', time: '2m ago' },
-                { dot: 'bg-emerald', text: 'SG-GAN training complete', time: '1h ago' },
-                { dot: 'bg-amber', text: 'Battery warning at node 24', time: '3h ago' },
-                { dot: 'bg-emerald', text: 'Network updated (437 nodes)', time: '5h ago' },
-              ].map((item, i) => (
-                <div key={i} className="flex items-center gap-2 text-xs">
+                { id: 1, dot: 'bg-emerald', text: 'Route #452 generated', time: '2m ago' },
+                { id: 2, dot: 'bg-emerald', text: 'SG-GAN training complete', time: '1h ago' },
+                { id: 3, dot: 'bg-amber', text: 'Battery warning at node 24', time: '3h ago' },
+                { id: 4, dot: 'bg-emerald', text: 'Network updated (437 nodes)', time: '5h ago' },
+              ].map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => console.log('View activity:', item.id)}
+                  className="w-full flex items-center gap-2 text-xs px-3 py-2.5 hover:bg-white/[0.02] cursor-pointer transition-colors duration-200 rounded-lg text-left"
+                >
                   <span className={`w-1.5 h-1.5 rounded-full ${item.dot} shrink-0`} />
                   <span className="text-slate-300 flex-1">{item.text}</span>
                   <span className="text-slate-500">{item.time}</span>
-                </div>
+                </button>
               ))}
             </div>
           </Card>
