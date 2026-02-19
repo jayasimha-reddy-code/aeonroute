@@ -3,13 +3,12 @@ import { Badge } from '../ui';
 import { cn } from '../../lib/utils';
 
 const PIPELINE_STEPS = [
-  { name: 'Road Network',       desc: 'Building graph topology',      threshold: 10 },
-  { name: 'Traffic Generation',  desc: 'Sampling synthetic patterns',  threshold: 25 },
-  { name: 'GAN Training',        desc: 'Training SG-GAN generator',    threshold: 40 },
-  { name: 'RL Environment',      desc: 'Initializing MDP',             threshold: 55 },
-  { name: 'Agent Training',      desc: 'Q-learning episodes',          threshold: 75 },
-  { name: 'Route Generator',     desc: 'GNN-GAN route generation',     threshold: 85 },
-  { name: 'System Evaluation',   desc: 'Benchmark & metrics',          threshold: 95 },
+  { name: 'Loading Graph',       desc: 'Loading Hyderabad road network',   threshold: 10 },
+  { name: 'Loading Stations',    desc: 'Fetching EV charging stations',    threshold: 20 },
+  { name: 'RL Environment',      desc: 'Creating routing environment',     threshold: 30 },
+  { name: 'Q-Learning Training', desc: 'Training RL agent on graph',       threshold: 70 },
+  { name: 'Saving Q-Table',      desc: 'Persisting learned policy',        threshold: 95 },
+  { name: 'Complete',            desc: 'AI routes ready',                  threshold: 100 },
 ];
 
 interface PipelineStepperProps {
@@ -26,8 +25,6 @@ export function PipelineStepper({
   progress,
   isTraining,
   currentStep: _currentStep,
-  ganEpoch,
-  ganTotalEpochs,
   rlEpisode,
   rlTotalEpisodes,
 }: PipelineStepperProps) {
@@ -62,12 +59,8 @@ export function PipelineStepper({
                   {isDone && <Badge variant="success">Done</Badge>}
                 </div>
                 <p className="text-[11px] text-label mt-0.5">{step.desc}</p>
-                {/* Sub-progress for GAN Training (index 2) */}
-                {idx === 2 && isCurrent && ganEpoch != null && ganTotalEpochs != null && ganTotalEpochs > 0 && (
-                  <p className="text-[10px] text-amber-500 mt-0.5">Epoch {ganEpoch}/{ganTotalEpochs}</p>
-                )}
-                {/* Sub-progress for Agent Training (index 4) */}
-                {idx === 4 && isCurrent && rlEpisode != null && rlTotalEpisodes != null && rlTotalEpisodes > 0 && (
+                {/* Sub-progress for Q-Learning Training (index 3) */}
+                {idx === 3 && isCurrent && rlEpisode != null && rlTotalEpisodes != null && rlTotalEpisodes > 0 && (
                   <p className="text-[10px] text-emerald mt-0.5">Episode {rlEpisode}/{rlTotalEpisodes}</p>
                 )}
               </div>

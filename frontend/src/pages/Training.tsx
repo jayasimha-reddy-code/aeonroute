@@ -4,26 +4,25 @@ import { hyperStaggerContainer, hyperStaggerItem } from '../lib/motion';
 import api from '../services/api';
 import PageHeader from '../components/PageHeader';
 import { Card, Button, Badge, ProgressBar } from '../components/ui';
-import { useSystemStore, useTrainingProgress, useLossHistory, useRewardHistory, useSSEConnected, useResetTrainingData } from '../store/store';
+import { useSystemStore, useTrainingProgress, useRewardHistory, useSSEConnected, useResetTrainingData, useSetActiveTab } from '../store/store';
 import { useTrainingStream } from '../hooks/useTrainingStream';
-import { LossCurveChart } from '../components/training/LossCurveChart';
 import { RewardCurveChart } from '../components/training/RewardCurveChart';
 import { PipelineStepper } from '../components/training/PipelineStepper';
-import { Brain, Play, Square, CheckCircle, Circle, Loader2, Settings2, Workflow, BarChart3, TrendingUp } from 'lucide-react';
+import { Brain, Play, Square, CheckCircle, Circle, Loader2, Settings2, Workflow, BarChart3, TrendingUp, Navigation } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 function Training() {
   const { addToast } = useSystemStore();
 
   const trainingProgress = useTrainingProgress();
-  const lossHistory = useLossHistory();
   const rewardHistory = useRewardHistory();
   const sseConnected = useSSEConnected();
   const resetTrainingData = useResetTrainingData();
+  const setActiveTab = useSetActiveTab();
 
   const [config, setConfig] = useState({
-    grid_size: 10, gan_epochs: 100, rl_episodes: 500,
-    traffic_samples: 500, gan_batch_size: 32, rl_max_steps: 200,
+    episodes: 200, learning_rate: 0.1, discount_factor: 0.95,
+    max_steps: 300,
   });
 
   // Connect SSE stream when training is active
@@ -46,7 +45,7 @@ function Training() {
     try {
       await api.startTraining(config);
       resetTrainingData();
-      addToast({ type: 'info', title: 'Training Started', message: 'Pipeline kicked off.' });
+      addToast({ type: 'info', title: 'Training Started', message: 'Q-Learning pipeline kicked off.' });
     } catch (error: any) {
       addToast({ type: 'error', title: 'Failed to Start', message: error?.message });
     }
@@ -62,12 +61,10 @@ function Training() {
   };
 
   const configFields = [
-    { key: 'grid_size',       label: 'Grid Size',          min: 5,   max: 20,   icon: '🗺️' },
-    { key: 'gan_epochs',      label: 'GAN Epochs',         min: 10,  max: 500,  icon: '🧠' },
-    { key: 'rl_episodes',     label: 'RL Episodes',        min: 100, max: 1000, icon: '🎯' },
-    { key: 'traffic_samples', label: 'Traffic Samples',    min: 100, max: 2000, icon: '🚗' },
-    { key: 'gan_batch_size',  label: 'Batch Size',         min: 4,   max: 128,  icon: '📦' },
-    { key: 'rl_max_steps',    label: 'Max Steps/Episode',  min: 50,  max: 500,  icon: '👣' },
+    { key: 'episodes',        label: 'Episodes',           min: 50,  max: 1000, icon: '🎯' },
+    { key: 'learning_rate',   label: 'Learning Rate',      min: 0.01, max: 1.0, icon: '📈', step: 0.01 },
+    { key: 'discount_factor', label: 'Discount Factor',    min: 0.5, max: 0.99, icon: '⚖️', step: 0.01 },
+    { key: 'max_steps',       label: 'Max Steps/Episode',  min: 50,  max: 1000, icon: '👣' },
   ] as const;
 
   return (
@@ -108,15 +105,16 @@ function Training() {
             </div>
 
             <div className="space-y-3">
-              {configFields.map(({ key, label, min, max, icon }) => (
+              {configFields.map(({ key, label, min, max, icon, ...rest }) => (
                 <div key={key}>
                   <label className="input-label flex items-center gap-1.5">
                     <span className="text-xs">{icon}</span> {label}
                   </label>
                   <input
                     type="number" min={min} max={max}
-                    value={config[key]}
-                    onChange={(e) => setConfig({ ...config, [key]: parseInt(e.target.value) || min })}
+                    step={'step' in rest ? (rest as any).step : 1}
+                    value={(config as any)[key]}
+                    onChange={(e) => setConfig({ ...config, [key]: parseFloat(e.target.value) || min })}
                     disabled={trainingProgress.is_training}
                     className="input-field disabled:opacity-40"
                   />
@@ -175,21 +173,10 @@ function Training() {
             />
           </Card>
 
-          {/* GAN Loss Curves */}
-          {(lossHistory.length > 0 || trainingProgress.current_step.toLowerCase().includes('gan')) && (
-            <div>
-              <Card>
-                <div className="flex items-center gap-2.5 mb-4">
-                  <div className="p-1.5 rounded-lg bg-amber-500/10"><BarChart3 className="w-3.5 h-3.5 text-amber-500" /></div>
-                  <h3 className="text-sm font-semibold text-white uppercase tracking-wider">GAN Loss Curves</h3>
-                </div>
-                <LossCurveChart data={lossHistory} ganEpoch={trainingProgress.gan_epoch} ganTotalEpochs={trainingProgress.gan_total_epochs} />
-              </Card>
-            </div>
-          )}
+          {/* GAN Loss Curves — hidden for Q-Learning only pipeline */}
 
           {/* Q-Learning Reward */}
-          {(rewardHistory.length > 0 || trainingProgress.current_step.toLowerCase().includes('agent')) && (
+          {(rewardHistory.length > 0 || trainingProgress.current_step.toLowerCase().includes('agent') || trainingProgress.current_step.toLowerCase().includes('training') || trainingProgress.current_step.toLowerCase().includes('q-learning')) && (
             <div>
               <Card>
                 <div className="flex items-center gap-2.5 mb-4">
@@ -218,6 +205,23 @@ function Training() {
                   </div>
                 ))}
               </div>
+
+              {/* Post-training success indicator */}
+              {!trainingProgress.is_training && trainingProgress.progress >= 100 && (
+                <div className="mt-4 pt-4 border-t border-white/[0.05]">
+                  <div className="flex items-center gap-2 mb-3">
+                    <CheckCircle className="w-4 h-4 text-emerald" />
+                    <span className="text-sm text-emerald font-medium">Q-table saved — routes now use AI optimization</span>
+                  </div>
+                  <button
+                    onClick={() => setActiveTab('routing')}
+                    className="px-4 py-2 rounded-xl bg-emerald/20 text-emerald text-sm font-medium hover:bg-emerald/30 transition-colors flex items-center gap-2"
+                  >
+                    <Navigation className="w-3.5 h-3.5" />
+                    Test Route
+                  </button>
+                </div>
+              )}
             </Card>
           )}
         </div>
