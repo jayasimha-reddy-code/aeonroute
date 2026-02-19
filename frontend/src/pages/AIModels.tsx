@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { Brain, Cpu, Network, Activity, CheckCircle2, XCircle } from 'lucide-react';
 import { Card } from '../components/ui';
-import { staggerContainer, staggerItem } from '../lib/motion';
+import { staggerContainer, staggerItem, hyperStaggerContainer, hyperStaggerItem } from '../lib/motion';
 
 const models = [
   { name: 'SG-GAN Traffic Generator', version: 'v2.1', status: 'active', accuracy: '94.2%', icon: Brain, color: 'emerald' },
@@ -13,7 +13,7 @@ export default function AIModels() {
   return (
     <motion.div
       className="grid grid-cols-12 gap-4 lg:gap-6"
-      variants={staggerContainer}
+      variants={hyperStaggerContainer}
       initial="hidden"
       animate="show"
     >
@@ -21,7 +21,7 @@ export default function AIModels() {
       {models.map((model) => {
         const isActive = model.status === 'active';
         return (
-          <motion.div key={model.name} className="col-span-12 lg:col-span-4" variants={staggerItem}>
+          <motion.div key={model.name} className="col-span-12 lg:col-span-4" variants={hyperStaggerItem}>
             <Card>
               <div className="flex items-center gap-3 mb-5">
                 <div className={`w-10 h-10 rounded-xl bg-${model.color}/10 flex items-center justify-center`}>
@@ -64,7 +64,7 @@ export default function AIModels() {
       })}
 
       {/* ── Model Performance Overview ── */}
-      <motion.div className="col-span-12" variants={staggerItem}>
+      <motion.div className="col-span-12" variants={hyperStaggerItem}>
         <Card>
           <div className="flex items-center gap-3 mb-5">
             <div className="w-10 h-10 rounded-xl bg-emerald/10 flex items-center justify-center">

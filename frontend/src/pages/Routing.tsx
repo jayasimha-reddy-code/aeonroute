@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { Target, Route, Gauge, Timer, Zap, TrendingUp } from 'lucide-react';
 import { Card } from '../components/ui';
-import { staggerContainer, staggerItem } from '../lib/motion';
+import { staggerContainer, staggerItem, hyperStaggerContainer, hyperStaggerItem } from '../lib/motion';
 
 const routingAlgorithms = [
   { name: 'Q-Learning Agent', type: 'Reinforcement Learning', status: 'Primary', color: 'emerald' },
@@ -13,12 +13,12 @@ export default function RoutingConfig() {
   return (
     <motion.div
       className="grid grid-cols-12 gap-4 lg:gap-6"
-      variants={staggerContainer}
+      variants={hyperStaggerContainer}
       initial="hidden"
       animate="show"
     >
       {/* ── Routing Algorithms ── */}
-      <motion.div className="col-span-12 lg:col-span-7" variants={staggerItem}>
+      <motion.div className="col-span-12 lg:col-span-7" variants={hyperStaggerItem}>
         <Card>
           <div className="flex items-center gap-3 mb-5">
             <div className="w-10 h-10 rounded-xl bg-emerald/10 flex items-center justify-center">
@@ -49,7 +49,7 @@ export default function RoutingConfig() {
       </motion.div>
 
       {/* ── Routing Metrics ── */}
-      <motion.div className="col-span-12 lg:col-span-5" variants={staggerItem}>
+      <motion.div className="col-span-12 lg:col-span-5" variants={hyperStaggerItem}>
         <Card>
           <div className="flex items-center gap-3 mb-5">
             <div className="w-10 h-10 rounded-xl bg-cyan/10 flex items-center justify-center">
@@ -81,7 +81,7 @@ export default function RoutingConfig() {
       </motion.div>
 
       {/* ── Configuration ── */}
-      <motion.div className="col-span-12" variants={staggerItem}>
+      <motion.div className="col-span-12" variants={hyperStaggerItem}>
         <Card>
           <div className="flex items-center gap-3 mb-5">
             <div className="w-10 h-10 rounded-xl bg-amber/10 flex items-center justify-center">

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Car, Gauge, Palette, Globe, Save } from 'lucide-react';
 import { Card, ToggleSwitch } from '../components/ui';
-import { staggerContainer, staggerItem } from '../lib/motion';
+import { staggerContainer, staggerItem, hyperStaggerContainer, hyperStaggerItem } from '../lib/motion';
 import { useSettings, useSetUnits, useSetAvoidTolls, useSetOptimizeBattery, useSetNotifications, useAddToast } from '../store/store';
 
 export default function Settings() {
@@ -17,12 +17,12 @@ export default function Settings() {
   return (
     <motion.div
       className="grid grid-cols-12 gap-4 lg:gap-6"
-      variants={staggerContainer}
+      variants={hyperStaggerContainer}
       initial="hidden"
       animate="show"
     >
       {/* ── Vehicle Profile ── */}
-      <motion.div className="col-span-12 lg:col-span-6" variants={staggerItem}>
+      <motion.div className="col-span-12 lg:col-span-6" variants={hyperStaggerItem}>
         <Card>
           <div className="flex items-center gap-3 mb-5">
             <div className="w-10 h-10 rounded-xl bg-emerald/10 flex items-center justify-center">
@@ -63,7 +63,7 @@ export default function Settings() {
       </motion.div>
 
       {/* ── Route Preferences ── */}
-      <motion.div className="col-span-12 lg:col-span-6" variants={staggerItem}>
+      <motion.div className="col-span-12 lg:col-span-6" variants={hyperStaggerItem}>
         <Card>
           <div className="flex items-center gap-3 mb-5">
             <div className="w-10 h-10 rounded-xl bg-cyan/10 flex items-center justify-center">
@@ -101,7 +101,7 @@ export default function Settings() {
       </motion.div>
 
       {/* ── Display Settings ── */}
-      <motion.div className="col-span-12 lg:col-span-6" variants={staggerItem}>
+      <motion.div className="col-span-12 lg:col-span-6" variants={hyperStaggerItem}>
         <Card>
           <div className="flex items-center gap-3 mb-5">
             <div className="w-10 h-10 rounded-xl bg-amber/10 flex items-center justify-center">
@@ -136,7 +136,7 @@ export default function Settings() {
       </motion.div>
 
       {/* ── API & System ── */}
-      <motion.div className="col-span-12 lg:col-span-6" variants={staggerItem}>
+      <motion.div className="col-span-12 lg:col-span-6" variants={hyperStaggerItem}>
         <Card>
           <div className="flex items-center gap-3 mb-5">
             <div className="w-10 h-10 rounded-xl bg-rose/10 flex items-center justify-center">
@@ -164,7 +164,7 @@ export default function Settings() {
       </motion.div>
 
       {/* ── Save Button ── */}
-      <motion.div className="col-span-12" variants={staggerItem}>
+      <motion.div className="col-span-12" variants={hyperStaggerItem}>
         <button
           onClick={() => addToast({ type: 'success', title: 'Settings Saved', message: 'Your preferences have been saved globally.' })}
           className="w-full sm:w-auto px-6 py-3 rounded-xl bg-emerald text-midnight font-semibold text-sm hover:bg-emerald/90 transition-all duration-300 flex items-center gap-2"

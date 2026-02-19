@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { Activity, Cpu, HardDrive, Wifi, Clock, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { Card, ProgressBar } from '../components/ui';
-import { staggerContainer, staggerItem } from '../lib/motion';
+import { staggerContainer, staggerItem, hyperStaggerContainer, hyperStaggerItem } from '../lib/motion';
 
 const services = [
   { name: 'FastAPI Backend', status: 'healthy', uptime: '99.9%', latency: '12ms', icon: Cpu, color: 'emerald' },
@@ -21,12 +21,12 @@ export default function Monitoring() {
   return (
     <motion.div
       className="grid grid-cols-12 gap-4 lg:gap-6"
-      variants={staggerContainer}
+      variants={hyperStaggerContainer}
       initial="hidden"
       animate="show"
     >
       {/* ── System Health ── */}
-      <motion.div className="col-span-12" variants={staggerItem}>
+      <motion.div className="col-span-12" variants={hyperStaggerItem}>
         <Card>
           <div className="flex items-center gap-3 mb-5">
             <div className="w-10 h-10 rounded-xl bg-emerald/10 flex items-center justify-center">
@@ -65,7 +65,7 @@ export default function Monitoring() {
       </motion.div>
 
       {/* ── Resource Usage ── */}
-      <motion.div className="col-span-12 lg:col-span-6" variants={staggerItem}>
+      <motion.div className="col-span-12 lg:col-span-6" variants={hyperStaggerItem}>
         <Card>
           <div className="flex items-center gap-3 mb-5">
             <div className="w-10 h-10 rounded-xl bg-cyan/10 flex items-center justify-center">
@@ -96,7 +96,7 @@ export default function Monitoring() {
       </motion.div>
 
       {/* ── Event Log ── */}
-      <motion.div className="col-span-12 lg:col-span-6" variants={staggerItem}>
+      <motion.div className="col-span-12 lg:col-span-6" variants={hyperStaggerItem}>
         <Card>
           <div className="flex items-center gap-3 mb-5">
             <div className="w-10 h-10 rounded-xl bg-amber/10 flex items-center justify-center">

@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Zap, MapPin, Battery, Clock, Search, Filter, ChevronRight, Check } from 'lucide-react';
 import { Card } from '../components/ui';
-import { staggerContainer, staggerItem } from '../lib/motion';
+import { staggerContainer, staggerItem, hyperStaggerContainer, hyperStaggerItem } from '../lib/motion';
 import { cn } from '../lib/utils';
 
 const MOCK_STATIONS = [
@@ -61,12 +61,12 @@ export default function Stations() {
   return (
     <motion.div
       className="grid grid-cols-12 gap-4 lg:gap-6"
-      variants={staggerContainer}
+      variants={hyperStaggerContainer}
       initial="hidden"
       animate="show"
     >
       {/* ── Search & Filter Bar ── */}
-      <motion.div className="col-span-12" variants={staggerItem}>
+      <motion.div className="col-span-12" variants={hyperStaggerItem}>
         <Card className="flex items-center gap-3">
           <Search className="w-4 h-4 text-label flex-shrink-0" />
           <input
@@ -115,7 +115,7 @@ export default function Stations() {
       </motion.div>
 
       {/* ── Stat Summary Row ── */}
-      <motion.div className="col-span-12 grid grid-cols-2 md:grid-cols-4 gap-4" variants={staggerItem}>
+      <motion.div className="col-span-12 grid grid-cols-2 md:grid-cols-4 gap-4" variants={hyperStaggerItem}>
         {[
           { label: 'Total Stations', value: '127', icon: Zap, color: 'text-emerald' },
           { label: 'Available Now', value: '89', icon: MapPin, color: 'text-cyan' },
@@ -135,7 +135,7 @@ export default function Stations() {
       </motion.div>
 
       {/* ── Station List ── */}
-      <motion.div className="col-span-12 lg:col-span-7" variants={staggerItem}>
+      <motion.div className="col-span-12 lg:col-span-7" variants={hyperStaggerItem}>
         <Card padding="none">
           <div className="px-5 pt-5 pb-3 border-b border-white/[0.05]">
             <h3 className="text-sm font-semibold text-white">Charging Stations</h3>
@@ -167,7 +167,7 @@ export default function Stations() {
       </motion.div>
 
       {/* ── Station Detail Panel ── */}
-      <motion.div className="col-span-12 lg:col-span-5" variants={staggerItem}>
+      <motion.div className="col-span-12 lg:col-span-5" variants={hyperStaggerItem}>
         <Card className="h-full min-h-[400px] flex items-center justify-center">
           {selected ? (
             <div className="text-center space-y-3 w-full px-4">

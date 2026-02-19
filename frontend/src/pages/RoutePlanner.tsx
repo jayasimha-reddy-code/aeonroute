@@ -1,4 +1,6 @@
 import { useState, useCallback, useMemo } from 'react';
+import { motion } from 'framer-motion';
+import { hyperStaggerContainer, hyperStaggerItem } from '../lib/motion';
 import { useSystemStore } from '../store/store';
 import api from '../services/api';
 import NetworkMap from '../components/NetworkMap';
@@ -66,10 +68,17 @@ function RoutePlanner() {
   const batteryColor = currentEVState.battery_soc > 50 ? 'bg-emerald' : currentEVState.battery_soc > 20 ? 'bg-amber' : 'bg-rose';
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto">
-      <PageHeader title="Route Planner" subtitle="Generate and compare optimized EV routes with real-time metrics" icon={Map} />
+    <motion.div
+      className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto"
+      variants={hyperStaggerContainer}
+      initial="hidden"
+      animate="show"
+    >
+      <motion.div variants={hyperStaggerItem}>
+        <PageHeader title="Route Planner" subtitle="Generate and compare optimized EV routes with real-time metrics" icon={Map} />
+      </motion.div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <motion.div variants={hyperStaggerItem} className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* ── Control Panel ───────────────────────────── */}
         <div className="lg:col-span-3">
           <Card className="sticky top-20">
@@ -235,8 +244,8 @@ function RoutePlanner() {
             />
           )}
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
 

@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { hyperStaggerContainer, hyperStaggerItem } from '../lib/motion';
 import api from '../services/api';
 import PageHeader from '../components/PageHeader';
 import { Card, Button, Badge, ProgressBar } from '../components/ui';
@@ -69,11 +71,17 @@ function Training() {
   ] as const;
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto">
-      <PageHeader
-        title="Model Training"
-        subtitle="Configure and train the complete EV routing AI pipeline"
-        icon={Brain}
+    <motion.div
+      className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto"
+      variants={hyperStaggerContainer}
+      initial="hidden"
+      animate="show"
+    >
+      <motion.div variants={hyperStaggerItem}>
+        <PageHeader
+          title="Model Training"
+          subtitle="Configure and train the complete EV routing AI pipeline"
+          icon={Brain}
         actions={
           <>
             {trainingProgress.is_training && (
@@ -87,9 +95,10 @@ function Training() {
             )}
           </>
         }
-      />
+        />
+      </motion.div>
 
-      <div className="grid grid-cols-12 gap-6">
+      <motion.div variants={hyperStaggerItem} className="grid grid-cols-12 gap-6">
         {/* ── Config Panel ──────────────────────────────── */}
         <div className="col-span-12 lg:col-span-3">
           <Card className="sticky top-20">
@@ -212,8 +221,8 @@ function Training() {
             </Card>
           )}
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
 

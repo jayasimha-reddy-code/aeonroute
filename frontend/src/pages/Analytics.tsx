@@ -7,7 +7,7 @@ import { Card, Badge } from '../components/ui';
 import { StatCardSkeleton } from '../components/ui/Skeleton';
 import { OverflowMenu } from '../components/ui/OverflowMenu';
 import { cn } from '../lib/utils';
-import { staggerContainer, staggerItem } from '../lib/motion';
+import { staggerContainer, staggerItem, hyperStaggerContainer, hyperStaggerItem } from '../lib/motion';
 import {
   BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
@@ -158,7 +158,7 @@ function Analytics() {
   return (
     <motion.div
       className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto"
-      variants={staggerContainer}
+      variants={hyperStaggerContainer}
       initial="hidden"
       animate="show"
     >
@@ -206,7 +206,7 @@ function Analytics() {
       )}
 
       {/* ── Key Metrics ──────────────────────────────── */}
-      <motion.div variants={staggerItem} className={viewMode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 mb-8' : 'flex flex-col gap-3 mb-8'}>
+      <motion.div variants={hyperStaggerItem} className={viewMode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 mb-8' : 'flex flex-col gap-3 mb-8'}>
         {loading ? (
           Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)
         ) : (
