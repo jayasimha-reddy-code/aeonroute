@@ -1,18 +1,25 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Car, Gauge, Palette, Globe, Save } from 'lucide-react';
+import { Car, Gauge, Palette, Globe, Save, MapPin, Cpu } from 'lucide-react';
 import { Card, ToggleSwitch } from '../components/ui';
-import { staggerContainer, staggerItem, hyperStaggerContainer, hyperStaggerItem } from '../lib/motion';
+import { hyperStaggerContainer, hyperStaggerItem } from '../lib/motion';
 import { useSettings, useSetUnits, useSetAvoidTolls, useSetOptimizeBattery, useSetNotifications, useAddToast } from '../store/store';
+import api, { SystemConfig } from '../services/api';
 
 export default function Settings() {
   const [vehicleProfile, setVehicleProfile] = useState('tesla_model_3_lr');
+  const [sysConfig, setSysConfig] = useState<SystemConfig | null>(null);
   const settings = useSettings();
   const setUnits = useSetUnits();
   const setAvoidTolls = useSetAvoidTolls();
   const setOptimizeBattery = useSetOptimizeBattery();
   const setNotifications = useSetNotifications();
   const addToast = useAddToast();
+
+  // Fetch system config on mount
+  useEffect(() => {
+    api.getSystemConfig().then(setSysConfig).catch(() => {});
+  }, []);
 
   return (
     <motion.div
@@ -160,6 +167,55 @@ export default function Settings() {
               </div>
             </div>
           </div>
+        </Card>
+      </motion.div>
+
+      {/* ── Simulation Scale & Resources ── */}
+      <motion.div className="col-span-12 lg:col-span-6" variants={hyperStaggerItem}>
+        <Card>
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-10 h-10 rounded-xl bg-cyan/10 flex items-center justify-center">
+              <Cpu className="w-5 h-5 text-cyan" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-white">Simulation Scale & Resources</h3>
+              <p className="text-xs text-muted">Active hardware constraints from <code className="text-emerald">.env</code></p>
+            </div>
+          </div>
+          {sysConfig ? (
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3 rounded-xl bg-white/[0.03]">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <MapPin className="w-3 h-3 text-emerald" />
+                    <p className="text-[10px] text-muted uppercase tracking-wider">Map Radius</p>
+                  </div>
+                  <p className="text-lg font-bold text-white">{sysConfig.osmnx_radius_km} km</p>
+                </div>
+                <div className="p-3 rounded-xl bg-white/[0.03]">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <Cpu className="w-3 h-3 text-amber" />
+                    <p className="text-[10px] text-muted uppercase tracking-wider">Max Episodes</p>
+                  </div>
+                  <p className="text-lg font-bold text-white">{sysConfig.max_training_episodes}</p>
+                </div>
+              </div>
+              <div className="p-3 rounded-xl bg-white/[0.03]">
+                <p className="text-[10px] text-muted uppercase tracking-wider mb-1">Map Center</p>
+                <p className="text-sm text-white font-mono">
+                  {sysConfig.osmnx_center_lat}, {sysConfig.osmnx_center_lon}
+                  <span className="text-xs text-muted ml-2">— HITEC City</span>
+                </p>
+              </div>
+              <p className="text-[11px] text-slate-500 italic mt-2">
+                These limits are set in <code className="text-emerald/60">.env</code>. Increase for cloud deployment.
+              </p>
+            </div>
+          ) : (
+            <div className="h-24 flex items-center justify-center">
+              <p className="text-xs text-muted">Loading config…</p>
+            </div>
+          )}
         </Card>
       </motion.div>
 
