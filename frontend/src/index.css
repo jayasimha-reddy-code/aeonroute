@@ -36,18 +36,17 @@
 @layer components {
   /* Glass surface — luminous translucent card foundation */
   .glass {
-    @apply bg-white/[0.02] backdrop-blur-[40px] border border-t-white/10 border-l-white/10 border-r-white/5 border-b-white/5 rounded-2xl;
-    box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.8), inset 0 1px 0 0 rgba(255,255,255,0.06);
+    @apply bg-white/[0.02] backdrop-blur-[40px] border-t border-l border-white/10 rounded-2xl;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
   }
 
   .glass-hover {
     @apply transition-all duration-500 ease-out;
   }
   .glass-hover:hover {
-    @apply -translate-y-1.5 border-white/[0.15];
-    border-top-color: rgba(255, 255, 255, 0.25);
-    background-color: rgba(255, 255, 255, 0.05);
-    box-shadow: 0 32px 64px -16px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255,255,255,0.05);
+    @apply -translate-y-0.5;
+    background-color: rgba(255, 255, 255, 0.03);
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5);
   }
 
   /* Skeleton shimmer */
