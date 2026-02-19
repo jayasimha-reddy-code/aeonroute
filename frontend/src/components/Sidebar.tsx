@@ -11,10 +11,10 @@ const navItems: Array<{ id: AppTab; label: string; icon: React.ComponentType<{ c
   { id: 'settings', label: 'Settings', icon: Settings },
 ];
 
-const secondaryNav = [
-  { icon: Brain, label: 'AI Models' },
-  { icon: Target, label: 'Routing' },
-  { icon: Activity, label: 'Monitoring' },
+const secondaryNav: Array<{ id: string; icon: React.ComponentType<{ className?: string }>; label: string }> = [
+  { id: 'ai-models', icon: Brain, label: 'AI Models' },
+  { id: 'routing-config', icon: Target, label: 'Routing' },
+  { id: 'monitoring', icon: Activity, label: 'Monitoring' },
 ];
 
 export default function Sidebar() {
@@ -92,17 +92,27 @@ export default function Sidebar() {
 
         {/* Secondary nav icons */}
         {secondaryNav.map(item => (
-          <button
-            key={item.label}
-            className={cn(
-              'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-label hover:text-white hover:bg-white/[0.04] transition-all duration-300',
-              collapsed && 'justify-center px-0'
+          <NavLink
+            key={item.id}
+            to={`/${item.id}`}
+            className={({ isActive }) => cn(
+              'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-300',
+              collapsed && 'justify-center px-0',
+              isActive
+                ? 'text-emerald-400 bg-white/[0.05] shadow-[inset_2px_0_0_#10b981]'
+                : 'text-label hover:text-white hover:bg-white/[0.04]'
             )}
-            title={collapsed ? item.label : undefined}
           >
-            <item.icon className="w-[18px] h-[18px] flex-shrink-0" />
-            {!collapsed && <span>{item.label}</span>}
-          </button>
+            {({ isActive }) => (
+              <>
+                <item.icon className="w-[18px] h-[18px] flex-shrink-0" />
+                {!collapsed && <span>{item.label}</span>}
+                {isActive && !collapsed && (
+                  <span className="ml-auto w-1.5 h-1.5 rounded-full bg-emerald" />
+                )}
+              </>
+            )}
+          </NavLink>
         ))}
       </nav>
 

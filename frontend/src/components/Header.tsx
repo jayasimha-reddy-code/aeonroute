@@ -10,6 +10,9 @@ const pageTitles: Record<string, string> = {
   analytics: 'Analytics',
   stations: 'Stations',
   settings: 'Settings',
+  'ai-models': 'AI Models',
+  'routing-config': 'Routing',
+  monitoring: 'Monitoring',
 };
 
 export default function Header() {

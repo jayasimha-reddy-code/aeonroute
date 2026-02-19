@@ -14,6 +14,9 @@ const TrainingView = lazy(() => import('./pages/Training'));
 const AnalyticsView = lazy(() => import('./pages/Analytics'));
 const StationsView = lazy(() => import('./pages/Stations'));
 const SettingsView = lazy(() => import('./pages/Settings'));
+const AIModelsView = lazy(() => import('./pages/AIModels'));
+const RoutingConfigView = lazy(() => import('./pages/Routing'));
+const MonitoringView = lazy(() => import('./pages/Monitoring'));
 
 function App() {
   const location = useLocation();
@@ -25,7 +28,7 @@ function App() {
   // Keep Zustand activeTab in sync with URL for backward compat
   useEffect(() => {
     const segment = location.pathname.split('/')[1] || 'dashboard';
-    const validTabs: AppTab[] = ['dashboard', 'routing', 'training', 'analytics', 'stations', 'settings'];
+    const validTabs: AppTab[] = ['dashboard', 'routing', 'training', 'analytics', 'stations', 'settings', 'ai-models', 'routing-config', 'monitoring'];
     if (validTabs.includes(segment as AppTab)) {
       setActiveTab(segment as AppTab);
     }
@@ -85,6 +88,9 @@ function App() {
               <Route path="/analytics" element={<Suspense fallback={<PageLoader />}><AnalyticsView /></Suspense>} />
               <Route path="/stations" element={<Suspense fallback={<PageLoader />}><StationsView /></Suspense>} />
               <Route path="/settings" element={<Suspense fallback={<PageLoader />}><SettingsView /></Suspense>} />
+              <Route path="/ai-models" element={<Suspense fallback={<PageLoader />}><AIModelsView /></Suspense>} />
+              <Route path="/routing-config" element={<Suspense fallback={<PageLoader />}><RoutingConfigView /></Suspense>} />
+              <Route path="/monitoring" element={<Suspense fallback={<PageLoader />}><MonitoringView /></Suspense>} />
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Routes>
           </main>
