@@ -52,3 +52,7 @@ tensorboard/
 # OS
 .DS_Store
 Thumbs.db
+
+# GSD
+.github/
+.gsd/
