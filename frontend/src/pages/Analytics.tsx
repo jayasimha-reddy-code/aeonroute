@@ -1,14 +1,16 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import api, { SystemStats, RouteMetrics } from '../services/api';
 import { useSystemStore } from '../store/store';
 import PageHeader from '../components/PageHeader';
 import { Card, Badge } from '../components/ui';
 import { StatCardSkeleton } from '../components/ui/Skeleton';
+import { OverflowMenu } from '../components/ui/OverflowMenu';
+import { cn } from '../lib/utils';
 import {
   BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts';
-import { Activity, TrendingUp, Zap, Timer, Route, Gauge, Network, Cpu } from 'lucide-react';
+import { Activity, TrendingUp, Zap, Timer, Route, Gauge, Network, Cpu, Calendar, Download, RefreshCw, Maximize2 } from 'lucide-react';
 
 /* ── Chart Styling Tokens ────────────────────────── */
 const CHART_COLORS = ['#14A8C0', '#F59E0B', '#10B981', '#EF4444', '#8B5CF6', '#3B82F6'];
@@ -49,6 +51,21 @@ function Analytics() {
   const [metrics, setMetrics] = useState<RouteMetrics | null>(null);
   const [systemStats, setSystemStats] = useState<SystemStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [dateRange, setDateRange] = useState('7d');
+  const [dateDropdownOpen, setDateDropdownOpen] = useState(false);
+  const dateRef = useRef<HTMLDivElement>(null);
+
+  // Outside click handler for date dropdown
+  useEffect(() => {
+    if (!dateDropdownOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (dateRef.current && !dateRef.current.contains(e.target as Node)) {
+        setDateDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [dateDropdownOpen]);
 
   /* ── Live evaluation state ───────────────────────── */
   const [ganEval, setGanEval] = useState<Record<string, any> | null>(null);
@@ -148,7 +165,41 @@ function Analytics() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto">
-      <PageHeader title="Analytics" subtitle="Comprehensive system performance metrics and AI model insights" icon={Activity} />
+      <div className="flex items-center justify-between mb-2">
+        <PageHeader title="Analytics" subtitle="Comprehensive system performance metrics and AI model insights" icon={Activity} />
+        <div ref={dateRef} className="relative">
+          <button
+            onClick={() => setDateDropdownOpen(!dateDropdownOpen)}
+            className="px-3 py-1.5 rounded-xl bg-white/[0.04] border border-white/[0.06] text-xs text-label hover:text-white transition-all duration-300 flex items-center gap-1.5"
+          >
+            <Calendar className="w-3 h-3" />
+            {dateRange === '7d' ? 'Last 7d' : dateRange === '30d' ? 'Last 30d' : dateRange === '90d' ? '90 days' : 'All time'}
+          </button>
+          {dateDropdownOpen && (
+            <div className="absolute right-0 mt-2 w-40 rounded-xl bg-[#0f141c] border border-white/10 backdrop-blur-3xl shadow-2xl z-50 py-1">
+              {[
+                { value: '7d', label: 'Last 7 days' },
+                { value: '30d', label: 'Last 30 days' },
+                { value: '90d', label: 'Last 90 days' },
+                { value: 'all', label: 'All time' },
+              ].map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => { setDateRange(opt.value); setDateDropdownOpen(false); }}
+                  className={cn(
+                    'w-full px-3 py-2 text-sm text-left transition-colors',
+                    dateRange === opt.value
+                      ? 'text-emerald bg-emerald/10'
+                      : 'text-slate-300 hover:bg-white/[0.04] hover:text-white'
+                  )}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* ── Not-trained banner ───────────────────────────── */}
       {!modelsReady && !evalLoading && (
@@ -174,12 +225,21 @@ function Analytics() {
       {/* ── Charts Row 1 ─────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 mb-5">
         {/* Agent Reward / Energy Timeline (wider) */}
-        <Card className="col-span-12 lg:col-span-7">
-          <div className="flex items-center gap-2.5 mb-5">
-            <div className="p-1.5 rounded-lg bg-amber/10"><Zap className="w-3.5 h-3.5 text-amber" /></div>
-            <h3 className="text-sm font-semibold text-white uppercase tracking-wider">
-              {trainingHistory?.reward_history?.length ? 'Agent Reward History' : 'Energy & Distance'}
-            </h3>
+        <Card className="col-span-12 lg:col-span-7 group">
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center gap-2.5">
+              <div className="p-1.5 rounded-lg bg-amber/10"><Zap className="w-3.5 h-3.5 text-amber" /></div>
+              <h3 className="text-sm font-semibold text-white uppercase tracking-wider">
+                {trainingHistory?.reward_history?.length ? 'Agent Reward History' : 'Energy & Distance'}
+              </h3>
+            </div>
+            <OverflowMenu
+              items={[
+                { label: 'Export PNG', icon: Download, onClick: () => console.log('Export: Energy chart') },
+                { label: 'Refresh Data', icon: RefreshCw, onClick: () => console.log('Refresh: Energy chart') },
+                { label: 'Full Screen', icon: Maximize2, onClick: () => console.log('Full screen: Energy chart') },
+              ]}
+            />
           </div>
           {evalLoading ? (
             <div className="h-[280px] flex items-center justify-center text-label text-sm">Loading…</div>
@@ -234,10 +294,19 @@ function Analytics() {
         </Card>
 
         {/* Route Quality Donut (narrower) */}
-        <Card className="col-span-12 lg:col-span-5">
-          <div className="flex items-center gap-2.5 mb-5">
-            <div className="p-1.5 rounded-lg bg-emerald/10"><TrendingUp className="w-3.5 h-3.5 text-emerald" /></div>
-            <h3 className="text-sm font-semibold text-white uppercase tracking-wider">Route Quality</h3>
+        <Card className="col-span-12 lg:col-span-5 group">
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center gap-2.5">
+              <div className="p-1.5 rounded-lg bg-emerald/10"><TrendingUp className="w-3.5 h-3.5 text-emerald" /></div>
+              <h3 className="text-sm font-semibold text-white uppercase tracking-wider">Route Quality</h3>
+            </div>
+            <OverflowMenu
+              items={[
+                { label: 'Export PNG', icon: Download, onClick: () => console.log('Export: Route Quality') },
+                { label: 'Refresh Data', icon: RefreshCw, onClick: () => console.log('Refresh: Route Quality') },
+                { label: 'Full Screen', icon: Maximize2, onClick: () => console.log('Full screen: Route Quality') },
+              ]}
+            />
           </div>
           <ResponsiveContainer width="100%" height={280}>
             <PieChart>
@@ -259,12 +328,21 @@ function Analytics() {
       {/* ── Charts Row 2 ─────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
         {/* GAN Quality / Distance Distribution */}
-        <Card>
-          <div className="flex items-center gap-2.5 mb-5">
-            <div className="p-1.5 rounded-lg bg-blue/10"><Route className="w-3.5 h-3.5 text-blue" /></div>
-            <h3 className="text-sm font-semibold text-white uppercase tracking-wider">
-              {ganEval ? 'GAN Quality Metrics' : 'Distance Distribution'} <span className="text-label normal-case font-normal">{ganEval ? '' : '(km)'}</span>
-            </h3>
+        <Card className="group">
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center gap-2.5">
+              <div className="p-1.5 rounded-lg bg-blue/10"><Route className="w-3.5 h-3.5 text-blue" /></div>
+              <h3 className="text-sm font-semibold text-white uppercase tracking-wider">
+                {ganEval ? 'GAN Quality Metrics' : 'Distance Distribution'} <span className="text-label normal-case font-normal">{ganEval ? '' : '(km)'}</span>
+              </h3>
+            </div>
+            <OverflowMenu
+              items={[
+                { label: 'Export PNG', icon: Download, onClick: () => console.log('Export: GAN Quality') },
+                { label: 'Refresh Data', icon: RefreshCw, onClick: () => console.log('Refresh: GAN Quality') },
+                { label: 'Full Screen', icon: Maximize2, onClick: () => console.log('Full screen: GAN Quality') },
+              ]}
+            />
           </div>
           {evalLoading ? (
             <div className="h-[260px] flex items-center justify-center text-label text-sm">Loading…</div>
@@ -284,10 +362,19 @@ function Analytics() {
         </Card>
 
         {/* GAN Training Convergence */}
-        <Card>
-          <div className="flex items-center gap-2.5 mb-5">
-            <div className="p-1.5 rounded-lg bg-amber/10"><Cpu className="w-3.5 h-3.5 text-amber" /></div>
-            <h3 className="text-sm font-semibold text-white uppercase tracking-wider">GAN Training Loss</h3>
+        <Card className="group">
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center gap-2.5">
+              <div className="p-1.5 rounded-lg bg-amber/10"><Cpu className="w-3.5 h-3.5 text-amber" /></div>
+              <h3 className="text-sm font-semibold text-white uppercase tracking-wider">GAN Training Loss</h3>
+            </div>
+            <OverflowMenu
+              items={[
+                { label: 'Export PNG', icon: Download, onClick: () => console.log('Export: Training Loss') },
+                { label: 'Refresh Data', icon: RefreshCw, onClick: () => console.log('Refresh: Training Loss') },
+                { label: 'Full Screen', icon: Maximize2, onClick: () => console.log('Full screen: Training Loss') },
+              ]}
+            />
           </div>
           <ResponsiveContainer width="100%" height={260}>
             <AreaChart data={trainingConvergence}>
