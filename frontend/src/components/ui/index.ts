@@ -13,6 +13,8 @@ export { default as Spinner } from './Spinner';
 // Interactive
 export { default as ToggleSwitch } from './ToggleSwitch';
 export { default as Slider } from './Slider';
+export { OverflowMenu } from './OverflowMenu';
+export { ViewToggle } from './ViewToggle';
 
 // Layout
 export { default as Skeleton, StatCardSkeleton, RouteCardSkeleton, DashboardSkeleton, AnalyticsSkeleton, TrainingSkeleton } from './Skeleton';
