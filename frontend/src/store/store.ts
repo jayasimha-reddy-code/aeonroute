@@ -59,6 +59,11 @@ interface SystemState {
   activeTab: AppTab;
   setActiveTab: (tab: AppTab) => void;
 
+  // ── Sidebar ──
+  sidebarCollapsed: boolean;
+  toggleSidebar: () => void;
+  setSidebarCollapsed: (collapsed: boolean) => void;
+
   // ── Loading / Error ──
   isLoading: boolean;
   setIsLoading: (loading: boolean) => void;
@@ -108,6 +113,11 @@ export const useSystemStore = create<SystemState>()(
       // Navigation
       activeTab: 'dashboard',
       setActiveTab: (tab) => set({ activeTab: tab }),
+
+      // Sidebar
+      sidebarCollapsed: false,
+      toggleSidebar: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
+      setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
 
       // Loading / Error
       isLoading: false,
@@ -209,6 +219,7 @@ export const useSystemStore = create<SystemState>()(
       // Only persist user preferences — not runtime data
       partialize: (state) => ({
         activeTab: state.activeTab,
+        sidebarCollapsed: state.sidebarCollapsed,
       }),
     }
   )
@@ -223,6 +234,9 @@ export const useSetRoadNetwork = () => useSystemStore((s) => s.setRoadNetwork);
 
 export const useActiveTab = () => useSystemStore((s) => s.activeTab);
 export const useSetActiveTab = () => useSystemStore((s) => s.setActiveTab);
+
+export const useSidebarCollapsed = () => useSystemStore((s) => s.sidebarCollapsed);
+export const useToggleSidebar = () => useSystemStore((s) => s.toggleSidebar);
 
 export const useToasts = () => useSystemStore((s) => ({ toasts: s.toasts, addToast: s.addToast, removeToast: s.removeToast }));
 export const useAddToast = () => useSystemStore((s) => s.addToast);

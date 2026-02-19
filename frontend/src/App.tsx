@@ -1,5 +1,6 @@
 import { useEffect, lazy, Suspense } from 'react';
-import { useActiveTab, useSetRoadNetwork, useLoading, useAddToast } from './store/store';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { useSetActiveTab, useSetRoadNetwork, useLoading, useAddToast, type AppTab } from './store/store';
 import api from './services/api';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
@@ -11,19 +12,24 @@ const DashboardView = lazy(() => import('./pages/Dashboard'));
 const RoutePlannerView = lazy(() => import('./pages/RoutePlanner'));
 const TrainingView = lazy(() => import('./pages/Training'));
 const AnalyticsView = lazy(() => import('./pages/Analytics'));
-
-const pages: Record<string, React.LazyExoticComponent<() => JSX.Element>> = {
-  dashboard: DashboardView,
-  routing: RoutePlannerView,
-  training: TrainingView,
-  analytics: AnalyticsView,
-};
+const StationsView = lazy(() => import('./pages/Stations'));
+const SettingsView = lazy(() => import('./pages/Settings'));
 
 function App() {
-  const activeTab = useActiveTab();
+  const location = useLocation();
+  const setActiveTab = useSetActiveTab();
   const setRoadNetwork = useSetRoadNetwork();
   const { setIsLoading } = useLoading();
   const addToast = useAddToast();
+
+  // Keep Zustand activeTab in sync with URL for backward compat
+  useEffect(() => {
+    const segment = location.pathname.split('/')[1] || 'dashboard';
+    const validTabs: AppTab[] = ['dashboard', 'routing', 'training', 'analytics', 'stations', 'settings'];
+    if (validTabs.includes(segment as AppTab)) {
+      setActiveTab(segment as AppTab);
+    }
+  }, [location.pathname, setActiveTab]);
 
   useEffect(() => {
     const loadInitialData = async () => {
@@ -46,8 +52,6 @@ function App() {
     loadInitialData();
   }, [setIsLoading, setRoadNetwork, addToast]);
 
-  const Page = pages[activeTab] || DashboardView;
-
   return (
     <>
       {/* Skip link */}
@@ -55,7 +59,7 @@ function App() {
         Skip to content
       </a>
 
-      <div className="flex h-screen bg-midnight overflow-hidden relative">
+      <div className="flex h-screen bg-[#060910] bg-[radial-gradient(ellipse_80%_80%_at_50%_-10%,rgba(16,185,129,0.12),rgba(6,9,16,1))] overflow-hidden relative">
         {/* Glass refraction light sources — MASSIVE radial gradients for backdrop-blur refraction */}
         <div className="pointer-events-none fixed inset-0 z-0">
           {/* Primary emerald wash — top-right */}
@@ -73,9 +77,16 @@ function App() {
         <div className="flex-1 flex flex-col min-w-0 relative z-10">
           <Header />
           <main id="main" className="flex-1 overflow-y-auto overflow-x-hidden p-4 lg:p-6">
-            <Suspense fallback={<PageLoader />}>
-              <Page />
-            </Suspense>
+            <Routes>
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/dashboard" element={<Suspense fallback={<PageLoader />}><DashboardView /></Suspense>} />
+              <Route path="/routing" element={<Suspense fallback={<PageLoader />}><RoutePlannerView /></Suspense>} />
+              <Route path="/training" element={<Suspense fallback={<PageLoader />}><TrainingView /></Suspense>} />
+              <Route path="/analytics" element={<Suspense fallback={<PageLoader />}><AnalyticsView /></Suspense>} />
+              <Route path="/stations" element={<Suspense fallback={<PageLoader />}><StationsView /></Suspense>} />
+              <Route path="/settings" element={<Suspense fallback={<PageLoader />}><SettingsView /></Suspense>} />
+              <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            </Routes>
           </main>
         </div>
       </div>

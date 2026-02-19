@@ -1,4 +1,4 @@
-import { useActiveTab } from '../store/store';
+import { useLocation } from 'react-router-dom';
 import { LayoutGrid, List, SlidersHorizontal } from 'lucide-react';
 
 const pageTitles: Record<string, string> = {
@@ -11,8 +11,9 @@ const pageTitles: Record<string, string> = {
 };
 
 export default function Header() {
-  const activeTab = useActiveTab();
-  const title = pageTitles[activeTab] || 'Dashboard';
+  const location = useLocation();
+  const segment = location.pathname.split('/')[1] || 'dashboard';
+  const title = pageTitles[segment] || 'Dashboard';
 
   return (
     <header className="h-14 flex items-center justify-between px-6 border-b border-white/[0.03] flex-shrink-0">
