@@ -1,29 +1,34 @@
 ﻿from pydantic import BaseModel, Field, field_validator
+from typing import Optional
 
 class EVStateRequest(BaseModel):
     battery_soc: float = Field(..., ge=0, le=100, description="State of charge (0-100%)")
-    current_node: int = Field(..., ge=0, le=9999, description="Current node ID")
+    current_node: int = Field(..., ge=0, le=999999, description="Current node ID")
     battery_capacity_kwh: float = Field(60, gt=0, le=500, description="Battery capacity in kWh")
     time_minutes: int = Field(480, ge=0, le=1440, description="Current time of day in minutes")
 
 class RouteRequest(BaseModel):
-    source: int = Field(..., ge=0, le=9999, description="Source node ID")
-    destination: int = Field(..., ge=0, le=9999, description="Destination node ID")
-    ev_state: EVStateRequest
-    num_candidates: int = Field(5, ge=1, le=20, description="Number of candidate routes")
-
-    @field_validator("destination")
-    @classmethod
-    def source_ne_dest(cls, v, info):
-        if "source" in info.data and v == info.data["source"]:
-            raise ValueError("source and destination must differ")
-        return v
+    source: Optional[int] = Field(None, ge=0, description="Source node ID")
+    destination: Optional[int] = Field(None, ge=0, description="Destination node ID")
+    source_lat: Optional[float] = Field(None, description="Source latitude")
+    source_lon: Optional[float] = Field(None, description="Source longitude")
+    dest_lat: Optional[float] = Field(None, description="Destination latitude")
+    dest_lon: Optional[float] = Field(None, description="Destination longitude")
+    battery_soc: float = Field(80.0, ge=0, le=100, description="Battery SOC %")
+    battery_capacity_kwh: float = Field(60.0, gt=0, le=500, description="Battery capacity kWh")
+    ev_state: Optional[EVStateRequest] = None
+    num_candidates: int = Field(3, ge=1, le=10, description="Number of candidate routes")
 
 class TrainingConfig(BaseModel):
-    grid_size: int = Field(10, ge=3, le=50, description="Road network grid size")
-    gan_epochs: int = Field(100, ge=1, le=1000, description="GAN training epochs")
-    rl_episodes: int = Field(500, ge=1, le=5000, description="RL training episodes")
-    traffic_samples: int = Field(500, ge=10, le=5000, description="Number of traffic samples")
-    gan_batch_size: int = Field(32, ge=1, le=256, description="GAN batch size")
-    rl_max_steps: int = Field(200, ge=10, le=1000, description="Max steps per RL episode")
-    demo_mode: bool = Field(False, description="Fast training from checkpoints (5-10 epochs)")
+    episodes: int = Field(200, ge=10, le=5000, description="Q-Learning episodes")
+    learning_rate: float = Field(0.1, ge=0.001, le=1.0, description="Learning rate")
+    discount_factor: float = Field(0.95, ge=0.5, le=0.99, description="Discount factor")
+    max_steps: int = Field(300, ge=50, le=1000, description="Max steps per episode")
+    # Legacy fields (ignored but accepted for backward compat)
+    grid_size: int = Field(10, ge=3, le=50)
+    gan_epochs: int = Field(100, ge=1, le=1000)
+    rl_episodes: int = Field(500, ge=1, le=5000)
+    traffic_samples: int = Field(500, ge=10, le=5000)
+    gan_batch_size: int = Field(32, ge=1, le=256)
+    rl_max_steps: int = Field(200, ge=10, le=1000)
+    demo_mode: bool = Field(False, description="Fast training (fewer episodes)")

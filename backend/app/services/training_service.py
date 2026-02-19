@@ -1,19 +1,23 @@
-"""Training service — runs ML pipeline in ThreadPoolExecutor."""
+"""Training service — runs Q-Learning pipeline over real Hyderabad graph."""
 
 import asyncio
 import logging
+import os
+import pickle
 from concurrent.futures import ThreadPoolExecutor
 from backend.app.state import AppState
 from backend.app.models.requests import TrainingConfig
-from src.main import EVRoutingSystem
+from backend.app.config import settings
 
 logger = logging.getLogger("ev_routing")
 
 _executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="ml-train")
 
+_Q_TABLE_PATH = "models/q_learning/q_table_hyderabad.pkl"
+
 
 class TrainingService:
-    """Manages ML training lifecycle — runs pipeline in a thread, updates AppState."""
+    """Manages Q-Learning training lifecycle — runs pipeline in a thread, updates AppState."""
 
     def __init__(self, state: AppState):
         self.state = state
@@ -23,34 +27,6 @@ class TrainingService:
             from fastapi import HTTPException
             raise HTTPException(409, detail={"ok": False, "message": "Training already in progress"})
 
-        system_config = {
-            "grid_size": config.grid_size,
-            "max_battery": 100,
-            "battery_capacity_kwh": 60,
-            "gan_epochs": config.gan_epochs,
-            "gan_batch_size": config.gan_batch_size,
-            "gnn_epochs": 50,
-            "gnn_batch_size": 16,
-            "rl_episodes": config.rl_episodes,
-            "rl_max_steps": config.rl_max_steps,
-            "traffic_samples": config.traffic_samples,
-            "historical_routes": 300,
-            "seed": 42,
-            "model_dir": "models",
-            "results_dir": "results",
-            "data_dir": "data",
-            "use_gnn_gan": True,
-        }
-
-        system_config["demo_mode"] = config.demo_mode
-        if config.demo_mode:
-            system_config["gan_epochs"] = 5
-            system_config["rl_episodes"] = 20
-            system_config["gnn_epochs"] = 5
-            system_config["traffic_samples"] = 50
-            system_config["historical_routes"] = 30
-
-        training_system = EVRoutingSystem(system_config)
         self.state.training_status.update({
             "is_training": True,
             "progress": 0,
@@ -58,89 +34,138 @@ class TrainingService:
             "metrics": {},
             "loss_history": [],
             "reward_history": [],
-            "gan_epoch": 0,
-            "gan_total_epochs": 0,
             "rl_episode": 0,
             "rl_total_episodes": 0,
         })
 
         loop = asyncio.get_running_loop()
-        loop.run_in_executor(_executor, self._run_pipeline, training_system)
-        logger.info("Training dispatched to ThreadPoolExecutor with config: %s", config.model_dump())
+        loop.run_in_executor(_executor, self._run_pipeline, config)
+        logger.info("Q-Learning training dispatched with config: episodes=%d, lr=%f", config.episodes, config.learning_rate)
 
-    def _run_pipeline(self, sys: EVRoutingSystem) -> None:
+    def _run_pipeline(self, config: TrainingConfig) -> None:
         """Synchronous — runs in ThreadPoolExecutor thread. NOT async."""
         try:
-            # Reset history arrays at pipeline start
             self.state.training_status["loss_history"] = []
             self.state.training_status["reward_history"] = []
 
-            self._update(10, "Creating road network")
-            sys.step1_create_road_network()
+            # --- Step 1: Load graph ---
+            self._update(10, "Loading Hyderabad graph")
+            from backend.app.services.graph_service import get_hyderabad_graph
+            hgraph = get_hyderabad_graph()
+            logger.info("Graph loaded: %d nodes, %d edges", hgraph.num_nodes, hgraph.num_edges)
 
-            if sys.config.get("demo_mode"):
-                self._update(15, "Loading model checkpoints (demo mode)")
-                try:
-                    sys.load_models()
-                except Exception:
-                    pass  # No checkpoints, train from scratch
+            # --- Step 2: Load stations ---
+            self._update(20, "Loading charging stations")
+            from backend.app.services.station_service import get_charging_stations, snap_stations_to_graph
+            stations = get_charging_stations(settings.OSMNX_CENTER_LAT, settings.OSMNX_CENTER_LON)
+            snap_stations_to_graph(stations, hgraph)
+            logger.info("Stations loaded: %d", len(stations))
 
-            self._update(25, "Generating traffic data")
-            traffic_data = sys.step2_generate_traffic_data()
+            # --- Step 3: Create environment ---
+            self._update(30, "Creating RL environment")
+            from src.hyderabad_environment import HyderabadRoutingEnvironment
+            env = HyderabadRoutingEnvironment(
+                graph=hgraph,
+                max_steps=config.max_steps,
+            )
 
-            self._update(40, "Training traffic GAN")
+            # --- Step 4: Train Q-Learning ---
+            episodes = min(config.episodes, settings.MAX_TRAINING_EPISODES)
+            if config.demo_mode:
+                episodes = min(episodes, 50)
+            self._update(40, f"Training Q-Learning agent ({episodes} episodes)")
+            self.state.training_status["rl_total_episodes"] = episodes
 
-            def on_gan_epoch(epoch, total, losses):
-                self.state.training_status["loss_history"].append({
-                    "epoch": epoch,
-                    "g_loss": float(losses["g_loss"]),
-                    "d_loss_real": float(losses["d_loss_real"]),
-                    "d_loss_fake": float(losses["d_loss_fake"]),
-                })
-                self.state.training_status["gan_epoch"] = epoch
-                self.state.training_status["gan_total_epochs"] = total
+            from src.q_learning_agent import QLearningAgent
+            agent = QLearningAgent(
+                state_space=hgraph.num_nodes,
+                action_space=env._max_degree,
+                learning_rate=config.learning_rate,
+                discount_factor=config.discount_factor,
+            )
 
-            sys.step3_train_gan(traffic_data, epoch_callback=on_gan_epoch)
+            for ep in range(episodes):
+                if not self.state.training_status["is_training"]:
+                    logger.info("Training stopped by user at episode %d", ep)
+                    self._update(self.state.training_status["progress"], "Stopped by user")
+                    return
 
-            self._update(55, "Creating RL environment")
-            sys.step4_create_environment()
+                state_obs, info = env.reset()
+                episode_reward = 0.0
+                td_errors = []
 
-            if not self.state.training_status["is_training"]:
-                self._update(self.state.training_status["progress"], "Stopped by user")
-                logger.info("Training stopped by user after environment creation")
-                return
+                for step in range(config.max_steps):
+                    neighbors = hgraph.get_neighbors(env.current_node)
+                    valid_actions = len(neighbors)
 
-            self._update(75, "Training Q-Learning agent")
+                    if valid_actions == 0:
+                        break
 
-            def on_rl_episode(episode, total, reward, length):
+                    action = agent.choose_action(state_obs, training=True)
+                    action = action % valid_actions  # clamp to valid range
+
+                    next_state, reward, terminated, truncated, step_info = env.step(action)
+                    agent.learn(state_obs, action, reward, next_state, terminated or truncated)
+
+                    td_error = abs(reward + config.discount_factor * max(
+                        agent.q_table.get(agent._state_to_key(next_state), [0])[:]
+                    ) - agent.q_table.get(agent._state_to_key(state_obs), [0])[action % len(agent.q_table.get(agent._state_to_key(state_obs), [0]))])
+                    td_errors.append(td_error)
+
+                    episode_reward += reward
+                    state_obs = next_state
+
+                    if terminated or truncated:
+                        break
+
+                agent.decay_exploration()
+
+                avg_td = sum(td_errors) / max(len(td_errors), 1)
                 self.state.training_status["reward_history"].append({
-                    "episode": episode,
-                    "reward": float(reward),
-                    "length": int(length),
+                    "episode": ep,
+                    "reward": float(episode_reward),
+                    "length": step + 1,
                 })
-                self.state.training_status["rl_episode"] = episode
-                self.state.training_status["rl_total_episodes"] = total
+                self.state.training_status["loss_history"].append({
+                    "episode": ep,
+                    "td_error": float(avg_td),
+                })
+                self.state.training_status["rl_episode"] = ep + 1
 
-            sys.step5_train_agent(episode_callback=on_rl_episode)
+                # Update progress (40% -> 90% during training)
+                train_progress = 40 + int((ep / max(episodes, 1)) * 50)
+                self._update(train_progress, f"Training: episode {ep + 1}/{episodes}")
 
-            self._update(85, "Creating route generator")
-            sys.step6_create_route_generator()
+            # --- Step 5: Save Q-table ---
+            self._update(95, "Saving Q-table")
+            os.makedirs(os.path.dirname(_Q_TABLE_PATH), exist_ok=True)
+            agent.save_model(_Q_TABLE_PATH)
 
-            self._update(95, "Evaluating system")
-            results = sys.step7_evaluate_system()
-            self.state.training_status["metrics"] = results
+            # Load Q-table into state for immediate use
+            self.state.q_table = dict(agent.q_table)
 
-            self._update(100, "Complete")
-            self.state.training_status["is_training"] = False
+            # Update graph + stations on state
+            self.state.hyderabad_graph = hgraph
+            self.state.charging_stations = stations
 
-            # Atomic swap
-            self.state.system = sys
-
-            # Invalidate caches after training
+            # Invalidate caches
             self.state.road_network_cache.clear()
             self.state.system_stats_cache.clear()
 
-            logger.info("Training pipeline completed successfully")
+            # --- Step 6: Complete ---
+            final_rewards = [r["reward"] for r in self.state.training_status["reward_history"][-20:]]
+            avg_final_reward = sum(final_rewards) / max(len(final_rewards), 1)
+
+            self.state.training_status["metrics"] = {
+                "total_episodes": episodes,
+                "final_avg_reward": round(avg_final_reward, 2),
+                "q_table_states": len(agent.q_table),
+                "exploration_rate": round(agent.exploration_rate, 4),
+            }
+            self._update(100, "Complete")
+            self.state.training_status["is_training"] = False
+
+            logger.info("Q-Learning training completed: %d episodes, avg reward=%.2f", episodes, avg_final_reward)
 
         except Exception as e:
             self.state.training_status["is_training"] = False

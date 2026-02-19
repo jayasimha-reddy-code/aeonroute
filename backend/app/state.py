@@ -1,13 +1,17 @@
 ﻿from dataclasses import dataclass, field
-from typing import Optional, Any, Dict
+from typing import Optional, Any, Dict, List
 from cachetools import TTLCache
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from src.main import EVRoutingSystem
+    from backend.app.services.graph_service import HyderabadGraph
 
 @dataclass
 class AppState:
-    system: Optional[Any] = None  # EVRoutingSystem instance
+    system: Optional[Any] = None  # EVRoutingSystem instance (legacy)
+    hyderabad_graph: Optional[Any] = None  # HyderabadGraph instance
+    charging_stations: List[Dict[str, Any]] = field(default_factory=list)
+    q_table: Optional[Dict] = None  # Trained Q-table
     training_status: Dict[str, Any] = field(default_factory=lambda: {
         "is_training": False,
         "progress": 0,
@@ -15,8 +19,6 @@ class AppState:
         "metrics": {},
         "loss_history": [],
         "reward_history": [],
-        "gan_epoch": 0,
-        "gan_total_epochs": 0,
         "rl_episode": 0,
         "rl_total_episodes": 0,
     })

@@ -8,9 +8,11 @@ router = APIRouter(tags=["System"])
 
 @router.get("/health", summary="Health check")
 async def health_check(request: Request, state: AppState = Depends(get_state)):
+    """Liveness probe — always returns 200 if server is up."""
     return ok({
         "status": "healthy",
-        "system_initialized": state.system is not None,
+        "graph_loaded": state.hyderabad_graph is not None,
+        "stations_loaded": len(state.charging_stations) > 0,
         "timestamp": datetime.now().isoformat(),
     })
 
@@ -20,18 +22,19 @@ async def get_system_stats(request: Request, state: AppState = Depends(get_state
     cached = state.system_stats_cache.get("stats")
     if cached is not None:
         return ok(cached)
-    if state.system is None:
-        fail("System not initialised", 503)
-    s = state.system
+
+    hg = state.hyderabad_graph
     result = {
         "road_network": {
-            "nodes": s.road_graph.num_nodes if s.road_graph else 0,
-            "edges": s.road_graph.graph.number_of_edges() if s.road_graph else 0,
+            "nodes": hg.num_nodes if hg else 0,
+            "edges": hg.num_edges if hg else 0,
+            "bounds": hg.bounds if hg else {},
+        },
+        "stations": {
+            "count": len(state.charging_stations),
         },
         "models": {
-            "gan_trained": s.gan is not None,
-            "agent_trained": s.agent is not None,
-            "gnn_gan_trained": s.gnn_gan is not None,
+            "q_table_loaded": state.q_table is not None,
         },
         "training_status": state.training_status,
     }

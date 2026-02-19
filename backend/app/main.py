@@ -13,21 +13,33 @@ from backend.app.state import get_state
 from backend.app.middleware import register_middleware
 from backend.app.routers import health, routing, training, analytics
 from src.config import get_settings
-from src.main import EVRoutingSystem
 
 logger = logging.getLogger("ev_routing")
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    """Load Hyderabad graph + charging stations on startup. CPU-only, no CUDA."""
     state = get_state()
     try:
-        state.system = EVRoutingSystem()
-        state.system.step1_create_road_network()
-        state.system.step6_create_route_generator()
-        logger.info("EV Routing System initialised")
+        # Load real Hyderabad road graph (cached after first download)
+        from backend.app.services.graph_service import get_hyderabad_graph
+        from backend.app.services.station_service import get_charging_stations, snap_stations_to_graph
+        from backend.app.config import settings
+
+        hgraph = get_hyderabad_graph()
+        stations = get_charging_stations(settings.OSMNX_CENTER_LAT, settings.OSMNX_CENTER_LON)
+        snap_stations_to_graph(stations, hgraph)
+
+        state.hyderabad_graph = hgraph
+        state.charging_stations = stations
+        logger.info(
+            "Hyderabad graph loaded: %d nodes, %d edges, %d stations",
+            hgraph.num_nodes, hgraph.num_edges, len(stations),
+        )
     except Exception as e:
-        logger.error("Failed to initialise system: %s", e)
+        logger.error("Failed to initialise Hyderabad graph: %s", e)
+        logger.warning("Server starting without graph — endpoints will return errors")
     yield
     logger.info("Shutting down EV Routing System")
 
