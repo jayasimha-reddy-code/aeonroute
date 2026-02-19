@@ -50,8 +50,8 @@ const config: Config = {
         '4xl': '2rem',
       },
       boxShadow: {
-        card: '0 8px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255,255,255,0.03)',
-        'card-hover': '0 16px 56px rgba(0, 0, 0, 0.6), inset 0 1px 0 0 rgba(255,255,255,0.05)',
+        card: '0 24px 48px -12px rgba(0,0,0,0.8)',
+        'card-hover': '0 32px 64px -16px rgba(0,0,0,0.9), 0 0 0 1px rgba(255,255,255,0.05)',
         'glow-emerald': '0 0 30px rgba(16, 185, 129, 0.25), 0 0 60px rgba(16, 185, 129, 0.08)',
         'glow-emerald-lg': '0 0 50px rgba(16, 185, 129, 0.35), 0 0 100px rgba(16, 185, 129, 0.12)',
         'glow-amber': '0 0 30px rgba(245, 158, 11, 0.25), 0 0 60px rgba(245, 158, 11, 0.08)',
@@ -107,22 +107,25 @@ const config: Config = {
     plugin(({ addUtilities }) => {
       addUtilities({
         '.glass': {
-          backgroundColor: 'rgba(15, 20, 26, 0.6)',
+          backgroundColor: 'rgba(255, 255, 255, 0.02)',
           backdropFilter: 'blur(40px)',
           WebkitBackdropFilter: 'blur(40px)',
-          border: '1px solid rgba(255, 255, 255, 0.03)',
-          borderTop: '1px solid rgba(255, 255, 255, 0.15)',
+          border: '1px solid rgba(255, 255, 255, 0.05)',
+          borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+          borderLeft: '1px solid rgba(255, 255, 255, 0.1)',
+          borderRight: '1px solid rgba(255, 255, 255, 0.05)',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
           borderRadius: '1rem',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255,255,255,0.03)',
+          boxShadow: '0 24px 48px -12px rgba(0, 0, 0, 0.8), inset 0 1px 0 0 rgba(255,255,255,0.06)',
         },
         '.glass-hover': {
           transition: 'all 500ms cubic-bezier(0.4, 0, 0.2, 1)',
           '&:hover': {
-            transform: 'translateY(-4px)',
-            backgroundColor: 'rgba(20, 28, 38, 0.7)',
-            borderColor: 'rgba(255, 255, 255, 0.06)',
-            borderTopColor: 'rgba(255, 255, 255, 0.2)',
-            boxShadow: '0 0 35px rgba(16, 185, 129, 0.25), 0 16px 56px rgba(0, 0, 0, 0.6), inset 0 1px 0 0 rgba(255,255,255,0.05)',
+            transform: 'translateY(-6px)',
+            backgroundColor: 'rgba(255, 255, 255, 0.05)',
+            borderColor: 'rgba(255, 255, 255, 0.15)',
+            borderTopColor: 'rgba(255, 255, 255, 0.25)',
+            boxShadow: '0 32px 64px -16px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255,255,255,0.05)',
           },
         },
       });
