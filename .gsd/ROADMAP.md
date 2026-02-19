@@ -246,7 +246,7 @@ Plans:
 
 ### Phase 12: Hyper-Fidelity UI & Functional Replication
 **Goal:** Eliminate every dead click, broken button, and missing interaction in the UI. Add react-router-dom routing, wire overflow menus, upgrade charts with gradient fills and glow effects, apply material-physics glass cards with directional bevels, and inject Framer Motion micro-interactions on every interactive element.
-**Status:** ◐ In progress — 1/5 plans complete
+**Status:** ◐ In progress — 2/5 plans complete
 **Dependencies:** Phase 11 (ultra-premium bento UI)
 **Requirements:** UI-01, UI-03
 
@@ -264,7 +264,7 @@ Plans:
 
 Plans:
 - [x] 12-01-PLAN.md — Routing, Missing Pages & Shell State: react-router-dom, Stations/Settings pages, sidebar collapse, NavLink, studio lighting (Wave 1)
-- [ ] 12-02-PLAN.md — Component Interactivity & Dead Clicks Fix: OverflowMenu, ViewToggle, pill toggles, header toggles, date range picker (Wave 2)
+- [x] 12-02-PLAN.md — Component Interactivity & Dead Clicks Fix: OverflowMenu, ViewToggle, pill toggles, header toggles, date range picker (Wave 2)
 - [ ] 12-03-PLAN.md — Chart Upgrades & Data Visualization: gradient fills, animated glow filters, dark glass tooltips, axis cleanup (Wave 3)
 - [ ] 12-04-PLAN.md — Glass Material Physics & Card Upgrades: directional bevels, specular highlights, edge glow, depth-aware shadows (Wave 4)
 - [ ] 12-05-PLAN.md — Framer Motion Micro-Interactions & Polish: spring-physics hover/tap, stagger animations, page transitions, scroll reveal (Wave 5)
@@ -291,4 +291,4 @@ Plans:
 ---
 
 _Roadmap created: 2026-02-16_
-_Last updated: 2026-02-19 (12-01 complete)_
+_Last updated: 2026-02-19 (12-02 complete)_
