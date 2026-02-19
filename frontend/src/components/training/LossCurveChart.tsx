@@ -49,7 +49,7 @@ export function LossCurveChart({ data, ganEpoch, ganTotalEpochs }: LossCurveChar
               <stop offset="95%" stopColor="#EF4444" stopOpacity={0} />
             </linearGradient>
           </defs>
-          <CartesianGrid stroke="rgba(255,255,255,0.03)" />
+          <CartesianGrid stroke="rgba(255,255,255,0.03)" vertical={false} />
           <XAxis
             dataKey="epoch"
             tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.3)' }}

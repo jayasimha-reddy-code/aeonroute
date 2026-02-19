@@ -42,6 +42,19 @@ export interface Toast {
 
 export type AppTab = 'dashboard' | 'routing' | 'training' | 'analytics' | 'stations' | 'settings' | 'ai-models' | 'routing-config' | 'monitoring';
 
+// ─── Settings Types ───────────────────────────────────────
+
+export type UnitSystem = 'metric' | 'imperial';
+export type ViewMode = 'grid' | 'list';
+
+export interface UserSettings {
+  units: UnitSystem;
+  avoidTolls: boolean;
+  optimizeBattery: boolean;
+  notifications: boolean;
+  viewMode: ViewMode;
+}
+
 // ─── Store Interface ──────────────────────────────────────
 
 interface SystemState {
@@ -63,6 +76,14 @@ interface SystemState {
   sidebarCollapsed: boolean;
   toggleSidebar: () => void;
   setSidebarCollapsed: (collapsed: boolean) => void;
+
+  // ── User Settings (global, persisted) ──
+  settings: UserSettings;
+  setUnits: (units: UnitSystem) => void;
+  setAvoidTolls: (avoid: boolean) => void;
+  setOptimizeBattery: (optimize: boolean) => void;
+  setNotifications: (enabled: boolean) => void;
+  setViewMode: (mode: ViewMode) => void;
 
   // ── Loading / Error ──
   isLoading: boolean;
@@ -118,6 +139,20 @@ export const useSystemStore = create<SystemState>()(
       sidebarCollapsed: false,
       toggleSidebar: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
       setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
+
+      // User Settings (global)
+      settings: {
+        units: 'metric',
+        avoidTolls: false,
+        optimizeBattery: true,
+        notifications: true,
+        viewMode: 'grid',
+      },
+      setUnits: (units) => set((s) => ({ settings: { ...s.settings, units } })),
+      setAvoidTolls: (avoidTolls) => set((s) => ({ settings: { ...s.settings, avoidTolls } })),
+      setOptimizeBattery: (optimizeBattery) => set((s) => ({ settings: { ...s.settings, optimizeBattery } })),
+      setNotifications: (notifications) => set((s) => ({ settings: { ...s.settings, notifications } })),
+      setViewMode: (viewMode) => set((s) => ({ settings: { ...s.settings, viewMode } })),
 
       // Loading / Error
       isLoading: false,
@@ -220,6 +255,7 @@ export const useSystemStore = create<SystemState>()(
       partialize: (state) => ({
         activeTab: state.activeTab,
         sidebarCollapsed: state.sidebarCollapsed,
+        settings: state.settings,
       }),
     }
   )
@@ -241,7 +277,13 @@ export const useToggleSidebar = () => useSystemStore((s) => s.toggleSidebar);
 export const useToasts = () => useSystemStore((s) => ({ toasts: s.toasts, addToast: s.addToast, removeToast: s.removeToast }));
 export const useAddToast = () => useSystemStore((s) => s.addToast);
 
-
+export const useSettings = () => useSystemStore((s) => s.settings);
+export const useSetUnits = () => useSystemStore((s) => s.setUnits);
+export const useSetAvoidTolls = () => useSystemStore((s) => s.setAvoidTolls);
+export const useSetOptimizeBattery = () => useSystemStore((s) => s.setOptimizeBattery);
+export const useSetNotifications = () => useSystemStore((s) => s.setNotifications);
+export const useViewMode = () => useSystemStore((s) => s.settings.viewMode);
+export const useSetViewMode = () => useSystemStore((s) => s.setViewMode);
 
 export const useRoutes = () => useSystemStore((s) => ({
   generatedRoutes: s.generatedRoutes,

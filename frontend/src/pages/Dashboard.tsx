@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { useRoadNetwork, useAddToast } from '../store/store';
+import { motion } from 'framer-motion';
+import { useRoadNetwork, useAddToast, useViewMode } from '../store/store';
 import api, { SystemStats, RouteMetrics } from '../services/api';
 import NetworkMap from '../components/NetworkMap';
 import StatCard from '../components/StatCard';
@@ -10,10 +11,12 @@ import { StatCardSkeleton } from '../components/ui/Skeleton';
 import { ProgressRing } from '../components/ui';
 import { OverflowMenu } from '../components/ui/OverflowMenu';
 import { BarChart3, Activity, Navigation, Zap, Cpu, Clock, RefreshCw, ChevronUp } from 'lucide-react';
+import { staggerContainer, staggerItem } from '../lib/motion';
 
 function Dashboard() {
   const roadNetwork = useRoadNetwork();
   const addToast = useAddToast();
+  const viewMode = useViewMode();
   const [stats, setStats] = useState<SystemStats | null>(null);
   const [metrics, setMetrics] = useState<RouteMetrics | null>(null);
   const [loading, setLoading] = useState(true);
@@ -71,23 +74,30 @@ function Dashboard() {
   }, [loadData]);
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 xl:p-10 max-w-[1600px] mx-auto">
-      <PageHeader
-        title="Dashboard"
-        subtitle="Real-time EV routing system status and performance metrics"
-        icon={BarChart3}
-      />
+    <motion.div
+      className="p-4 sm:p-6 lg:p-8 xl:p-10 max-w-[1600px] mx-auto"
+      variants={staggerContainer}
+      initial="hidden"
+      animate="show"
+    >
+      <motion.div variants={staggerItem}>
+        <PageHeader
+          title="Dashboard"
+          subtitle="Real-time EV routing system status and performance metrics"
+          icon={BarChart3}
+        />
+      </motion.div>
 
       {/* ── Auto-refresh indicator ───────────────────── */}
       {lastRefresh && (
-        <div className="flex items-center gap-1.5 mb-4 text-[11px] text-muted">
+        <motion.div variants={staggerItem} className="flex items-center gap-1.5 mb-4 text-[11px] text-muted">
           <RefreshCw className={`w-3 h-3 ${isRefreshing ? 'animate-spin' : ''}`} />
           <span>Auto-refreshing every 30s · Last: {lastRefresh.toLocaleTimeString()}</span>
-        </div>
+        </motion.div>
       )}
 
       {/* ── Key Metrics ─────────────────────────────── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 mb-6">
+      <motion.div variants={staggerItem} className={viewMode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 mb-6' : 'flex flex-col gap-3 mb-6'}>
         {loading ? (
           Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)
         ) : (
@@ -100,10 +110,10 @@ function Dashboard() {
             </StatCard>
           </>
         )}
-      </div>
+      </motion.div>
 
       {/* ── Map (8 cols) + Info Panel (4 cols) ─────── */}
-      <div className="grid grid-cols-12 gap-4 mb-6" style={{ minHeight: 520 }}>
+      <motion.div variants={staggerItem} className="grid grid-cols-12 gap-4 mb-6" style={{ minHeight: 520 }}>
         {/* Map — 8 columns */}
         <div className="col-span-12 lg:col-span-8">
           <div className="h-full rounded-3xl overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
@@ -170,11 +180,12 @@ function Dashboard() {
             </div>
           </Card>
         </div>
-      </div>
+      </motion.div>
 
       {/* ── Time-of-Day Traffic Patterns (full width) ── */}
       {stats && (
-        <Card>
+        <motion.div variants={staggerItem}>
+          <Card>
           <div className="flex items-center gap-3 mb-5">
             <div className="p-2 rounded-lg bg-emerald/10">
               <Clock className="w-4 h-4 text-emerald" />
@@ -187,9 +198,10 @@ function Dashboard() {
             </div>
           </div>
           <TrafficSlider />
-        </Card>
+          </Card>
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   );
 }
 

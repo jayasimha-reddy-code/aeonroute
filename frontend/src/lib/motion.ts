@@ -24,15 +24,15 @@ export const staggerContainer: Variants = {
   hidden: {},
   show: {
     transition: {
-      staggerChildren: 0.06,
+      staggerChildren: 0.1,
       delayChildren: 0.1,
     },
   },
 };
 
-// Stagger item — each child in a stagger container
+// Stagger item — each child in a stagger container — spring entrance
 export const staggerItem: Variants = {
-  hidden: { opacity: 0, y: 16, scale: 0.97 },
+  hidden: { opacity: 0, y: 20, scale: 0.97 },
   show: {
     opacity: 1,
     y: 0,

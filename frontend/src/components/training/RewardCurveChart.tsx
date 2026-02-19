@@ -62,7 +62,7 @@ export function RewardCurveChart({ data, rlEpisode, rlTotalEpisodes }: RewardCur
               <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
             </linearGradient>
           </defs>
-          <CartesianGrid stroke="rgba(255,255,255,0.03)" />
+          <CartesianGrid stroke="rgba(255,255,255,0.03)" vertical={false} />
           <XAxis
             dataKey="episode"
             tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.3)' }}

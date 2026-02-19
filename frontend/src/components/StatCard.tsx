@@ -58,7 +58,7 @@ export default memo(function StatCard({ title, value, unit, subtitle, trend, ico
 
   return (
     <div className={cn(
-      'glass glass-hover p-5 group',
+      'glass glass-hover p-5 group transition-all duration-500 ease-out',
       glowStyle[resolvedAccent],
     )}>
       {/* Header row */}

@@ -1,11 +1,13 @@
 import { useEffect, useState, useRef } from 'react';
+import { motion } from 'framer-motion';
 import api, { SystemStats, RouteMetrics } from '../services/api';
-import { useSystemStore } from '../store/store';
+import { useSystemStore, useViewMode } from '../store/store';
 import PageHeader from '../components/PageHeader';
 import { Card, Badge } from '../components/ui';
 import { StatCardSkeleton } from '../components/ui/Skeleton';
 import { OverflowMenu } from '../components/ui/OverflowMenu';
 import { cn } from '../lib/utils';
+import { staggerContainer, staggerItem } from '../lib/motion';
 import {
   BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
@@ -48,6 +50,7 @@ function MetricTile({
 
 function Analytics() {
   const { addToast } = useSystemStore();
+  const viewMode = useViewMode();
   const [metrics, setMetrics] = useState<RouteMetrics | null>(null);
   const [systemStats, setSystemStats] = useState<SystemStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -164,7 +167,12 @@ function Analytics() {
       ];
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto">
+    <motion.div
+      className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto"
+      variants={staggerContainer}
+      initial="hidden"
+      animate="show"
+    >
       <div className="flex items-center justify-between mb-2">
         <PageHeader title="Analytics" subtitle="Comprehensive system performance metrics and AI model insights" icon={Activity} />
         <div ref={dateRef} className="relative">
@@ -209,7 +217,7 @@ function Analytics() {
       )}
 
       {/* ── Key Metrics ──────────────────────────────── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 mb-8 animate-stagger">
+      <motion.div variants={staggerItem} className={viewMode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 mb-8' : 'flex flex-col gap-3 mb-8'}>
         {loading ? (
           Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)
         ) : (
@@ -220,7 +228,7 @@ function Analytics() {
             <MetricTile icon={Gauge}       label="Feasibility"   value={routeEval ? `${(routeEval.avg_feasibility_rate * 100).toFixed(0)}` : metrics?.avg_feasibility !== undefined ? `${(metrics.avg_feasibility * 100).toFixed(0)}` : '—'} unit="%" color="accent" />
           </>
         )}
-      </div>
+      </motion.div>
 
       {/* ── Charts Row 1 ─────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 mb-5">
@@ -252,7 +260,7 @@ function Analytics() {
                     <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid stroke="rgba(255,255,255,0.03)" />
+                <CartesianGrid stroke="rgba(255,255,255,0.03)" vertical={false} />
                 <XAxis dataKey="episode" tick={axisStyle} axisLine={false} tickLine={false} />
                 <YAxis tick={axisStyle} axisLine={false} tickLine={false} />
                 <Tooltip contentStyle={tooltipStyle} />
@@ -281,7 +289,7 @@ function Analytics() {
                     <stop offset="95%" stopColor="#14A8C0" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid stroke="rgba(255,255,255,0.03)" />
+                <CartesianGrid stroke="rgba(255,255,255,0.03)" vertical={false} />
                 <XAxis dataKey="time" tick={axisStyle} axisLine={false} tickLine={false} />
                 <YAxis tick={axisStyle} axisLine={false} tickLine={false} />
                 <Tooltip contentStyle={tooltipStyle} />
@@ -349,7 +357,7 @@ function Analytics() {
           ) : (
             <ResponsiveContainer width="100%" height={260}>
               <BarChart data={ganQualityBars}>
-                <CartesianGrid stroke="rgba(255,255,255,0.03)" />
+                <CartesianGrid stroke="rgba(255,255,255,0.03)" vertical={false} />
                 <XAxis dataKey="label" tick={axisStyle} axisLine={false} tickLine={false} />
                 <YAxis tick={axisStyle} axisLine={false} tickLine={false} />
                 <Tooltip contentStyle={tooltipStyle} />
@@ -388,7 +396,7 @@ function Analytics() {
                   <stop offset="95%" stopColor="#14A8C0" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid stroke="rgba(255,255,255,0.03)" />
+              <CartesianGrid stroke="rgba(255,255,255,0.03)" vertical={false} />
               <XAxis dataKey="epoch" tick={axisStyle} axisLine={false} tickLine={false} label={{ value: 'Epoch', position: 'insideBottom', offset: -5, fill: 'rgba(255,255,255,0.3)', fontSize: 11 }} />
               <YAxis tick={axisStyle} axisLine={false} tickLine={false} />
               <Tooltip contentStyle={tooltipStyle} />
@@ -457,7 +465,7 @@ function Analytics() {
           </div>
         </Card>
       </div>
-    </div>
+    </motion.div>
   );
 }
 

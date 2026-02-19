@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { LayoutGrid, List, SlidersHorizontal, Check } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { useViewMode, useSetViewMode } from '../store/store';
 
 const pageTitles: Record<string, string> = {
   dashboard: 'Dashboard',
@@ -19,7 +20,8 @@ export default function Header() {
   const location = useLocation();
   const segment = location.pathname.split('/')[1] || 'dashboard';
   const title = pageTitles[segment] || 'Dashboard';
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const viewMode = useViewMode();
+  const setViewMode = useSetViewMode();
   const [filterOpen, setFilterOpen] = useState(false);
   const [filters, setFilters] = useState({ showActive: true, showCompleted: true, showPending: true });
   const filterRef = useRef<HTMLDivElement>(null);

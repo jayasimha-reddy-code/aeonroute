@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Zap, MapPin, Battery, Clock, Search, Filter, ChevronRight } from 'lucide-react';
+import { Zap, MapPin, Battery, Clock, Search, Filter, ChevronRight, Check } from 'lucide-react';
 import { Card } from '../components/ui';
 import { staggerContainer, staggerItem } from '../lib/motion';
+import { cn } from '../lib/utils';
 
 const MOCK_STATIONS = [
   { id: 1, name: 'Downtown Supercharger', status: 'available', power: 250, connectors: 8, available: 6, waitTime: '0 min' },
@@ -24,9 +25,35 @@ const statusColor: Record<string, string> = {
 export default function Stations() {
   const [search, setSearch] = useState('');
   const [selectedStation, setSelectedStation] = useState<number | null>(null);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [statusFilters, setStatusFilters] = useState({ available: true, busy: true, offline: true });
+  const filterRef = useRef<HTMLDivElement>(null);
+
+  // Close filter on outside click
+  useEffect(() => {
+    if (!filterOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (filterRef.current && !filterRef.current.contains(e.target as Node)) {
+        setFilterOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [filterOpen]);
+
+  // Close on Escape
+  useEffect(() => {
+    if (!filterOpen) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setFilterOpen(false);
+    };
+    document.addEventListener('keydown', handleKey);
+    return () => document.removeEventListener('keydown', handleKey);
+  }, [filterOpen]);
 
   const filtered = MOCK_STATIONS.filter((s) =>
-    s.name.toLowerCase().includes(search.toLowerCase())
+    s.name.toLowerCase().includes(search.toLowerCase()) &&
+    statusFilters[s.status as keyof typeof statusFilters]
   );
 
   const selected = MOCK_STATIONS.find((s) => s.id === selectedStation);
@@ -49,9 +76,41 @@ export default function Stations() {
             onChange={(e) => setSearch(e.target.value)}
             className="flex-1 bg-transparent text-sm text-white placeholder:text-muted outline-none"
           />
-          <button className="px-3 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.06] text-xs text-label hover:text-white hover:bg-white/[0.08] transition-all duration-300 flex items-center gap-1.5">
-            <Filter className="w-3 h-3" /> Filters
-          </button>
+          <div ref={filterRef} className="relative">
+            <button
+              onClick={() => setFilterOpen(!filterOpen)}
+              className={cn(
+                'px-3 py-1.5 rounded-lg border text-xs transition-all duration-300 flex items-center gap-1.5',
+                filterOpen
+                  ? 'bg-emerald/20 border-emerald/30 text-emerald'
+                  : 'bg-white/[0.04] border-white/[0.06] text-label hover:text-white hover:bg-white/[0.08]'
+              )}
+            >
+              <Filter className="w-3 h-3" /> Filters
+            </button>
+            {filterOpen && (
+              <div className="absolute right-0 mt-2 w-44 rounded-xl bg-[#0f141c] border border-white/10 backdrop-blur-3xl shadow-2xl z-50 py-1 animate-in fade-in slide-in-from-top-2 duration-200">
+                <p className="px-3 py-1.5 text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Status</p>
+                {(['available', 'busy', 'offline'] as const).map((status) => (
+                  <button
+                    key={status}
+                    onClick={() => setStatusFilters(prev => ({ ...prev, [status]: !prev[status] }))}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-300 hover:bg-white/[0.04] hover:text-white transition-colors duration-150"
+                  >
+                    <span className={cn(
+                      'w-4 h-4 rounded border flex items-center justify-center transition-all',
+                      statusFilters[status]
+                        ? 'bg-emerald border-emerald text-white'
+                        : 'border-white/20 bg-transparent'
+                    )}>
+                      {statusFilters[status] && <Check className="w-3 h-3" />}
+                    </span>
+                    <span className="capitalize">{status}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </Card>
       </motion.div>
 

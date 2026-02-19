@@ -3,13 +3,16 @@ import { motion } from 'framer-motion';
 import { Car, Gauge, Palette, Globe, Save } from 'lucide-react';
 import { Card, ToggleSwitch } from '../components/ui';
 import { staggerContainer, staggerItem } from '../lib/motion';
+import { useSettings, useSetUnits, useSetAvoidTolls, useSetOptimizeBattery, useSetNotifications, useAddToast } from '../store/store';
 
 export default function Settings() {
   const [vehicleProfile, setVehicleProfile] = useState('tesla_model_3_lr');
-  const [avoidTolls, setAvoidTolls] = useState(false);
-  const [optimizeBattery, setOptimizeBattery] = useState(true);
-  const [notifications, setNotifications] = useState(true);
-  const [units, setUnits] = useState<'metric' | 'imperial'>('metric');
+  const settings = useSettings();
+  const setUnits = useSetUnits();
+  const setAvoidTolls = useSetAvoidTolls();
+  const setOptimizeBattery = useSetOptimizeBattery();
+  const setNotifications = useSetNotifications();
+  const addToast = useAddToast();
 
   return (
     <motion.div
@@ -77,21 +80,21 @@ export default function Settings() {
                 <p className="text-sm text-white">Avoid Tolls</p>
                 <p className="text-xs text-muted">Route around toll roads when possible</p>
               </div>
-              <ToggleSwitch checked={avoidTolls} onChange={setAvoidTolls} />
+              <ToggleSwitch checked={settings.avoidTolls} onChange={setAvoidTolls} />
             </div>
             <div className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02]">
               <div>
                 <p className="text-sm text-white">Optimize for Battery</p>
                 <p className="text-xs text-muted">Prefer energy-efficient routes</p>
               </div>
-              <ToggleSwitch checked={optimizeBattery} onChange={setOptimizeBattery} />
+              <ToggleSwitch checked={settings.optimizeBattery} onChange={setOptimizeBattery} />
             </div>
             <div className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02]">
               <div>
                 <p className="text-sm text-white">Notifications</p>
                 <p className="text-xs text-muted">Charging and route alerts</p>
               </div>
-              <ToggleSwitch checked={notifications} onChange={setNotifications} />
+              <ToggleSwitch checked={settings.notifications} onChange={setNotifications} />
             </div>
           </div>
         </Card>
@@ -118,7 +121,7 @@ export default function Settings() {
                     key={u}
                     onClick={() => setUnits(u)}
                     className={`flex-1 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
-                      units === u
+                      settings.units === u
                         ? 'bg-emerald/20 text-emerald border border-emerald/30'
                         : 'bg-white/[0.04] text-label border border-white/[0.06] hover:bg-white/[0.06]'
                     }`}
@@ -162,7 +165,10 @@ export default function Settings() {
 
       {/* ── Save Button ── */}
       <motion.div className="col-span-12" variants={staggerItem}>
-        <button className="w-full sm:w-auto px-6 py-3 rounded-xl bg-emerald text-midnight font-semibold text-sm hover:bg-emerald/90 transition-all duration-300 flex items-center gap-2">
+        <button
+          onClick={() => addToast({ type: 'success', title: 'Settings Saved', message: 'Your preferences have been saved globally.' })}
+          className="w-full sm:w-auto px-6 py-3 rounded-xl bg-emerald text-midnight font-semibold text-sm hover:bg-emerald/90 transition-all duration-300 flex items-center gap-2"
+        >
           <Save className="w-4 h-4" />
           Save Preferences
         </button>

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useSidebarCollapsed, useToggleSidebar, type AppTab } from '../store/store';
-import { LayoutDashboard, Map, BarChart3, Zap, Settings, Brain, Target, Activity, ChevronDown, ChevronUp, PanelLeftClose, PanelLeft, Circle, Moon, Clock, MinusCircle } from 'lucide-react';
+import { LayoutDashboard, Map, BarChart3, Zap, Settings, Brain, Target, Activity, ChevronDown, ChevronUp, PanelLeftClose, PanelLeft, Circle, Moon, Clock, MinusCircle, User, LogOut } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 const statusOptions = [
@@ -31,7 +31,9 @@ export default function Sidebar() {
   const navigate = useNavigate();
   const [userStatus, setUserStatus] = useState<'online' | 'away' | 'dnd' | 'offline'>('online');
   const [statusOpen, setStatusOpen] = useState(false);
+  const [gearOpen, setGearOpen] = useState(false);
   const statusRef = useRef<HTMLDivElement>(null);
+  const gearRef = useRef<HTMLDivElement>(null);
 
   // Close status dropdown on outside click
   useEffect(() => {
@@ -54,6 +56,28 @@ export default function Sidebar() {
     document.addEventListener('keydown', handleKey);
     return () => document.removeEventListener('keydown', handleKey);
   }, [statusOpen]);
+
+  // Close gear dropdown on outside click
+  useEffect(() => {
+    if (!gearOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (gearRef.current && !gearRef.current.contains(e.target as Node)) {
+        setGearOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [gearOpen]);
+
+  // Close gear on Escape
+  useEffect(() => {
+    if (!gearOpen) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setGearOpen(false);
+    };
+    document.addEventListener('keydown', handleKey);
+    return () => document.removeEventListener('keydown', handleKey);
+  }, [gearOpen]);
 
   const currentStatus = statusOptions.find(s => s.value === userStatus)!;
 
@@ -190,13 +214,41 @@ export default function Sidebar() {
             </div>
           )}
           {!collapsed && (
-            <button
-              onClick={() => navigate('/settings')}
-              className="p-1 rounded-lg hover:bg-white/[0.06] transition-all duration-300"
-              title="Settings"
-            >
-              <Settings className="w-4 h-4 text-label hover:text-white cursor-pointer transition-colors" />
-            </button>
+            <div ref={gearRef} className="relative">
+              <button
+                onClick={() => setGearOpen(!gearOpen)}
+                className="p-1 rounded-lg hover:bg-white/[0.06] transition-all duration-300"
+                title="User menu"
+              >
+                <Settings className="w-4 h-4 text-label hover:text-white cursor-pointer transition-colors" />
+              </button>
+              {gearOpen && (
+                <div className="absolute bottom-full right-0 mb-2 w-48 rounded-xl bg-[#0a0f16]/90 backdrop-blur-3xl border border-white/10 shadow-2xl z-50 py-1 animate-in fade-in slide-in-from-bottom-2 duration-200">
+                  <button
+                    onClick={() => { navigate('/settings'); setGearOpen(false); }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-300 hover:bg-white/[0.04] hover:text-white transition-colors duration-150"
+                  >
+                    <Settings className="w-4 h-4" />
+                    Settings
+                  </button>
+                  <button
+                    onClick={() => { navigate('/settings'); setGearOpen(false); }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-300 hover:bg-white/[0.04] hover:text-white transition-colors duration-150"
+                  >
+                    <User className="w-4 h-4" />
+                    Profile
+                  </button>
+                  <div className="h-px bg-white/[0.06] my-1" />
+                  <button
+                    onClick={() => setGearOpen(false)}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-rose hover:bg-rose/10 transition-colors duration-150"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Sign Out
+                  </button>
+                </div>
+              )}
+            </div>
           )}
         </div>
       </div>
