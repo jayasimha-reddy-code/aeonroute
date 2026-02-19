@@ -214,7 +214,7 @@ _Superseded: Phase 10 was deemed too basic. Replaced by Phase 11 (Ultra-Premium 
 
 ### Phase 11: Ultra-Premium Bento UI Rebuild
 **Goal:** Rebuild the entire frontend UI to ultra-premium bento-box cockpit quality matching 4-panel reference images. Replace all CSS variable systems with flat design tokens, implement CSS Grid 12-column bento layouts, next-gen glassmorphism (bg-white/[0.02], backdrop-blur-2xl), fluid micro-interactions (500ms ease-out), advanced map visuals (glowing polylines, pulse markers), rich analytics (gradient charts, hidden gridlines, dark tooltips), and complex UI primitives (custom toggles, sliders, progress rings, circular gauges). Permanent dark mode on midnight slate (#0a0f16).
-**Status:** ◐ In progress — 2/5 plans complete
+**Status:** ✅ Complete
 **Dependencies:** Phase 09 (codebase state)
 **Requirements:** UI-01, UI-03
 
@@ -238,9 +238,36 @@ _Superseded: Phase 10 was deemed too basic. Replaced by Phase 11 (Ultra-Premium 
 Plans:
 - [x] 11-01-PLAN.md — Core CSS/Tokens & Bento Grid Setup: Nuke index.css + tailwind.config.ts, flat token system, dark mode lock, purge dark:/var(-- from codebase (Wave 1)
 - [x] 11-02-PLAN.md — App Shell & Navigation: Rebuild App.tsx, 224px Sidebar with branding + user status, transparent Header with page title + actions (Wave 2)
-- [ ] 11-03-PLAN.md — Interactive Primitives & Micro-Animations: Rebuild Card, Button, Input, Badge, Spinner, Skeleton + new ToggleSwitch, Slider, ProgressRing, StatCard (Wave 3)
-- [ ] 11-04-PLAN.md — Map Overhaul: Borderless rounded-3xl container, glowing neon routes, pulse markers, dark-only tiles, glass popups (Wave 4)
-- [ ] 11-05-PLAN.md — Dashboard, Analytics & All Page Rebuilds: Bento grid page compositions matching reference images, chart restyling, Training pipeline flow, logs terminal (Wave 5)
+- [x] 11-03-PLAN.md — Interactive Primitives & Micro-Animations: Rebuild Card, Button, Input, Badge, Spinner, Skeleton + new ToggleSwitch, Slider, ProgressRing, StatCard (Wave 3)
+- [x] 11-04-PLAN.md — Map Overhaul: Borderless rounded-3xl container, glowing neon routes, pulse markers, dark-only tiles, glass popups (Wave 4)
+- [x] 11-05-PLAN.md — Dashboard, Analytics & All Page Rebuilds: Bento grid page compositions matching reference images, chart restyling, Training pipeline flow, logs terminal (Wave 5)
+
+---
+
+### Phase 12: Hyper-Fidelity UI & Functional Replication
+**Goal:** Eliminate every dead click, broken button, and missing interaction in the UI. Add react-router-dom routing, wire overflow menus, upgrade charts with gradient fills and glow effects, apply material-physics glass cards with directional bevels, and inject Framer Motion micro-interactions on every interactive element.
+**Status:** ◐ In progress — 1/5 plans complete
+**Dependencies:** Phase 11 (ultra-premium bento UI)
+**Requirements:** UI-01, UI-03
+
+**Success Criteria:**
+1. react-router-dom URL-based routing with lazy-loaded pages — zero Zustand tab switcher usage
+2. Sidebar collapse/expand toggle with persistent state and NavLink active indicators
+3. Every `...` overflow button opens a glass dropdown with actions (Export, Refresh, Details)
+4. Pill toggles (Fast/Eco/Scenic, Grid/List) physically swap rendered content
+5. Charts upgraded with gradient fills, animated glow, dark glass tooltips
+6. Glass cards with directional bevels, specular highlights, edge glow on hover
+7. Framer Motion spring-physics hover/tap/stagger on every interactive element
+8. Zero dead clicks remain in the entire UI
+
+**Plans:** 5 plans (5 waves, sequential)
+
+Plans:
+- [x] 12-01-PLAN.md — Routing, Missing Pages & Shell State: react-router-dom, Stations/Settings pages, sidebar collapse, NavLink, studio lighting (Wave 1)
+- [ ] 12-02-PLAN.md — Component Interactivity & Dead Clicks Fix: OverflowMenu, ViewToggle, pill toggles, header toggles, date range picker (Wave 2)
+- [ ] 12-03-PLAN.md — Chart Upgrades & Data Visualization: gradient fills, animated glow filters, dark glass tooltips, axis cleanup (Wave 3)
+- [ ] 12-04-PLAN.md — Glass Material Physics & Card Upgrades: directional bevels, specular highlights, edge glow, depth-aware shadows (Wave 4)
+- [ ] 12-05-PLAN.md — Framer Motion Micro-Interactions & Polish: spring-physics hover/tap, stagger animations, page transitions, scroll reveal (Wave 5)
 
 ---
 
@@ -259,8 +286,9 @@ Plans:
 | 09 | UI Polish & Bug Fixes | 7 | Medium-Heavy | 03, 04, 05, 08 |
 | 10 | Nuclear UI Rebuild | 3 | Medium | 09 | ⊘ Superseded |
 | 11 | Ultra-Premium Bento UI Rebuild | 5 | Heavy | 09 |
+| 12 | Hyper-Fidelity UI & Functional Replication | 5 | Heavy | 11 |
 
 ---
 
 _Roadmap created: 2026-02-16_
-_Last updated: 2026-02-18 (11-02 complete)_
+_Last updated: 2026-02-19 (12-01 complete)_
