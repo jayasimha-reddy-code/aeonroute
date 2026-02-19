@@ -271,6 +271,36 @@ Plans:
 
 ---
 
+### Phase 13: Production Transition — Real Data & AI
+**Goal:** Replace the entire synthetic backend (fake 10×10 grids, mock 503 endpoints, CUDA-crashing TensorFlow) with a production-grade system powered by real Hyderabad map data from OpenStreetMap (free Overpass API), real EV charging stations from OpenChargeMap (free public API), and a functioning Q-Learning agent trained over the real road graph. Wire the frontend to render real streets, generate real routes, and display real training metrics.
+**Status:** ● In progress (Wave 1 complete)
+**Dependencies:** Phase 12
+**Requirements:** PROD-01 (Container Stability), PROD-02 (Real Map Data), PROD-03 (Real Stations), PROD-04 (Real AI), PROD-05 (Live Endpoints), PROD-06 (Frontend Integration), PROD-07 (UI Fidelity)
+
+**Success Criteria:**
+1. Docker container boots to `healthy` status — no CUDA crashes, no 503s
+2. `/api/road-network` returns real Hyderabad streets (lat 17.3–17.5, lon 78.3–78.6, >1000 nodes)
+3. `/api/stations` returns >10 real EV charging stations with real operator names
+4. `/api/generate-route` returns GeoJSON LineString routes over Hyderabad streets
+5. Q-Learning trains end-to-end via SSE streaming with real reward curves
+6. Frontend map renders Hyderabad streets with real station markers
+7. All glass cards match reference images (smoked glass, directional borders, heavy shadows)
+8. Zero operating costs — all APIs are free and public
+
+**Plans:** 2 plans (2 waves, sequential — backend first, frontend second)
+
+**Public APIs:**
+| API | Cost | Purpose |
+|-----|------|---------|
+| Overpass API (via OSMnx) | Free | Hyderabad street network |
+| OpenChargeMap API | Free | Real EV charging station locations |
+
+Plans:
+- [x] 13-01-PLAN.md — Wave 1: Backend Reality (container fix, OSMnx graph, OpenChargeMap stations, Q-Learning, live endpoints)
+- [ ] 13-02-PLAN.md — Wave 2: Frontend Wiring & UI Polish (real map rendering, interactive routing, live training, glass audit)
+
+---
+
 ### Phase Sizing Summary
 
 | Phase | Name | Plans | Complexity | Dependencies |
@@ -287,8 +317,9 @@ Plans:
 | 10 | Nuclear UI Rebuild | 3 | Medium | 09 | ⊘ Superseded |
 | 11 | Ultra-Premium Bento UI Rebuild | 5 | Heavy | 09 |
 | 12 | Hyper-Fidelity UI & Functional Replication | 5 | Heavy | 11 |
+| 13 | Production Transition — Real Data & AI | 2 | Heavy | 12 |
 
 ---
 
 _Roadmap created: 2026-02-16_
-_Last updated: 2026-02-19 (Phase 12 complete)_
+_Last updated: 2026-02-19 (Phase 13, plan 01 complete)_
