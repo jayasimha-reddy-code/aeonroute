@@ -180,7 +180,7 @@ function Dashboard() {
                 <button
                   key={item.id}
                   onClick={() => console.log('View activity:', item.id)}
-                  className="w-full flex items-center gap-2 text-xs px-3 py-2.5 hover:bg-white/[0.02] cursor-pointer transition-colors duration-200 rounded-lg text-left"
+                  className="w-full flex items-center gap-2 text-xs px-3 py-2.5 hover:bg-white/[0.04] cursor-pointer transition-colors duration-200 rounded-lg text-left"
                 >
                   <span className={`w-1.5 h-1.5 rounded-full ${item.dot} shrink-0`} />
                   <span className="text-slate-300 flex-1">{item.text}</span>

@@ -109,7 +109,7 @@ export default function Monitoring() {
           </div>
           <div className="space-y-1">
             {recentEvents.map((event, i) => (
-              <div key={i} className="flex items-start gap-2.5 px-3 py-2.5 rounded-lg hover:bg-white/[0.02] transition-colors">
+              <div key={i} className="flex items-start gap-2.5 px-3 py-2.5 rounded-lg hover:bg-white/[0.04] transition-colors">
                 {event.type === 'success' ? (
                   <CheckCircle2 className="w-4 h-4 text-emerald flex-shrink-0 mt-0.5" />
                 ) : (

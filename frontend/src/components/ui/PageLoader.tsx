@@ -16,7 +16,7 @@ export default function PageLoader() {
                 {[1, 2, 3, 4].map((i) => (
                     <div
                         key={i}
-                        className="bg-white/[0.02] border border-white/[0.05] rounded-2xl p-5 space-y-3 animate-pulse"
+                        className="bg-[#0a0f16]/40 border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.5)] rounded-2xl p-5 space-y-3 animate-pulse"
                     >
                         <div className="h-8 w-8 bg-white/[0.04] rounded-lg" />
                         <div className="h-3 w-20 bg-white/[0.04] rounded-lg" />
@@ -26,18 +26,18 @@ export default function PageLoader() {
             </div>
 
             {/* Map-area skeleton */}
-            <div className="bg-white/[0.02] border border-white/[0.05] rounded-2xl p-5 animate-pulse">
+            <div className="bg-[#0a0f16]/40 border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.5)] rounded-2xl p-5 animate-pulse">
                 <div className="h-[300px] bg-white/[0.04] rounded-xl" />
             </div>
 
             {/* Right panel skeletons */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div className="bg-white/[0.02] border border-white/[0.05] rounded-2xl p-5 space-y-3 animate-pulse">
+                <div className="bg-[#0a0f16]/40 border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.5)] rounded-2xl p-5 space-y-3 animate-pulse">
                     <div className="h-4 w-32 bg-white/[0.04] rounded-lg" />
                     <div className="h-4 w-full bg-white/[0.04] rounded-lg" />
                     <div className="h-4 w-3/4 bg-white/[0.04] rounded-lg" />
                 </div>
-                <div className="bg-white/[0.02] border border-white/[0.05] rounded-2xl p-5 space-y-3 animate-pulse">
+                <div className="bg-[#0a0f16]/40 border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.5)] rounded-2xl p-5 space-y-3 animate-pulse">
                     <div className="h-4 w-28 bg-white/[0.04] rounded-lg" />
                     <div className="h-4 w-full bg-white/[0.04] rounded-lg" />
                     <div className="h-4 w-5/6 bg-white/[0.04] rounded-lg" />

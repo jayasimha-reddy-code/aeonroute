@@ -146,7 +146,7 @@ export default function Stations() {
               <button
                 key={station.id}
                 onClick={() => setSelectedStation(station.id === selectedStation ? null : station.id)}
-                className="w-full flex items-center gap-4 px-5 py-3.5 hover:bg-white/[0.02] cursor-pointer transition-colors duration-200 text-left"
+                className="w-full flex items-center gap-4 px-5 py-3.5 hover:bg-white/[0.04] cursor-pointer transition-colors duration-200 text-left"
               >
                 <div className="w-10 h-10 rounded-xl bg-[#0a0f16]/30 flex items-center justify-center flex-shrink-0">
                   <Zap className="w-5 h-5 text-emerald" />
