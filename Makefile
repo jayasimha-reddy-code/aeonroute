@@ -57,13 +57,13 @@ typecheck:
 	mypy src --ignore-missing-imports
 
 docker-build:
-	docker build -f docker/Dockerfile -t ev-routing:latest .
+	docker compose build
 
-docker-test:
-	docker run --rm ev-routing:latest python -m pytest src -v
+docker-up:
+	docker compose up
 
-docker-train:
-	docker-compose -f docker-compose.yml up training
+docker-down:
+	docker compose down
 
 tensorboard:
 	tensorboard --logdir=results --host=0.0.0.0 --port=6006

@@ -1,53 +1,40 @@
-version: '3.8'
-
 services:
-  ev-routing:
+  backend:
     build:
       context: .
-      dockerfile: docker/Dockerfile
-    image: ev-routing:latest
-    container_name: ev-routing-dev
+      dockerfile: backend/Dockerfile
+    ports:
+      - "8000:8000"
     volumes:
-      - .:/app
-      - /app/__pycache__
-    environment:
-      - PYTHONUNBUFFERED=1
-      - TF_CPP_MIN_LOG_LEVEL=2
-    working_dir: /app
-    command: python -m pytest src -v
-
-  training:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile
-    image: ev-routing:latest
-    container_name: ev-routing-train
-    volumes:
-      - .:/app
+      - ./src:/app/src
+      - ./backend:/app/backend
       - ./models:/app/models
       - ./results:/app/results
       - ./data:/app/data
-      - /app/__pycache__
+      - ./backend_api.py:/app/backend_api.py
     environment:
       - PYTHONUNBUFFERED=1
-      - TF_CPP_MIN_LOG_LEVEL=2
-    working_dir: /app
-    command: python src/main.py --mode train --episodes 100
-    # Optional: mount GPU
-    # gpus: ['all']
+      - CUDA_VISIBLE_DEVICES=-1
+      - TF_CPP_MIN_LOG_LEVEL=3
+      - TF_ENABLE_ONEDNN_OPTS=0
+    command: python backend_api.py
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 5
 
-  tensorboard:
+  frontend:
     build:
-      context: .
-      dockerfile: docker/Dockerfile
-    image: ev-routing:latest
-    container_name: ev-routing-tensorboard
-    volumes:
-      - ./results:/app/results
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: http://localhost:8000
     ports:
-      - "6006:6006"
-    working_dir: /app
-    command: tensorboard --logdir=./results --host=0.0.0.0 --port=6006
-
-volumes:
-  tensorflow-cache:
+      - "5173:5173"
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy

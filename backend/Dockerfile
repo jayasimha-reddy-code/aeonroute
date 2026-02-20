@@ -22,6 +22,7 @@ COPY --from=builder /install /usr/local
 
 # Copy only the application code needed
 COPY src/ ./src/
+COPY backend/ ./backend/
 COPY backend_api.py .
 
 # Create necessary directories
