@@ -114,6 +114,7 @@ interface SystemState {
   trainingProgress: TrainingProgress;
   lossHistory: LossPoint[];
   rewardHistory: RewardPoint[];
+  trainingLogs: Array<{ timestamp: string; message: string }>;
   updateTrainingFromSSE: (data: any) => void;
   resetTrainingData: () => void;
 }
@@ -207,6 +208,7 @@ export const useSystemStore = create<SystemState>()(
 
       lossHistory: [],
       rewardHistory: [],
+      trainingLogs: [],
 
       updateTrainingFromSSE: (data: any) =>
         set((s) => {
@@ -234,10 +236,18 @@ export const useSystemStore = create<SystemState>()(
             if (newReward.length > 2000) newReward = newReward.slice(newReward.length - 2000);
           }
 
+          // Handle multiplexed log events (Override #3)
+          let newLogs = s.trainingLogs;
+          if (data._log_event) {
+            newLogs = [...s.trainingLogs, data._log_event];
+            if (newLogs.length > 500) newLogs = newLogs.slice(newLogs.length - 500);
+          }
+
           return {
             trainingProgress: newProgress,
             lossHistory: newLoss,
             rewardHistory: newReward,
+            trainingLogs: newLogs,
           };
         }),
 
@@ -245,6 +255,7 @@ export const useSystemStore = create<SystemState>()(
         set({
           lossHistory: [],
           rewardHistory: [],
+          trainingLogs: [],
           trainingProgress: {
             is_training: false,
             progress: 0,
@@ -320,6 +331,7 @@ export const useLoading = () => useSystemStore((s) => ({
 export const useTrainingProgress = () => useSystemStore((s) => s.trainingProgress);
 export const useLossHistory = () => useSystemStore((s) => s.lossHistory);
 export const useRewardHistory = () => useSystemStore((s) => s.rewardHistory);
+export const useTrainingLogs = () => useSystemStore((s) => s.trainingLogs);
 export const useSSEConnected = () => useSystemStore((s) => s.sseConnected);
 export const useUpdateTrainingFromSSE = () => useSystemStore((s) => s.updateTrainingFromSSE);
 export const useSetSSEConnected = () => useSystemStore((s) => s.setSSEConnected);

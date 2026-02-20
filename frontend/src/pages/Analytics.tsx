@@ -7,7 +7,7 @@ import { Card, Badge } from '../components/ui';
 import { StatCardSkeleton } from '../components/ui/Skeleton';
 import { OverflowMenu } from '../components/ui/OverflowMenu';
 import { cn } from '../lib/utils';
-import { staggerContainer, staggerItem, hyperStaggerContainer, hyperStaggerItem } from '../lib/motion';
+import { hyperStaggerContainer, hyperStaggerItem } from '../lib/motion';
 import {
   BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
@@ -99,11 +99,13 @@ function Analytics() {
 
       const [ganRes, agentRes, routeRes, historyRes] = results;
 
-      // If all model endpoints return 503, models aren't trained
-      const allUnavailable = [ganRes, agentRes, routeRes].every(
-        (r) => r.status === 'rejected' && (r.reason as any)?.status === 503,
-      );
-      if (allUnavailable) setModelsReady(false);
+      // Check if models are "not_trained" by inspecting response status fields
+      const notTrained = [ganRes, agentRes, routeRes].every((r) => {
+        if (r.status === 'rejected') return true;
+        if (r.status === 'fulfilled' && r.value?.status === 'not_trained') return true;
+        return false;
+      });
+      if (notTrained) setModelsReady(false);
 
       if (ganRes.status === 'fulfilled') setGanEval(ganRes.value);
       if (agentRes.status === 'fulfilled') setAgentPerf(agentRes.value);
