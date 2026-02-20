@@ -11,13 +11,13 @@ When an evaluator sees this app, they immediately understand this is production-
 ## Current State
 
 **Milestone:** v1 — Presentation Release
-**Current Phase:** Phase 13 — Production Transition: Real Data & AI
-**Phase Status:** ✅ Complete — 2/2 plans complete
-**Overall Progress:** 12/13 phases complete (Phase 09 failed, Phase 10 superseded)
+**Current Phase:** Phase 14 — Critical System Reset: Nuke, Consolidate & Rebuild
+**Phase Status:** ◆ In progress — 1/6 plans complete
+**Overall Progress:** 12/14 phases complete (Phase 09 failed, Phase 10 superseded)
 
-Progress: █████████████ 100%
+Progress: ████████████░ 86%
 
-**Last Activity:** 2026-02-19 — Completed 13-02-PLAN.md (Wave 2: Frontend Wiring & UI Polish)
+**Last Activity:** 2026-02-20 — Completed 14-01 (Docker cleanup, requirements merge, MapLibre fix)
 
 ## Phase Tracker
 
@@ -36,6 +36,7 @@ Progress: █████████████ 100%
 | 11 | Ultra-Premium Bento UI Rebuild | ✅ | 5/5 | 100% |
 | 12 | Hyper-Fidelity UI & Functional Replication | ✅ | 5/5 | 100% |
 | 13 | Production Transition — Real Data & AI | ✅ | 2/2 | 100% |
+| 14 | Critical System Reset: Nuke & Rebuild | ◆ | 1/6 | 17% |
 
 ## Configuration
 
@@ -85,6 +86,8 @@ Progress: █████████████ 100%
 - [x] Phase 13 plan 01 execution
 - [x] Phase 13 plan 02 execution
 - [x] Phase 13 complete
+- [x] Phase 14 planning
+- [x] Phase 14 plan 01 execution
 
 ## Key Dates
 
@@ -120,7 +123,8 @@ Progress: █████████████ 100%
 | Phase 13 plan 01 complete | 2026-02-19 |
 | Phase 13 plan 02 complete | 2026-02-19 |
 | Phase 13 complete | 2026-02-19 |
+| Phase 14 plan 01 complete | 2026-02-20 |
 
 ---
 
-_Last updated: 2026-02-19 (Phase 13 complete — all phases done)_
+_Last updated: 2026-02-20 (Phase 14 plan 01 complete)_

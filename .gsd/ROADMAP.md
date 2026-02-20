@@ -301,6 +301,42 @@ Plans:
 
 ---
 
+### Phase 14: Critical System Reset — Nuke, Consolidate & Rebuild
+**Goal:** Eliminate AI spaghetti accumulated over 13 phases. Delete duplicate Docker/config files, fix fatal MapLibre crash, write real Q-Learning training logic, make routes follow actual streets (not fly through buildings), and enforce true smoked-glass glassmorphism across the entire UI.
+**Status:** ◆ In Progress (1/6 plans complete)
+**Dependencies:** Phase 13
+**Requirements:** STAB-01, BACK-01, MAP-01, UI-01
+
+**Success Criteria:**
+1. Exactly 1 `docker-compose.yml`, 1 `backend/Dockerfile`, 1 `frontend/Dockerfile` — zero duplicates
+2. `npm run build` succeeds with zero MapLibre/WebGL errors — map loads without crash
+3. All analytics endpoints return 200 (zero 503s) — real computed data, not mocks
+4. "Start Training" button triggers real Q-Learning that streams live loss/reward via SSE
+5. Routes render as glowing neon polylines following actual street geometry — zero straight-line cuts through buildings
+6. All EV stations render as interactive markers with popups on the map
+7. Every panel uses `bg-[#0a0f16]/40 backdrop-blur-2xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.5)]`
+8. All charts use gradient-filled AreaCharts with dark glass tooltips
+9. RadarChart, stacked BarChart, demand heatmap, elevation profile, SVG gauges, live terminal, sparklines, weather widget — all rendering real content
+10. Multi-stop waypoint list with drag-and-drop reordering
+11. Zero placeholder empty divs in the entire UI
+12. Node-based pipeline flowchart with animated SVG dash-flow paths on Training page
+13. Estimated Carbon Saved SVG progress ring with sub-metrics on Route Planner
+14. Segment-by-Segment breakdown list with glowing colored dots
+15. Custom neon emerald CSS sliders (no default browser styling)
+16. AI Insights panel with glowing 4-point star (✦) bullet icons on Analytics page
+
+**Plans:** 6 plans (6 waves, sequential)
+
+Plans:
+- [x] 14-01-PLAN.md — Wave 1: Architecture Consolidation & Cleanup (Docker nuke, requirements merge, Vite/MapLibre fix)
+- [ ] 14-02-PLAN.md — Wave 2: The Missing AI Brain & Scalability Dial (fix 503s, Q-Learning training, Start Training button)
+- [ ] 14-03-PLAN.md — Wave 3: True GeoJSON Routing (street-geometry LineStrings, neon polylines, station markers, simulation fix)
+- [ ] 14-04-PLAN.md — Wave 4: Strict Target UI Enforcement (smoked-glass audit, gradient AreaCharts, reference image match)
+- [ ] 14-05-PLAN.md — Wave 5: Complex UI Primitives & Bespoke Charts (RadarChart, stacked bars, heatmap, waypoint list, elevation profile, SVG gauges, live terminal, sparklines, weather widget)
+- [ ] 14-06-PLAN.md — Wave 6: Flowcharts, Metrics & Micro-Polish (pipeline flowchart with animated SVG paths, carbon saved ring, segment list, neon sliders, AI Insights panel)
+
+---
+
 ### Phase Sizing Summary
 
 | Phase | Name | Plans | Complexity | Dependencies |
@@ -318,6 +354,7 @@ Plans:
 | 11 | Ultra-Premium Bento UI Rebuild | 5 | Heavy | 09 |
 | 12 | Hyper-Fidelity UI & Functional Replication | 5 | Heavy | 11 |
 | 13 | Production Transition — Real Data & AI | 2 | Heavy | 12 |
+| 14 | Critical System Reset: Nuke & Rebuild | 6 | Heavy | 13 |
 
 ---
 
