@@ -22,7 +22,7 @@ export default defineConfig({
     }
   },
   optimizeDeps: {
-    include: ['maplibre-gl', 'react-map-gl/maplibre']
+    include: ['maplibre-gl', 'react-map-gl/maplibre', '@turf/turf']
   },
   build: {
     chunkSizeWarningLimit: 600,
@@ -34,6 +34,7 @@ export default defineConfig({
           'vendor-map': ['maplibre-gl', 'react-map-gl/maplibre'],
           'vendor-charts': ['recharts'],
           'vendor-state': ['zustand', 'axios'],
+          'vendor-turf': ['@turf/turf'],
         }
       }
     }

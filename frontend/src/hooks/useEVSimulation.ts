@@ -1,4 +1,5 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
+import * as turf from '@turf/turf';
 import type { Route } from '../services/api';
 
 // ─── Types ────────────────────────────────────────────────
@@ -29,7 +30,7 @@ interface InternalState {
   pausedAt: number;
   totalPausedMs: number;
   chargingStartTime: number;
-  chargingNodesPassed: Set<number>;
+  chargingNodesPassed: Set<string>;
   socAtChargeStart: number;
 }
 
@@ -46,9 +47,10 @@ const INITIAL_STATE: SimulationState = {
   chargingProgress: 0,
 };
 
-const MS_PER_SEGMENT = 3000;
+const MS_PER_KM = 800; // animation duration per km of route
 const CHARGE_DURATION_MS = 2500;
 const CHARGE_AMOUNT = 30;
+const CHARGING_PROXIMITY_KM = 0.05; // 50 m
 
 // ─── Hook ─────────────────────────────────────────────────
 
@@ -67,45 +69,59 @@ export function useEVSimulation(options: UseEVSimulationOptions) {
     socAtChargeStart: 0,
   });
 
-  // Pre-compute route coordinates and cumulative distances
+  // Pre-compute route GeoJSON LineString and total length using Turf.js
   const routeData = useRef<{
-    coords: [number, number][];
-    cumDist: number[];
-    totalDist: number;
-    chargingStops: Set<number>;
+    lineString: GeoJSON.Feature<GeoJSON.LineString>;
+    totalLengthKm: number;
+    chargingStopCoords: { coord: [number, number]; nodeId: number }[];
     path: number[];
+    totalEnergyKwh: number;
   } | null>(null);
 
   useEffect(() => {
-    if (!route || !posLookup) {
+    if (!route) {
       routeData.current = null;
       return;
     }
-    const coords: [number, number][] = [];
-    const path = route.path;
-    for (const nodeId of path) {
-      const c = posLookup[nodeId.toString()];
-      if (c) coords.push(c);
+
+    // Build the GeoJSON LineString — prefer backend geometry over posLookup
+    let coordinates: [number, number][] = [];
+    const geojsonCoords = route.geojson?.geometry?.coordinates;
+
+    if (geojsonCoords && geojsonCoords.length >= 2) {
+      coordinates = geojsonCoords as [number, number][];
+    } else if (posLookup) {
+      // Fallback to node-based coords
+      for (const nodeId of route.path) {
+        const c = posLookup[nodeId.toString()];
+        if (c) coordinates.push(c);
+      }
     }
-    if (coords.length < 2) {
+
+    if (coordinates.length < 2) {
       routeData.current = null;
       return;
     }
-    // Cumulative distances
-    const cumDist: number[] = [0];
-    let total = 0;
-    for (let i = 1; i < coords.length; i++) {
-      const dx = coords[i][0] - coords[i - 1][0];
-      const dy = coords[i][1] - coords[i - 1][1];
-      total += Math.sqrt(dx * dx + dy * dy);
-      cumDist.push(total);
+
+    const lineString = turf.lineString(coordinates);
+    const totalLengthKm = turf.length(lineString, { units: 'kilometers' });
+
+    // Build charging stop coords from station details
+    const chargingStopCoords: { coord: [number, number]; nodeId: number }[] = [];
+    const chargingDetails = route.charging_stop_details ?? [];
+    for (const stop of chargingDetails) {
+      chargingStopCoords.push({
+        coord: [stop.lon, stop.lat],
+        nodeId: stop.node_id,
+      });
     }
+
     routeData.current = {
-      coords,
-      cumDist,
-      totalDist: total,
-      chargingStops: new Set(route.charging_stops ?? []),
-      path,
+      lineString,
+      totalLengthKm,
+      chargingStopCoords,
+      path: route.path,
+      totalEnergyKwh: route.energy_kwh,
     };
   }, [route, posLookup]);
 
@@ -131,8 +147,6 @@ export function useEVSimulation(options: UseEVSimulationOptions) {
         const newSOC = Math.min(95, int.socAtChargeStart + CHARGE_AMOUNT * chargeProgress);
 
         if (chargeProgress >= 1) {
-          // Done charging, resume movement
-          // Add pause offset for charging duration
           int.totalPausedMs += CHARGE_DURATION_MS;
           return {
             ...prev,
@@ -148,82 +162,69 @@ export function useEVSimulation(options: UseEVSimulationOptions) {
         };
       }
 
-      // ── Movement logic ──
+      // ── Movement logic using Turf.js ──
       const elapsed = now - int.startTime - int.totalPausedMs;
-      const totalDurationMs = (rd.coords.length - 1) * MS_PER_SEGMENT / speedMultiplier;
+      const totalDurationMs = rd.totalLengthKm * MS_PER_KM / speedMultiplier;
       const progress = Math.min(elapsed / totalDurationMs, 1);
 
-      // Map progress to distance along route
-      const distAlong = progress * rd.totalDist;
+      // Distance traveled along the route
+      const distanceTraveled = progress * rd.totalLengthKm;
 
-      // Find current segment
-      let segIdx = 0;
-      for (let i = 1; i < rd.cumDist.length; i++) {
-        if (rd.cumDist[i] >= distAlong) {
-          segIdx = i - 1;
-          break;
-        }
-        segIdx = i - 1;
-      }
+      // Get current position using turf.along() for smooth on-path interpolation
+      const pointFeature = turf.along(rd.lineString, distanceTraveled, { units: 'kilometers' });
+      const [lng, lat] = pointFeature.geometry.coordinates;
 
-      // Fractional position within segment
-      const segStart = rd.cumDist[segIdx];
-      const segEnd = rd.cumDist[segIdx + 1] ?? rd.cumDist[segIdx];
-      const segLen = segEnd - segStart;
-      const frac = segLen > 0 ? (distAlong - segStart) / segLen : 0;
+      // Compute bearing from a point slightly behind to current
+      let bearing = 0;
+      const lookAhead = Math.min(distanceTraveled + 0.05, rd.totalLengthKm);
+      const aheadPoint = turf.along(rd.lineString, lookAhead, { units: 'kilometers' });
+      bearing = turf.bearing(pointFeature, aheadPoint);
 
-      // Interpolate position
-      const from = rd.coords[segIdx];
-      const to = rd.coords[segIdx + 1] ?? rd.coords[segIdx];
-      const lng = from[0] + (to[0] - from[0]) * frac;
-      const lat = from[1] + (to[1] - from[1]) * frac;
-
-      // Compute bearing
-      const bearing = Math.atan2(to[0] - from[0], to[1] - from[1]) * (180 / Math.PI);
-
-      // SOC depletion proportional to progress
-      const energyUsed = (route?.energy_kwh ?? 0) * progress;
+      // SOC depletion proportional to distance traveled
+      const energyUsed = (rd.totalEnergyKwh) * progress;
       const socDrain = (energyUsed / batteryCapacityKWh) * 100;
       const currentSOC = Math.max(0, startSOC - socDrain);
 
-      // Current node
+      // Approximate current segment index for UI display
+      const totalNodes = rd.path.length;
+      const segIdx = Math.min(Math.floor(progress * (totalNodes - 1)), totalNodes - 2);
       const currentNodeId = rd.path[segIdx] ?? 0;
 
-      // Check charging stop arrival (entering a new segment whose target is a charging stop)
-      const nextNodeId = rd.path[segIdx + 1];
-      if (
-        nextNodeId !== undefined &&
-        rd.chargingStops.has(nextNodeId) &&
-        !int.chargingNodesPassed.has(nextNodeId) &&
-        frac > 0.95
-      ) {
-        int.chargingNodesPassed.add(nextNodeId);
-        int.chargingStartTime = now;
-        int.socAtChargeStart = currentSOC;
-        return {
-          ...prev,
-          isCharging: true,
-          chargingProgress: 0,
-          progress,
-          currentPosition: [lng, lat],
-          currentBearing: bearing,
-          currentSOC,
-          currentSegmentIndex: segIdx,
-          currentNodeId,
-        };
+      // Check proximity to charging stations (within 50m)
+      for (const station of rd.chargingStopCoords) {
+        const key = `${station.nodeId}`;
+        if (int.chargingNodesPassed.has(key)) continue;
+        const stationPoint = turf.point(station.coord);
+        const dist = turf.distance(pointFeature, stationPoint, { units: 'kilometers' });
+        if (dist < CHARGING_PROXIMITY_KM) {
+          int.chargingNodesPassed.add(key);
+          int.chargingStartTime = now;
+          int.socAtChargeStart = currentSOC;
+          return {
+            ...prev,
+            isCharging: true,
+            chargingProgress: 0,
+            progress,
+            currentPosition: [lng, lat],
+            currentBearing: bearing,
+            currentSOC,
+            currentSegmentIndex: segIdx,
+            currentNodeId,
+          };
+        }
       }
 
       // Completed
       if (progress >= 1) {
-        const lastCoord = rd.coords[rd.coords.length - 1];
+        const lastCoord = rd.lineString.geometry.coordinates[rd.lineString.geometry.coordinates.length - 1];
         return {
           ...prev,
           isSimulating: false,
           progress: 1,
-          currentPosition: lastCoord,
+          currentPosition: lastCoord as [number, number],
           currentBearing: bearing,
           currentSOC,
-          currentSegmentIndex: rd.coords.length - 2,
+          currentSegmentIndex: totalNodes - 2,
           currentNodeId: rd.path[rd.path.length - 1] ?? 0,
         };
       }
@@ -239,7 +240,7 @@ export function useEVSimulation(options: UseEVSimulationOptions) {
       };
     });
 
-    // Schedule next frame (check if still simulating)
+    // Schedule next frame
     rafId.current = requestAnimationFrame(tick);
   }, [route, startSOC, batteryCapacityKWh, speedMultiplier]);
 
@@ -254,11 +255,12 @@ export function useEVSimulation(options: UseEVSimulationOptions) {
       chargingNodesPassed: new Set(),
       socAtChargeStart: 0,
     };
+    const firstCoord = routeData.current.lineString.geometry.coordinates[0];
     setState({
       ...INITIAL_STATE,
       isSimulating: true,
       currentSOC: startSOC,
-      currentPosition: routeData.current.coords[0],
+      currentPosition: firstCoord as [number, number],
       currentNodeId: routeData.current.path[0] ?? 0,
     });
     rafId.current = requestAnimationFrame(tick);
