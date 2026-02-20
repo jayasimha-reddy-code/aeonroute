@@ -12,12 +12,12 @@ When an evaluator sees this app, they immediately understand this is production-
 
 **Milestone:** v1 — Presentation Release
 **Current Phase:** Phase 14 — Critical System Reset: Nuke, Consolidate & Rebuild
-**Phase Status:** ◆ In progress — 2/6 plans complete
+**Phase Status:** ◆ In progress — 3/6 plans complete
 **Overall Progress:** 12/14 phases complete (Phase 09 failed, Phase 10 superseded)
 
 Progress: ████████████░ 86%
 
-**Last Activity:** 2026-02-20 — Completed 14-02 (analytics 503 fix, multiplexed SSE, training wiring)
+**Last Activity:** 2026-02-20 — Completed 14-03 (true GeoJSON routing, street geometry, station markers, Turf.js simulation)
 
 ## Phase Tracker
 
@@ -36,7 +36,7 @@ Progress: ████████████░ 86%
 | 11 | Ultra-Premium Bento UI Rebuild | ✅ | 5/5 | 100% |
 | 12 | Hyper-Fidelity UI & Functional Replication | ✅ | 5/5 | 100% |
 | 13 | Production Transition — Real Data & AI | ✅ | 2/2 | 100% |
-| 14 | Critical System Reset: Nuke & Rebuild | ◆ | 1/6 | 17% |
+| 14 | Critical System Reset: Nuke & Rebuild | ◆ | 3/6 | 50% |
 
 ## Configuration
 
@@ -88,6 +88,8 @@ Progress: ████████████░ 86%
 - [x] Phase 13 complete
 - [x] Phase 14 planning
 - [x] Phase 14 plan 01 execution
+- [x] Phase 14 plan 02 execution
+- [x] Phase 14 plan 03 execution
 
 ## Key Dates
 
@@ -124,7 +126,9 @@ Progress: ████████████░ 86%
 | Phase 13 plan 02 complete | 2026-02-19 |
 | Phase 13 complete | 2026-02-19 |
 | Phase 14 plan 01 complete | 2026-02-20 |
+| Phase 14 plan 02 complete | 2026-02-20 |
+| Phase 14 plan 03 complete | 2026-02-20 |
 
 ---
 
-_Last updated: 2026-02-20 (Phase 14 plan 01 complete)_
+_Last updated: 2026-02-20 (Phase 14 plan 03 complete)_
