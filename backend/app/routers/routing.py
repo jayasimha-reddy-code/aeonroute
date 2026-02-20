@@ -2,7 +2,7 @@
 from backend.app.state import AppState, get_state
 from backend.app.models.requests import RouteRequest
 from backend.app.models.responses import ok, fail
-from backend.app.services.routing_service import fetch_road_network, generate_route, require_graph
+from backend.app.services.routing_service import fetch_road_network, generate_route, generate_multi_stop_route, require_graph
 
 router = APIRouter(prefix="/api", tags=["Routing"])
 
@@ -28,7 +28,28 @@ async def get_stations(request: Request, state: AppState = Depends(get_state)):
 async def generate_route_endpoint(request: Request, route_req: RouteRequest, state: AppState = Depends(get_state)):
     hg = require_graph(state)
 
-    # Resolve source/destination from lat/lon or node IDs
+    battery_soc = route_req.battery_soc
+    battery_cap = route_req.battery_capacity_kwh
+
+    # ── Multi-stop waypoint mode ──────────────────────────
+    if route_req.waypoints and len(route_req.waypoints) >= 2:
+        waypoints_dicts = []
+        for wp in route_req.waypoints:
+            if wp.node_id is not None:
+                waypoints_dicts.append({"node_id": wp.node_id})
+            elif wp.lat is not None and wp.lon is not None:
+                waypoints_dicts.append({"lat": wp.lat, "lon": wp.lon})
+            else:
+                fail("Each waypoint must have lat/lon or node_id", 422)
+        try:
+            result = generate_multi_stop_route(state, waypoints_dicts, battery_soc, battery_cap)
+            return ok(result)
+        except Exception as e:
+            if hasattr(e, "status_code"):
+                raise
+            fail(f"Multi-stop route generation failed: {e}")
+
+    # ── Standard 2-point route ────────────────────────────
     source = route_req.source
     dest = route_req.destination
 
@@ -43,9 +64,6 @@ async def generate_route_endpoint(request: Request, route_req: RouteRequest, sta
         fail("Source and destination must differ", 422)
     if source >= hg.num_nodes or dest >= hg.num_nodes:
         fail(f"Node IDs must be in [0, {hg.num_nodes - 1}]", 422)
-
-    battery_soc = route_req.battery_soc
-    battery_cap = route_req.battery_capacity_kwh
 
     try:
         result = generate_route(state, source, dest, battery_soc, battery_cap)

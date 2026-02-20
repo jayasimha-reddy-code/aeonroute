@@ -1,5 +1,12 @@
 ﻿from pydantic import BaseModel, Field, field_validator
-from typing import Optional
+from typing import Optional, List
+
+
+class Coordinate(BaseModel):
+    lat: Optional[float] = None
+    lon: Optional[float] = None
+    node_id: Optional[int] = None
+
 
 class EVStateRequest(BaseModel):
     battery_soc: float = Field(..., ge=0, le=100, description="State of charge (0-100%)")
@@ -14,6 +21,7 @@ class RouteRequest(BaseModel):
     source_lon: Optional[float] = Field(None, description="Source longitude")
     dest_lat: Optional[float] = Field(None, description="Destination latitude")
     dest_lon: Optional[float] = Field(None, description="Destination longitude")
+    waypoints: Optional[List[Coordinate]] = Field(None, description="Ordered list of waypoints for multi-stop routes")
     battery_soc: float = Field(80.0, ge=0, le=100, description="Battery SOC %")
     battery_capacity_kwh: float = Field(60.0, gt=0, le=500, description="Battery capacity kWh")
     ev_state: Optional[EVStateRequest] = None

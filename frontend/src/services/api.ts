@@ -56,6 +56,7 @@ export interface RouteRequest {
   source_lon?: number;
   dest_lat?: number;
   dest_lon?: number;
+  waypoints?: { lat?: number; lon?: number; node_id?: number }[];
   battery_soc?: number;
   battery_capacity_kwh?: number;
   ev_state?: EVState;
@@ -69,7 +70,10 @@ export interface GeoJSONRouteProperties {
   battery_remaining_pct?: number;
   charging_stops?: { node_id: number; name: string; lat: number; lon: number }[];
   path_node_ids: number[];
-  route_type: 'q_learning' | 'dijkstra';
+  route_type: 'q_learning' | 'dijkstra' | 'multi_stop';
+  segments?: { from_node: number; to_node: number; distance_km: number; energy_kwh: number; road_type: string }[];
+  legs?: { from: number; to: number; distance_km: number; energy_kwh: number; time_minutes: number; route_type: string }[];
+  elevation_profile?: { distance_km: number; elevation_m: number }[];
 }
 
 export interface GeoJSONRoute {
@@ -93,9 +97,10 @@ export interface Route {
   charging_stops: number[];
   /** Extended fields from GeoJSON backend */
   battery_remaining_pct?: number;
-  route_type?: 'q_learning' | 'dijkstra';
+  route_type?: 'q_learning' | 'dijkstra' | 'multi_stop';
   charging_stop_details?: { node_id: number; name: string; lat: number; lon: number }[];
   geojson?: GeoJSONRoute;
+  elevation_profile?: { distance_km: number; elevation_m: number }[];
 }
 
 export interface TrainingConfig {
@@ -327,6 +332,7 @@ export function geoJSONRouteToLegacy(geojson: GeoJSONRoute): Route {
     route_type: props.route_type,
     charging_stop_details: props.charging_stops,
     geojson,
+    elevation_profile: props.elevation_profile,
   };
 }
 
