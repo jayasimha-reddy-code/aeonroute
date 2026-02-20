@@ -1,10 +1,17 @@
-"""Training service — runs Q-Learning pipeline over real Hyderabad graph."""
+"""Training service — runs Q-Learning pipeline over real Hyderabad graph.
+
+SSE events use multiplexed type discriminator (Architectural Override #3):
+  - "metric"  → { type:"metric", episode, reward, loss, epsilon }
+  - "log"     → { type:"log", timestamp, message }
+  - "status"  → { type:"status", phase, progress }
+"""
 
 import asyncio
 import logging
 import os
 import pickle
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime, timezone
 from backend.app.state import AppState
 from backend.app.models.requests import TrainingConfig
 from backend.app.config import settings
@@ -36,11 +43,43 @@ class TrainingService:
             "reward_history": [],
             "rl_episode": 0,
             "rl_total_episodes": 0,
+            "sse_events": [],  # multiplexed SSE event buffer
         })
 
         loop = asyncio.get_running_loop()
         loop.run_in_executor(_executor, self._run_pipeline, config)
         logger.info("Q-Learning training dispatched with config: episodes=%d, lr=%f", config.episodes, config.learning_rate)
+
+    def _emit_sse(self, event: dict) -> None:
+        """Push a typed SSE event to the buffer for the stream endpoint to consume."""
+        buf = self.state.training_status.get("sse_events")
+        if buf is None:
+            self.state.training_status["sse_events"] = []
+            buf = self.state.training_status["sse_events"]
+        buf.append(event)
+
+    def _emit_log(self, message: str) -> None:
+        self._emit_sse({
+            "type": "log",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "message": message,
+        })
+
+    def _emit_status(self, phase: str, progress: float) -> None:
+        self._emit_sse({
+            "type": "status",
+            "phase": phase,
+            "progress": round(progress, 2),
+        })
+
+    def _emit_metric(self, episode: int, reward: float, loss: float, epsilon: float) -> None:
+        self._emit_sse({
+            "type": "metric",
+            "episode": episode,
+            "reward": round(reward, 4),
+            "loss": round(loss, 4),
+            "epsilon": round(epsilon, 4),
+        })
 
     def _run_pipeline(self, config: TrainingConfig) -> None:
         """Synchronous — runs in ThreadPoolExecutor thread. NOT async."""
@@ -50,19 +89,27 @@ class TrainingService:
 
             # --- Step 1: Load graph ---
             self._update(10, "Loading Hyderabad graph")
+            self._emit_log("Loading Hyderabad road graph...")
+            self._emit_status("loading_graph", 0.10)
             from backend.app.services.graph_service import get_hyderabad_graph
             hgraph = get_hyderabad_graph()
             logger.info("Graph loaded: %d nodes, %d edges", hgraph.num_nodes, hgraph.num_edges)
+            self._emit_log(f"Graph loaded: {hgraph.num_nodes} nodes, {hgraph.num_edges} edges")
 
             # --- Step 2: Load stations ---
             self._update(20, "Loading charging stations")
+            self._emit_log("Loading charging stations...")
+            self._emit_status("loading_stations", 0.20)
             from backend.app.services.station_service import get_charging_stations, snap_stations_to_graph
             stations = get_charging_stations(settings.OSMNX_CENTER_LAT, settings.OSMNX_CENTER_LON)
             snap_stations_to_graph(stations, hgraph)
             logger.info("Stations loaded: %d", len(stations))
+            self._emit_log(f"Stations loaded: {len(stations)} charging stations snapped to graph")
 
             # --- Step 3: Create environment ---
             self._update(30, "Creating RL environment")
+            self._emit_log("Creating Gymnasium RL environment...")
+            self._emit_status("creating_env", 0.30)
             from src.hyderabad_environment import HyderabadRoutingEnvironment
             env = HyderabadRoutingEnvironment(
                 graph=hgraph,
@@ -74,6 +121,8 @@ class TrainingService:
             if config.demo_mode:
                 episodes = min(episodes, 50)
             self._update(40, f"Training Q-Learning agent ({episodes} episodes)")
+            self._emit_log(f"Starting Q-Learning training: {episodes} episodes, lr={config.learning_rate}")
+            self._emit_status("training", 0.40)
             self.state.training_status["rl_total_episodes"] = episodes
 
             from src.q_learning_agent import QLearningAgent
@@ -88,11 +137,15 @@ class TrainingService:
                 if not self.state.training_status["is_training"]:
                     logger.info("Training stopped by user at episode %d", ep)
                     self._update(self.state.training_status["progress"], "Stopped by user")
+                    self._emit_log(f"Training stopped by user at episode {ep}")
                     return
 
                 state_obs, info = env.reset()
                 episode_reward = 0.0
                 td_errors = []
+
+                if ep % 10 == 0:
+                    self._emit_log(f"Episode {ep + 1}/{episodes}: exploring from node {env.current_node} → {env.destination}")
 
                 for step in range(config.max_steps):
                     neighbors = hgraph.get_neighbors(env.current_node)
@@ -132,12 +185,23 @@ class TrainingService:
                 })
                 self.state.training_status["rl_episode"] = ep + 1
 
+                # Emit multiplexed SSE metric event
+                self._emit_metric(ep, float(episode_reward), float(avg_td), float(agent.exploration_rate))
+
                 # Update progress (40% -> 90% during training)
                 train_progress = 40 + int((ep / max(episodes, 1)) * 50)
                 self._update(train_progress, f"Training: episode {ep + 1}/{episodes}")
 
+                # Periodic status events
+                if ep % 5 == 0:
+                    self._emit_status("training", train_progress / 100.0)
+
+            self._emit_log(f"Training loop complete: {episodes} episodes finished")
+
             # --- Step 5: Save Q-table ---
             self._update(95, "Saving Q-table")
+            self._emit_log("Saving Q-table to disk...")
+            self._emit_status("saving", 0.95)
             os.makedirs(os.path.dirname(_Q_TABLE_PATH), exist_ok=True)
             agent.save_model(_Q_TABLE_PATH)
 
@@ -163,6 +227,8 @@ class TrainingService:
                 "exploration_rate": round(agent.exploration_rate, 4),
             }
             self._update(100, "Complete")
+            self._emit_log(f"Training complete! Q-table has {len(agent.q_table)} states, avg reward={avg_final_reward:.2f}")
+            self._emit_status("complete", 1.0)
             self.state.training_status["is_training"] = False
 
             logger.info("Q-Learning training completed: %d episodes, avg reward=%.2f", episodes, avg_final_reward)
@@ -170,6 +236,8 @@ class TrainingService:
         except Exception as e:
             self.state.training_status["is_training"] = False
             self.state.training_status["current_step"] = f"Error: {str(e)}"
+            self._emit_log(f"Training failed: {str(e)}")
+            self._emit_status("error", 0)
             logger.error("Training pipeline failed: %s", e, exc_info=True)
 
     def _update(self, progress: int, step: str) -> None:
