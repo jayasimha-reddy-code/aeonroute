@@ -170,7 +170,9 @@ export interface TemporalTrafficData {
 
 // ─── API Client ───────────────────────────────────────────
 
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+// Empty string → uses Vite proxy in dev (/api/* → localhost:8000)
+// Set VITE_API_URL to override (e.g. production backend)
+const BASE_URL = import.meta.env.VITE_API_URL || '';
 
 class APIClient {
   private client: AxiosInstance;

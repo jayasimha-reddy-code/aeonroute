@@ -70,12 +70,12 @@ def create_app() -> FastAPI:
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-    # CORS
+    # CORS — allow_methods="*" lets CORSMiddleware handle OPTIONS preflights correctly
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,
         allow_credentials=True,
-        allow_methods=["GET", "POST", "OPTIONS"],
+        allow_methods=["*"],
         allow_headers=["*"],
     )
 
