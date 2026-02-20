@@ -62,7 +62,7 @@ function ToastContainer() {
             key={toast.id}
             className={cn(
               'pointer-events-auto flex items-start gap-3 p-4 rounded-2xl border-l-4 shadow-elevated relative overflow-hidden',
-              'bg-white/[0.04] backdrop-blur-2xl',
+              'bg-[#0a0f16]/60 backdrop-blur-2xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.5)]',
               isDismissing ? 'animate-slide-out-right' : 'animate-slide-in-right',
               colorMap[toast.type],
             )}

@@ -58,7 +58,7 @@ export function OverflowMenu({ items = defaultItems, className }: OverflowMenuPr
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-48 rounded-xl bg-[#0f141c] border border-white/10 backdrop-blur-[40px] shadow-2xl z-50 py-1 animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="absolute right-0 mt-2 w-48 rounded-xl bg-[#0a0f16]/80 backdrop-blur-2xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.5)] z-50 py-1 animate-in fade-in slide-in-from-top-2 duration-200">
           {items.map((item, i) => (
             <button
               key={i}

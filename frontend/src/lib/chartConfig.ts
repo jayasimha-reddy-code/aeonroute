@@ -22,12 +22,12 @@ export const CHART_PALETTE = [
 
 /** Unified tooltip styling — dark glass */
 export const tooltipStyle: React.CSSProperties = {
-  backgroundColor: 'rgba(10, 15, 22, 0.9)',
+  backgroundColor: 'rgba(10, 15, 22, 0.95)',
   borderRadius: '12px',
   border: '1px solid rgba(255,255,255,0.1)',
   color: '#fff',
   fontSize: '12px',
-  boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+  boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
   padding: '10px 14px',
 };
 

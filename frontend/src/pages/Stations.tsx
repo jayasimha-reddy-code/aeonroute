@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Zap, MapPin, Battery, Clock, Search, Filter, ChevronRight, Check } from 'lucide-react';
 import { Card } from '../components/ui';
-import { staggerContainer, staggerItem, hyperStaggerContainer, hyperStaggerItem } from '../lib/motion';
+import { hyperStaggerContainer, hyperStaggerItem } from '../lib/motion';
 import { cn } from '../lib/utils';
 
 const MOCK_STATIONS = [
@@ -123,7 +123,7 @@ export default function Stations() {
           { label: 'Avg Wait', value: '4 min', icon: Clock, color: 'text-rose' },
         ].map((stat) => (
           <Card key={stat.label} className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white/[0.04] flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-[#0a0f16]/30 flex items-center justify-center">
               <stat.icon className={`w-5 h-5 ${stat.color}`} />
             </div>
             <div>
@@ -148,7 +148,7 @@ export default function Stations() {
                 onClick={() => setSelectedStation(station.id === selectedStation ? null : station.id)}
                 className="w-full flex items-center gap-4 px-5 py-3.5 hover:bg-white/[0.02] cursor-pointer transition-colors duration-200 text-left"
               >
-                <div className="w-10 h-10 rounded-xl bg-white/[0.04] flex items-center justify-center flex-shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-[#0a0f16]/30 flex items-center justify-center flex-shrink-0">
                   <Zap className="w-5 h-5 text-emerald" />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -179,19 +179,19 @@ export default function Stations() {
                 {selected.status}
               </span>
               <div className="grid grid-cols-2 gap-3 mt-4">
-                <div className="p-3 rounded-xl bg-white/[0.03]">
+                <div className="p-3 rounded-xl bg-[#0a0f16]/30">
                   <p className="text-xs text-muted">Power</p>
                   <p className="text-lg font-bold text-white">{selected.power} kW</p>
                 </div>
-                <div className="p-3 rounded-xl bg-white/[0.03]">
+                <div className="p-3 rounded-xl bg-[#0a0f16]/30">
                   <p className="text-xs text-muted">Wait Time</p>
                   <p className="text-lg font-bold text-white">{selected.waitTime}</p>
                 </div>
-                <div className="p-3 rounded-xl bg-white/[0.03]">
+                <div className="p-3 rounded-xl bg-[#0a0f16]/30">
                   <p className="text-xs text-muted">Connectors</p>
                   <p className="text-lg font-bold text-white">{selected.connectors}</p>
                 </div>
-                <div className="p-3 rounded-xl bg-white/[0.03]">
+                <div className="p-3 rounded-xl bg-[#0a0f16]/30">
                   <p className="text-xs text-muted">Available</p>
                   <p className="text-lg font-bold text-emerald">{selected.available}</p>
                 </div>

@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { Activity, Cpu, HardDrive, Wifi, Clock, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { Card, ProgressBar } from '../components/ui';
-import { staggerContainer, staggerItem, hyperStaggerContainer, hyperStaggerItem } from '../lib/motion';
+import { hyperStaggerContainer, hyperStaggerItem } from '../lib/motion';
 
 const services = [
   { name: 'FastAPI Backend', status: 'healthy', uptime: '99.9%', latency: '12ms', icon: Cpu, color: 'emerald' },
@@ -39,7 +39,7 @@ export default function Monitoring() {
           </div>
           <div className="space-y-3">
             {services.map((svc) => (
-              <div key={svc.name} className="flex items-center gap-4 p-4 rounded-xl bg-white/[0.03] border border-white/[0.05]">
+              <div key={svc.name} className="flex items-center gap-4 p-4 rounded-xl bg-[#0a0f16]/30 border border-white/[0.05]">
                 <div className={`w-10 h-10 rounded-xl bg-${svc.color}/10 flex items-center justify-center flex-shrink-0`}>
                   <svc.icon className={`w-5 h-5 text-${svc.color}`} />
                 </div>

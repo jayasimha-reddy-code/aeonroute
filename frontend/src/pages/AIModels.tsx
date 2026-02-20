@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { Brain, Cpu, Network, Activity, CheckCircle2, XCircle } from 'lucide-react';
 import { Card } from '../components/ui';
-import { staggerContainer, staggerItem, hyperStaggerContainer, hyperStaggerItem } from '../lib/motion';
+import { hyperStaggerContainer, hyperStaggerItem } from '../lib/motion';
 
 const models = [
   { name: 'SG-GAN Traffic Generator', version: 'v2.1', status: 'active', accuracy: '94.2%', icon: Brain, color: 'emerald' },
@@ -43,16 +43,16 @@ export default function AIModels() {
                 </div>
               </div>
               <div className="space-y-3">
-                <div className="p-3 rounded-xl bg-white/[0.03]">
+                <div className="p-3 rounded-xl bg-[#0a0f16]/30">
                   <p className="text-[10px] text-muted uppercase tracking-wider">Model Accuracy</p>
                   <p className="text-lg font-bold text-white mt-0.5">{model.accuracy}</p>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="p-3 rounded-xl bg-white/[0.03]">
+                  <div className="p-3 rounded-xl bg-[#0a0f16]/30">
                     <p className="text-[10px] text-muted uppercase tracking-wider">Parameters</p>
                     <p className="text-sm font-semibold text-white mt-0.5">1.2M</p>
                   </div>
-                  <div className="p-3 rounded-xl bg-white/[0.03]">
+                  <div className="p-3 rounded-xl bg-[#0a0f16]/30">
                     <p className="text-[10px] text-muted uppercase tracking-wider">Last Trained</p>
                     <p className="text-sm font-semibold text-white mt-0.5">2h ago</p>
                   </div>
@@ -82,7 +82,7 @@ export default function AIModels() {
               { label: 'Avg Accuracy', value: '90.9', unit: '%' },
               { label: 'Total Params', value: '3.6', unit: 'M' },
             ].map((stat) => (
-              <div key={stat.label} className="p-3 rounded-xl bg-white/[0.03]">
+              <div key={stat.label} className="p-3 rounded-xl bg-[#0a0f16]/30">
                 <p className="text-[10px] text-muted uppercase tracking-wider">{stat.label}</p>
                 <p className="text-2xl font-bold text-white mt-0.5">
                   {stat.value}

@@ -56,11 +56,11 @@ export default function Settings() {
               </select>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div className="p-3 rounded-xl bg-white/[0.03]">
+              <div className="p-3 rounded-xl bg-[#0a0f16]/30">
                 <p className="text-[10px] text-muted uppercase tracking-wider">Battery Capacity</p>
                 <p className="text-lg font-bold text-white mt-0.5">82 kWh</p>
               </div>
-              <div className="p-3 rounded-xl bg-white/[0.03]">
+              <div className="p-3 rounded-xl bg-[#0a0f16]/30">
                 <p className="text-[10px] text-muted uppercase tracking-wider">Range (EPA)</p>
                 <p className="text-lg font-bold text-white mt-0.5">358 mi</p>
               </div>
@@ -82,21 +82,21 @@ export default function Settings() {
             </div>
           </div>
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02]">
+            <div className="flex items-center justify-between p-3 rounded-xl bg-[#0a0f16]/30">
               <div>
                 <p className="text-sm text-white">Avoid Tolls</p>
                 <p className="text-xs text-muted">Route around toll roads when possible</p>
               </div>
               <ToggleSwitch checked={settings.avoidTolls} onChange={setAvoidTolls} />
             </div>
-            <div className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02]">
+            <div className="flex items-center justify-between p-3 rounded-xl bg-[#0a0f16]/30">
               <div>
                 <p className="text-sm text-white">Optimize for Battery</p>
                 <p className="text-xs text-muted">Prefer energy-efficient routes</p>
               </div>
               <ToggleSwitch checked={settings.optimizeBattery} onChange={setOptimizeBattery} />
             </div>
-            <div className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02]">
+            <div className="flex items-center justify-between p-3 rounded-xl bg-[#0a0f16]/30">
               <div>
                 <p className="text-sm text-white">Notifications</p>
                 <p className="text-xs text-muted">Charging and route alerts</p>
@@ -155,11 +155,11 @@ export default function Settings() {
             </div>
           </div>
           <div className="space-y-3">
-            <div className="p-3 rounded-xl bg-white/[0.02]">
+            <div className="p-3 rounded-xl bg-[#0a0f16]/30">
               <p className="text-[10px] text-muted uppercase tracking-wider">API Endpoint</p>
               <p className="text-sm text-white font-mono mt-1">http://localhost:8000</p>
             </div>
-            <div className="p-3 rounded-xl bg-white/[0.02]">
+            <div className="p-3 rounded-xl bg-[#0a0f16]/30">
               <p className="text-[10px] text-muted uppercase tracking-wider">Status</p>
               <div className="flex items-center gap-2 mt-1">
                 <span className="w-2 h-2 rounded-full bg-emerald animate-pulse" />
@@ -185,14 +185,14 @@ export default function Settings() {
           {sysConfig ? (
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
-                <div className="p-3 rounded-xl bg-white/[0.03]">
+                <div className="p-3 rounded-xl bg-[#0a0f16]/30">
                   <div className="flex items-center gap-1.5 mb-1">
                     <MapPin className="w-3 h-3 text-emerald" />
                     <p className="text-[10px] text-muted uppercase tracking-wider">Map Radius</p>
                   </div>
                   <p className="text-lg font-bold text-white">{sysConfig.osmnx_radius_km} km</p>
                 </div>
-                <div className="p-3 rounded-xl bg-white/[0.03]">
+                <div className="p-3 rounded-xl bg-[#0a0f16]/30">
                   <div className="flex items-center gap-1.5 mb-1">
                     <Cpu className="w-3 h-3 text-amber" />
                     <p className="text-[10px] text-muted uppercase tracking-wider">Max Episodes</p>
@@ -200,7 +200,7 @@ export default function Settings() {
                   <p className="text-lg font-bold text-white">{sysConfig.max_training_episodes}</p>
                 </div>
               </div>
-              <div className="p-3 rounded-xl bg-white/[0.03]">
+              <div className="p-3 rounded-xl bg-[#0a0f16]/30">
                 <p className="text-[10px] text-muted uppercase tracking-wider mb-1">Map Center</p>
                 <p className="text-sm text-white font-mono">
                   {sysConfig.osmnx_center_lat}, {sysConfig.osmnx_center_lon}

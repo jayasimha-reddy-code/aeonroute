@@ -128,7 +128,7 @@ function MetricPill({
   valueClass?: string;
 }) {
   return (
-    <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.03]">
+    <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#0a0f16]/30">
       <Icon className="w-3.5 h-3.5 text-label flex-shrink-0" />
       <div className="min-w-0">
         <p className="text-[10px] text-label uppercase tracking-wider leading-none mb-0.5">{label}</p>

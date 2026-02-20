@@ -142,7 +142,7 @@ function Training() {
               ) : trainingProgress.progress >= 100 ? (
                 <div className="p-2 rounded-xl bg-emerald/10"><CheckCircle className="w-5 h-5 text-emerald" /></div>
               ) : (
-                <div className="p-2 rounded-xl bg-white/[0.03]"><Circle className="w-5 h-5 text-slate-500" /></div>
+                <div className="p-2 rounded-xl bg-[#0a0f16]/30"><Circle className="w-5 h-5 text-slate-500" /></div>
               )}
               <div>
                 <h3 className="text-sm font-semibold text-white">
@@ -197,7 +197,7 @@ function Training() {
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {Object.entries(trainingProgress.metrics).map(([key, value]) => (
-                  <div key={key} className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.05]">
+                  <div key={key} className="p-3 rounded-xl bg-[#0a0f16]/30 border border-white/[0.05]">
                     <p className="text-[10px] text-muted uppercase tracking-wider mb-1">{key.replace(/_/g, ' ')}</p>
                     <p className="text-lg font-bold text-white">
                       {typeof value === 'object' ? JSON.stringify(value) : String(value)}

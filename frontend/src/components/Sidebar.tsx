@@ -83,7 +83,7 @@ export default function Sidebar() {
 
   return (
     <aside className={cn(
-      'h-screen flex flex-col bg-white/[0.02] backdrop-blur-[40px] border-r border-white/[0.06] flex-shrink-0 relative z-10 transition-all duration-300',
+      'h-screen flex flex-col bg-[#0a0f16]/60 backdrop-blur-2xl border-r border-white/[0.08] flex-shrink-0 relative z-10 transition-all duration-300',
       collapsed ? 'w-16' : 'w-56'
     )}>
 
@@ -126,7 +126,7 @@ export default function Sidebar() {
               }
             </button>
             {statusOpen && (
-              <div className="absolute left-0 right-0 mt-1.5 rounded-xl bg-[#0f141c] border border-white/10 backdrop-blur-[40px] shadow-2xl z-50 py-1 animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="absolute left-0 right-0 mt-1.5 rounded-xl bg-[#0a0f16]/80 backdrop-blur-2xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.5)] z-50 py-1 animate-in fade-in slide-in-from-top-2 duration-200">
                 {statusOptions.map((opt) => (
                   <button
                     key={opt.value}
@@ -223,7 +223,7 @@ export default function Sidebar() {
                 <Settings className="w-4 h-4 text-label hover:text-white cursor-pointer transition-colors" />
               </button>
               {gearOpen && (
-                <div className="absolute bottom-full right-0 mb-2 w-48 rounded-xl bg-[#0a0f16]/90 backdrop-blur-[40px] border border-white/10 shadow-2xl z-50 py-1 animate-in fade-in slide-in-from-bottom-2 duration-200">
+                <div className="absolute bottom-full right-0 mb-2 w-48 rounded-xl bg-[#0a0f16]/80 backdrop-blur-2xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.5)] z-50 py-1 animate-in fade-in slide-in-from-bottom-2 duration-200">
                   <button
                     onClick={() => { navigate('/settings'); setGearOpen(false); }}
                     className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-300 hover:bg-white/[0.04] hover:text-white transition-colors duration-150"

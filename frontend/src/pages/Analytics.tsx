@@ -397,7 +397,7 @@ function Analytics() {
               { label: 'Q-Learning Agent', ready: systemStats?.models?.agent_trained },
               { label: 'GNN Route GAN',    ready: systemStats?.models?.gnn_gan_trained },
             ].map((m) => (
-              <div key={m.label} className="flex items-center justify-between p-3 rounded-xl bg-white/[0.03] border border-white/[0.05]">
+              <div key={m.label} className="flex items-center justify-between p-3 rounded-xl bg-[#0a0f16]/30 border border-white/[0.05]">
                 <span className="text-sm font-medium text-label">{m.label}</span>
                 {m.ready ? <Badge variant="success" dot>Active</Badge> : <Badge variant="neutral" dot>Inactive</Badge>}
               </div>
@@ -415,7 +415,7 @@ function Analytics() {
               { label: 'Total Nodes', val: systemStats?.road_network?.nodes ?? 0 },
               { label: 'Total Edges', val: systemStats?.road_network?.edges ?? 0 },
             ].map((s) => (
-              <div key={s.label} className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.05]">
+              <div key={s.label} className="p-3 rounded-xl bg-[#0a0f16]/30 border border-white/[0.05]">
                 <p className="text-[10px] text-muted uppercase tracking-wider mb-1">{s.label}</p>
                 <p className="text-2xl font-bold text-white">{s.val}</p>
               </div>
@@ -433,7 +433,7 @@ function Analytics() {
               { label: 'Agent Success Rate', val: agentPerf ? `${(agentPerf.success_rate * 100).toFixed(0)}` : '—', unit: '%' },
               { label: 'Energy Improvement', val: routeEval ? `${(routeEval.energy_improvement * 100).toFixed(1)}` : '—', unit: '%' },
             ].map((s) => (
-              <div key={s.label} className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.05]">
+              <div key={s.label} className="p-3 rounded-xl bg-[#0a0f16]/30 border border-white/[0.05]">
                 <p className="text-[10px] text-muted uppercase tracking-wider mb-1">{s.label}</p>
                 <p className="text-2xl font-bold text-white">{s.val}{s.unit && <span className="text-sm font-medium text-label ml-1">{s.unit}</span>}</p>
               </div>

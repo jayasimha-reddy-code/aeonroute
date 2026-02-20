@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { Target, Route, Gauge, Timer, Zap, TrendingUp } from 'lucide-react';
 import { Card } from '../components/ui';
-import { staggerContainer, staggerItem, hyperStaggerContainer, hyperStaggerItem } from '../lib/motion';
+import { hyperStaggerContainer, hyperStaggerItem } from '../lib/motion';
 
 const routingAlgorithms = [
   { name: 'Q-Learning Agent', type: 'Reinforcement Learning', status: 'Primary', color: 'emerald' },
@@ -31,7 +31,7 @@ export default function RoutingConfig() {
           </div>
           <div className="space-y-3">
             {routingAlgorithms.map((algo) => (
-              <div key={algo.name} className="flex items-center justify-between p-3 rounded-xl bg-white/[0.03] border border-white/[0.05]">
+              <div key={algo.name} className="flex items-center justify-between p-3 rounded-xl bg-[#0a0f16]/30 border border-white/[0.05]">
                 <div className="flex items-center gap-3">
                   <div className={`w-2 h-8 rounded-full bg-${algo.color}`} />
                   <div>
@@ -67,7 +67,7 @@ export default function RoutingConfig() {
               { icon: Zap, label: 'Avg Energy Cost', value: '8.4', unit: 'kWh', color: 'text-amber' },
               { icon: TrendingUp, label: 'Feasibility Rate', value: '94', unit: '%', color: 'text-emerald' },
             ].map((metric) => (
-              <div key={metric.label} className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02]">
+              <div key={metric.label} className="flex items-center gap-3 p-3 rounded-xl bg-[#0a0f16]/30">
                 <metric.icon className={`w-4 h-4 ${metric.color} flex-shrink-0`} />
                 <span className="text-sm text-label flex-1">{metric.label}</span>
                 <span className="text-sm font-bold text-white tabular-nums">
@@ -99,7 +99,7 @@ export default function RoutingConfig() {
               { label: 'Time Weight', value: '0.3' },
               { label: 'Distance Weight', value: '0.3' },
             ].map((param) => (
-              <div key={param.label} className="p-3 rounded-xl bg-white/[0.03]">
+              <div key={param.label} className="p-3 rounded-xl bg-[#0a0f16]/30">
                 <p className="text-[10px] text-muted uppercase tracking-wider">{param.label}</p>
                 <p className="text-xl font-bold text-white mt-0.5">{param.value}</p>
               </div>
