@@ -11,13 +11,13 @@ When an evaluator sees this app, they immediately understand this is production-
 ## Current State
 
 **Milestone:** v1 — Presentation Release
-**Current Phase:** Phase 14 — Critical System Reset: Nuke, Consolidate & Rebuild
-**Phase Status:** ◆ In progress — 5/6 plans complete
-**Overall Progress:** 12/14 phases complete (Phase 09 failed, Phase 10 superseded)
+**Current Phase:** Phase 15 — The Great Wiring
+**Phase Status:** ◆ In progress — 1/3 plans complete (15-02 done)
+**Overall Progress:** 13/15 phases complete (Phase 09 failed, Phase 10 superseded)
 
-Progress: █████████████░ 90%
+Progress: █████████████░ 92%
 
-**Last Activity:** 2026-02-20 — Completed 14-05 (bespoke UI widgets + charts)
+**Last Activity:** 2026-02-21 — Completed 15-02 (kill fake logs, wire Training page to real SSE)
 
 ## Phase Tracker
 
@@ -37,6 +37,7 @@ Progress: █████████████░ 90%
 | 12 | Hyper-Fidelity UI & Functional Replication | ✅ | 5/5 | 100% |
 | 13 | Production Transition — Real Data & AI | ✅ | 2/2 | 100% |
 | 14 | Critical System Reset: Nuke & Rebuild | ◆ | 5/6 | 83% |
+| 15 | The Great Wiring | ◆ | 1/3 | 33% |
 
 ## Configuration
 
@@ -92,6 +93,8 @@ Progress: █████████████░ 90%
 - [x] Phase 14 plan 03 execution
 - [x] Phase 14 plan 04 execution
 - [x] Phase 14 plan 05 execution
+- [x] Phase 15 planning
+- [x] Phase 15 plan 02 execution
 
 ## Key Dates
 
@@ -132,7 +135,8 @@ Progress: █████████████░ 90%
 | Phase 14 plan 03 complete | 2026-02-20 |
 | Phase 14 plan 04 complete | 2026-02-20 |
 | Phase 14 plan 05 complete | 2026-02-20 |
+| Phase 15 plan 02 complete | 2026-02-21 |
 
 ---
 
-_Last updated: 2026-02-20 (Phase 14 plan 03 complete)_
+_Last updated: 2026-02-21 (Phase 15 plan 02 complete — MOCK_LOGS killed, Training page wired to real SSE)_
