@@ -66,7 +66,7 @@ async def generate_route_endpoint(request: Request, route_req: RouteRequest, sta
         fail(f"Node IDs must be in [0, {hg.num_nodes - 1}]", 422)
 
     try:
-        result = generate_route(state, source, dest, battery_soc, battery_cap)
+        result = generate_route(state, source, dest, battery_soc, battery_cap, route_req.route_mode or "fast")
         return ok(result)
     except Exception as e:
         if hasattr(e, "status_code"):

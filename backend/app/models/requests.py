@@ -26,6 +26,7 @@ class RouteRequest(BaseModel):
     battery_capacity_kwh: float = Field(60.0, gt=0, le=500, description="Battery capacity kWh")
     ev_state: Optional[EVStateRequest] = None
     num_candidates: int = Field(3, ge=1, le=10, description="Number of candidate routes")
+    route_mode: Optional[str] = Field("fast", description="Routing mode: fast (Q-Learning/Dijkstra), eco (energy-efficient), scenic (residential roads)")
 
 class TrainingConfig(BaseModel):
     episodes: int = Field(200, ge=10, le=5000, description="Q-Learning episodes")

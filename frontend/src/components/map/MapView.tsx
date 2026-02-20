@@ -36,6 +36,7 @@ export interface MapViewProps {
     isCharging: boolean;
     chargingProgress: number;
   };
+  routeMode?: 'fast' | 'eco' | 'scenic';
   children?: React.ReactNode;
 }
 
@@ -70,6 +71,7 @@ const MapView = memo(function MapView({
   onNodeClick,
   onRouteSelect,
   simulationState,
+  routeMode = 'fast',
   children,
 }: MapViewProps) {
   const mapRef = useRef<MapRef>(null);
@@ -213,6 +215,7 @@ const MapView = memo(function MapView({
           routes={routes}
           highlightIndex={highlightIndex}
           posLookup={posLookup}
+          routeMode={routeMode}
         />
 
         {/* Source / Destination markers */}

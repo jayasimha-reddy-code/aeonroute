@@ -202,7 +202,7 @@ def _q_learning_route(hg, source: int, dest: int, q_table: Dict) -> Optional[Lis
 
 
 def _dijkstra_route(hg, source: int, dest: int) -> Optional[List[int]]:
-    """Shortest-path fallback using Dijkstra on the real graph."""
+    """Shortest-path fallback using Dijkstra on the real graph (weighted by length)."""
     src_osm = hg.idx_to_osm(source)
     dst_osm = hg.idx_to_osm(dest)
     if src_osm == -1 or dst_osm == -1:
@@ -214,21 +214,79 @@ def _dijkstra_route(hg, source: int, dest: int) -> Optional[List[int]]:
         return None
 
 
-def generate_route(state: AppState, source: int, dest: int, battery_soc: float = 80.0, battery_capacity_kwh: float = 60.0) -> Dict[str, Any]:
-    """Generate a real route over Hyderabad streets. Q-table if trained, else Dijkstra."""
-    hg = require_graph(state)
+# ── Weighted Dijkstra weight functions ──────────────────
 
-    # Try Q-table first
-    q_table = state.q_table or _load_q_table()
+_SCENIC_ROAD_WEIGHTS: Dict[str, float] = {
+    "motorway": 10.0, "motorway_link": 8.0,
+    "trunk": 8.0, "trunk_link": 7.0,
+    "primary": 5.0, "primary_link": 4.5,
+    "secondary": 2.0, "secondary_link": 1.8,
+    "tertiary": 1.5, "tertiary_link": 1.3,
+    "residential": 1.0, "unclassified": 1.0,
+    "living_street": 0.8, "service": 0.9,
+}
+
+
+def _eco_weight(u: int, v: int, d: Dict) -> float:
+    """Weight by energy consumption (kWh) — prefers shorter, flatter paths."""
+    return max(d.get("length", 100.0) * 0.18 / 1000.0, 1e-6)
+
+
+def _scenic_weight(u: int, v: int, d: Dict) -> float:
+    """Weight to prefer residential/local roads over motorways."""
+    road_type = d.get("highway", "residential")
+    if isinstance(road_type, list):
+        road_type = road_type[0] if road_type else "residential"
+    road_type = str(road_type).replace("_link", "")
+    multiplier = _SCENIC_ROAD_WEIGHTS.get(road_type, 1.5)
+    return max(d.get("length", 100.0) * multiplier, 1e-6)
+
+
+def _dijkstra_route_weighted(hg, source: int, dest: int, weight_fn) -> Optional[List[int]]:
+    """Dijkstra with a custom weight callable (u, v, d) -> float."""
+    src_osm = hg.idx_to_osm(source)
+    dst_osm = hg.idx_to_osm(dest)
+    if src_osm == -1 or dst_osm == -1:
+        return None
+    try:
+        osm_path = nx.shortest_path(hg.graph, src_osm, dst_osm, weight=weight_fn)
+        return [hg.osm_to_idx(n) for n in osm_path]
+    except (nx.NetworkXNoPath, nx.NodeNotFound):
+        return None
+
+
+def generate_route(
+    state: AppState,
+    source: int,
+    dest: int,
+    battery_soc: float = 80.0,
+    battery_capacity_kwh: float = 60.0,
+    route_mode: str = "fast",
+) -> Dict[str, Any]:
+    """Generate a route over Hyderabad streets. Supports fast/eco/scenic modes.
+
+    - fast   → Q-Learning (if trained) with Dijkstra fallback
+    - eco    → Dijkstra weighted by energy consumption (distance × 0.18 kWh/km)
+    - scenic → Dijkstra weighted to prefer residential/secondary over motorways
+    """
+    hg = require_graph(state)
     route_type = "dijkstra"
     path = None
 
-    if q_table:
-        path = _q_learning_route(hg, source, dest, q_table)
-        if path:
-            route_type = "q_learning"
+    if route_mode == "eco":
+        path = _dijkstra_route_weighted(hg, source, dest, _eco_weight)
+        route_type = "eco"
+    elif route_mode == "scenic":
+        path = _dijkstra_route_weighted(hg, source, dest, _scenic_weight)
+        route_type = "scenic"
+    else:  # "fast" — try Q-Learning first
+        q_table = state.q_table or _load_q_table()
+        if q_table:
+            path = _q_learning_route(hg, source, dest, q_table)
+            if path:
+                route_type = "q_learning"
 
-    # Fallback to Dijkstra
+    # Fallback to standard Dijkstra if primary strategy produced no path
     if path is None:
         path = _dijkstra_route(hg, source, dest)
         route_type = "dijkstra"
@@ -238,9 +296,16 @@ def generate_route(state: AppState, source: int, dest: int, battery_soc: float =
 
     route_feature = _build_route_feature(hg, state, path, route_type, battery_soc, battery_capacity_kwh)
 
-    # Generate alternatives (Dijkstra shortest-distance)
+    # Generate an alternative route for comparison
     alternatives = []
-    if route_type == "q_learning":
+    if route_mode == "fast" and route_type == "q_learning":
+        # Offer Dijkstra as a spatial alternative to Q-Learning
+        alt_path = _dijkstra_route(hg, source, dest)
+        if alt_path and alt_path != path:
+            alt_feature = _build_route_feature(hg, state, alt_path, "dijkstra", battery_soc, battery_capacity_kwh)
+            alternatives.append(alt_feature)
+    elif route_mode in ("eco", "scenic"):
+        # Offer fast Dijkstra as baseline comparison
         alt_path = _dijkstra_route(hg, source, dest)
         if alt_path and alt_path != path:
             alt_feature = _build_route_feature(hg, state, alt_path, "dijkstra", battery_soc, battery_capacity_kwh)

@@ -6,14 +6,15 @@ interface NetworkNodesLayerProps {
   nodesGeoJSON: GeoJSON.FeatureCollection<GeoJSON.Point> | null;
 }
 
-/* Subtle glow ring behind ALL nodes — gives "alive" breathing feel */
+/* Subtle glow ring — only for charging stations */
 const nodeGlowStyle: CircleLayerSpecification = {
   id: 'nodes-glow',
   type: 'circle',
   source: 'network-nodes',
+  filter: ['==', ['get', 'isCharging'], true],
   paint: {
-    'circle-radius': ['case', ['get', 'isCharging'], 12, 8] as any,
-    'circle-color': ['case', ['get', 'isCharging'], '#f59e0b', '#10b981'] as any,
+    'circle-radius': 12,
+    'circle-color': '#f59e0b',
     'circle-opacity': 0.12,
     'circle-blur': 0.6,
   },
@@ -38,13 +39,14 @@ const nodesStyle: CircleLayerSpecification = {
   id: 'nodes-layer',
   type: 'circle',
   source: 'network-nodes',
+  filter: ['==', ['get', 'isCharging'], true],
   paint: {
-    'circle-radius': ['case', ['get', 'isCharging'], 7, 3.5] as any,
-    'circle-color': ['case', ['get', 'isCharging'], '#f59e0b', '#10b981'] as any,
-    'circle-opacity': ['case', ['get', 'isCharging'], 0.95, 0.5] as any,
-    'circle-stroke-width': ['case', ['get', 'isCharging'], 2, 0.5] as any,
-    'circle-stroke-color': ['case', ['get', 'isCharging'], '#92400e', '#10b981'] as any,
-    'circle-stroke-opacity': ['case', ['get', 'isCharging'], 1, 0.3] as any,
+    'circle-radius': 7,
+    'circle-color': '#f59e0b',
+    'circle-opacity': 0.95,
+    'circle-stroke-width': 2,
+    'circle-stroke-color': '#92400e',
+    'circle-stroke-opacity': 1,
   },
 };
 

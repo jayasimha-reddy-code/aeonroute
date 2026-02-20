@@ -16,6 +16,7 @@ interface RouteLayerProps {
   highlightIndex?: number;
   posLookup: Record<string, [number, number]> | null;
   animate?: boolean;
+  routeMode?: 'fast' | 'eco' | 'scenic';
 }
 
 const EMPTY_LINE: GeoJSON.Feature<GeoJSON.LineString> = {
@@ -29,10 +30,14 @@ export const RouteLayer = memo(function RouteLayer({
   highlightIndex,
   posLookup,
   animate = true,
+  routeMode = 'fast',
 }: RouteLayerProps) {
   if (!posLookup || routes.length === 0) return null;
 
   const hiIdx = highlightIndex ?? 0;
+
+  // Determine highlight color based on route mode
+  const highlightColor = routeMode === 'eco' ? '#f59e0b' : routeMode === 'scenic' ? '#06b6d4' : '#10b981';
 
   // Convert all routes to GeoJSON
   const routeGeoJSONs = useMemo(
@@ -130,7 +135,7 @@ export const RouteLayer = memo(function RouteLayer({
           id="route-highlight-glow-layer"
           type="line"
           paint={{
-            'line-color': '#10b981',
+            'line-color': highlightColor,
             'line-width': 14,
             'line-opacity': 0.2,
             'line-blur': 8,
@@ -149,7 +154,7 @@ export const RouteLayer = memo(function RouteLayer({
           id="route-highlight-core-layer"
           type="line"
           paint={{
-            'line-color': '#10b981',
+            'line-color': highlightColor,
             'line-width': 3,
             'line-opacity': 0.9,
           }}

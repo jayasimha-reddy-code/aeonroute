@@ -61,6 +61,7 @@ export interface RouteRequest {
   battery_capacity_kwh?: number;
   ev_state?: EVState;
   num_candidates?: number;
+  route_mode?: 'fast' | 'eco' | 'scenic';
 }
 
 export interface GeoJSONRouteProperties {

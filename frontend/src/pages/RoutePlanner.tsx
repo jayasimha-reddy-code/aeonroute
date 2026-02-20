@@ -41,6 +41,7 @@ function RoutePlanner() {
   const [loading, setLoading] = useState(false);
   const [highlightIdx, setHighlightIdx] = useState<number | undefined>(undefined);
   const [routeType, setRouteType] = useState<'fast' | 'eco' | 'scenic'>('fast');
+  const [speedMultiplier, setSpeedMultiplier] = useState<1 | 2 | 4>(1);
   const [elevationData, setElevationData] = useState<ElevationPoint[]>([]);
   const [waypoints, setWaypoints] = useState<Waypoint[]>([
     { id: 'wp-start', label: 'Charminar', type: 'start', lat: 17.3616, lon: 78.4747 },
@@ -55,6 +56,7 @@ function RoutePlanner() {
       posLookup,
       startSOC: currentEVState.battery_soc,
       batteryCapacityKWh: currentEVState.battery_capacity_kwh,
+      speedMultiplier,
     });
 
   const handleGenerateRoutes = async () => {
@@ -84,6 +86,7 @@ function RoutePlanner() {
         dest_lon: dLon,
         battery_soc: currentEVState.battery_soc,
         battery_capacity_kwh: currentEVState.battery_capacity_kwh,
+        route_mode: routeType,
       });
       // Convert GeoJSON routes to legacy Route format
       const routes = [geoJSONRouteToLegacy(result.route), ...result.alternatives.map(geoJSONRouteToLegacy)];
@@ -226,6 +229,26 @@ function RoutePlanner() {
                     <Button variant="ghost" icon={RotateCcw} onClick={resetSim} />
                   )}
                 </div>
+                {/* Speed multiplier controls */}
+                <div className="mt-3">
+                  <p className="text-xs text-muted mb-1.5 uppercase tracking-wider">Speed</p>
+                  <div className="flex gap-1.5">
+                    {([1, 2, 4] as const).map((s) => (
+                      <button
+                        key={s}
+                        onClick={() => setSpeedMultiplier(s)}
+                        className={cn(
+                          'flex-1 text-xs font-semibold py-1.5 rounded-lg border transition-colors',
+                          speedMultiplier === s
+                            ? 'bg-emerald/20 border-emerald text-emerald'
+                            : 'bg-white/[0.04] border-white/10 text-muted hover:text-white hover:border-white/20',
+                        )}
+                      >
+                        {s}×
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 {simState.isSimulating && (
                   <div className="mt-3">
                     <ProgressBar value={simState.progress * 100} size="sm" variant={simState.isCharging ? 'warning' : 'primary'} />
@@ -256,6 +279,7 @@ function RoutePlanner() {
                   onNodeClick={handleNodeClick}
                   onRouteSelect={(idx) => { setHighlightIdx(idx); setSelectedRoute(generatedRoutes[idx]); }}
                   simulationState={simState}
+                  routeMode={routeType}
                 />
               ) : (
                 <div className="h-full flex items-center justify-center bg-midnight/50">
