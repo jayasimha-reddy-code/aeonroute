@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useSidebarCollapsed, useToggleSidebar, type AppTab } from '../store/store';
-import { LayoutDashboard, Map, BarChart3, Zap, Settings, Brain, Target, Activity, ChevronDown, ChevronUp, PanelLeftClose, PanelLeft, Circle, Moon, Clock, MinusCircle, User, LogOut, GraduationCap } from 'lucide-react';
+import { LayoutDashboard, Map, BarChart3, Zap, Settings, ChevronDown, ChevronUp, PanelLeftClose, PanelLeft, Circle, Moon, Clock, MinusCircle, User, LogOut, GraduationCap } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 const statusOptions = [
@@ -20,11 +20,7 @@ const navItems: Array<{ id: AppTab; label: string; icon: React.ComponentType<{ c
   { id: 'settings', label: 'Settings', icon: Settings },
 ];
 
-const secondaryNav: Array<{ id: string; icon: React.ComponentType<{ className?: string }>; label: string }> = [
-  { id: 'ai-models', icon: Brain, label: 'AI Models' },
-  { id: 'routing-config', icon: Target, label: 'Routing' },
-  { id: 'monitoring', icon: Activity, label: 'Monitoring' },
-];
+
 
 export default function Sidebar() {
   const collapsed = useSidebarCollapsed();
@@ -175,33 +171,7 @@ export default function Sidebar() {
           </NavLink>
         ))}
 
-        {/* Separator */}
-        <div className="!my-4 h-px bg-white/[0.05]" />
 
-        {/* Secondary nav icons */}
-        {secondaryNav.map(item => (
-          <NavLink
-            key={item.id}
-            to={`/${item.id}`}
-            className={({ isActive }) => cn(
-              'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-300',
-              collapsed && 'justify-center px-0',
-              isActive
-                ? 'text-emerald-400 bg-white/[0.05] shadow-[inset_2px_0_0_#10b981]'
-                : 'text-label hover:text-white hover:bg-white/[0.04]'
-            )}
-          >
-            {({ isActive }) => (
-              <>
-                <item.icon className="w-[18px] h-[18px] flex-shrink-0" />
-                {!collapsed && <span>{item.label}</span>}
-                {isActive && !collapsed && (
-                  <span className="ml-auto w-1.5 h-1.5 rounded-full bg-emerald" />
-                )}
-              </>
-            )}
-          </NavLink>
-        ))}
       </nav>
 
       {/* ── Bottom bar ── */}

@@ -40,7 +40,7 @@ export interface Toast {
 
 // ─── Tab Type ─────────────────────────────────────────────
 
-export type AppTab = 'dashboard' | 'routing' | 'training' | 'analytics' | 'stations' | 'settings' | 'ai-models' | 'routing-config' | 'monitoring';
+export type AppTab = 'dashboard' | 'routing' | 'training' | 'analytics' | 'stations' | 'settings';
 
 // ─── Settings Types ───────────────────────────────────────
 
