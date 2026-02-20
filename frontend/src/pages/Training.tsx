@@ -1,17 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { hyperStaggerContainer, hyperStaggerItem } from '../lib/motion';
 import api from '../services/api';
 import PageHeader from '../components/PageHeader';
 import { Card, Button, Badge, ProgressBar } from '../components/ui';
-import { useSystemStore, useTrainingProgress, useRewardHistory, useSSEConnected, useResetTrainingData, useSetActiveTab } from '../store/store';
+import { useSystemStore, useTrainingProgress, useRewardHistory, useSSEConnected, useResetTrainingData, useSetActiveTab, useTrainingLogs } from '../store/store';
 import { useTrainingStream } from '../hooks/useTrainingStream';
 import { RewardCurveChart } from '../components/training/RewardCurveChart';
 import { HardwareGauge } from '../components/training/HardwareGauge';
 import { LiveTerminal } from '../components/training/LiveTerminal';
 import { PipelineFlowchart } from '../components/training/PipelineFlowchart';
 import { NeonSlider } from '../components/ui/NeonSlider';
-import { Brain, Play, Square, CheckCircle, Circle, Loader2, Settings2, Workflow, BarChart3, TrendingUp, Navigation } from 'lucide-react';
+import { Brain, Play, Square, CheckCircle, Circle, Loader2, Settings2, Workflow, BarChart3, TrendingUp, Navigation, Cpu } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 function Training() {
@@ -22,13 +22,51 @@ function Training() {
   const sseConnected = useSSEConnected();
   const resetTrainingData = useResetTrainingData();
   const setActiveTab = useSetActiveTab();
+  const trainingLogs = useTrainingLogs();
 
   const [config, setConfig] = useState({
     episodes: 200, learning_rate: 0.1, discount_factor: 0.95,
     max_steps: 300,
   });
   const [hardwareType, setHardwareType] = useState<'GPU' | 'TPU'>('GPU');
-  const [sseLogMessages] = useState<string[]>([]);
+
+  // ETA tracking
+  const epochStartRef = useRef<number | null>(null);
+  const [etaText, setEtaText] = useState<string>('');
+
+  // Detect GPU availability
+  const hasWebGPU = typeof navigator !== 'undefined' && 'gpu' in navigator;
+  const detectedDevice = hasWebGPU ? 'GPU (WebGPU)' : 'CPU';
+
+  // Compute ETA from episode progress
+  useEffect(() => {
+    if (!trainingProgress.is_training) {
+      if (trainingProgress.progress >= 100) setEtaText('Complete');
+      else setEtaText('');
+      epochStartRef.current = null;
+      return;
+    }
+    const ep = trainingProgress.rl_episode;
+    const total = trainingProgress.rl_total_episodes;
+    if (ep > 0 && total > 0) {
+      if (!epochStartRef.current) epochStartRef.current = performance.now();
+      if (ep >= 3) {
+        const elapsed = (performance.now() - epochStartRef.current) / 1000;
+        const avgPerEp = elapsed / ep;
+        const remaining = (total - ep) * avgPerEp;
+        const mins = Math.floor(remaining / 60);
+        const secs = Math.round(remaining % 60);
+        setEtaText(mins > 0 ? `~${mins}m ${secs}s` : `~${secs}s`);
+      } else {
+        setEtaText('Calculating…');
+      }
+    }
+  }, [trainingProgress.rl_episode, trainingProgress.rl_total_episodes, trainingProgress.is_training, trainingProgress.progress]);
+
+  // Format trainingLogs for LiveTerminal
+  const formattedLogs = trainingLogs.map(
+    (entry) => `[${entry.timestamp}] ${entry.message}`
+  );
 
   // Connect SSE stream when training is active
   useTrainingStream(trainingProgress.is_training);
@@ -139,6 +177,46 @@ function Training() {
             )}
 
             {/* ── Hardware Gauges ── */}
+            {/* ── Hardware Recommendations ── */}
+            <div className="divider my-5" />
+            <div className="flex items-center gap-2 mb-4">
+              <div className="p-1.5 rounded-lg bg-cyan-500/10"><Cpu className="w-3.5 h-3.5 text-cyan-400" /></div>
+              <h3 className="text-xs font-semibold text-white uppercase tracking-wider">Hardware Recommendations</h3>
+            </div>
+            <div className="mb-3 text-[10px] text-slate-400">
+              Detected: <span className="text-white font-medium">{detectedDevice}</span>
+            </div>
+            <div className="rounded-xl overflow-hidden border border-white/[0.06] text-[10px] mb-3">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-white/[0.06]">
+                    <th className="text-left px-3 py-2 text-slate-500">Setting</th>
+                    <th className={cn('px-3 py-2', !hasWebGPU ? 'text-emerald bg-emerald/5' : 'text-slate-500')}>CPU</th>
+                    <th className={cn('px-3 py-2', hasWebGPU ? 'text-emerald bg-emerald/5' : 'text-slate-500')}>GPU</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/[0.04]">
+                  {[
+                    ['Episodes', '200', '1000'],
+                    ['Batch Size', '32', '128'],
+                    ['Learning Rate', '0.1', '0.01'],
+                    ['Max Steps', '300', '1000'],
+                  ].map(([label, cpu, gpu]) => (
+                    <tr key={label}>
+                      <td className="px-3 py-1.5 text-slate-400">{label}</td>
+                      <td className={cn('px-3 py-1.5 text-center', !hasWebGPU ? 'text-emerald font-medium' : 'text-slate-500')}>{cpu}</td>
+                      <td className={cn('px-3 py-1.5 text-center', hasWebGPU ? 'text-emerald font-medium' : 'text-slate-500')}>{gpu}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="text-[10px] text-center text-muted">
+              {trainingProgress.is_training
+                ? etaText ? <span className="text-emerald">ETA: {etaText}</span> : 'Calculating ETA…'
+                : 'Start training to see ETA estimates.'}
+            </div>
+
             <div className="divider my-5" />
             <div className="mb-3 flex items-center justify-between">
               <span className="text-xs font-semibold text-white uppercase tracking-wider">Hardware</span>
@@ -184,6 +262,13 @@ function Training() {
               </div>
             </div>
             <ProgressBar value={trainingProgress.progress} variant="gradient" size="lg" showValue label="Overall Progress" />
+            {/* Episode counter */}
+            {(trainingProgress.is_training || trainingProgress.rl_episode > 0) && (
+              <div className="mt-3 flex items-center justify-between text-[11px] text-muted">
+                <span>Episode {trainingProgress.rl_episode} / {trainingProgress.rl_total_episodes || config.episodes}</span>
+                {etaText && <span className="text-emerald">ETA: {etaText}</span>}
+              </div>
+            )}
           </Card>
 
           {/* Training Pipeline — Node-Based Flowchart */}
@@ -195,6 +280,7 @@ function Training() {
             <PipelineFlowchart
               progress={trainingProgress.progress}
               isTraining={trainingProgress.is_training}
+              currentStep={trainingProgress.current_step}
             />
           </Card>
 
@@ -247,7 +333,7 @@ function Training() {
           )}
 
           {/* Real-time Logs — Terminal */}
-          <LiveTerminal isSSEConnected={sseConnected} sseMessages={sseLogMessages} />
+          <LiveTerminal logs={formattedLogs} />
         </div>
       </motion.div>
     </motion.div>
