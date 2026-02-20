@@ -15,6 +15,7 @@ import { RouteLayer } from './RouteLayer';
 import { RouteLegend } from './RouteLegend';
 import { EVMarker } from './EVMarker';
 import { ChargingOverlay } from './ChargingOverlay';
+import { StationMarkers } from './StationMarkers';
 
 export interface MapViewProps {
   network: RoadNetworkData | null;
@@ -137,17 +138,28 @@ const MapView = memo(function MapView({
     setCursor('auto');
   }, []);
 
-  // ── Fit bounds to routes ──────────────────────────────
+  // ── Fit bounds to routes (use GeoJSON coords when available) ──
   useEffect(() => {
-    if (!mapRef.current || routes.length === 0 || !posLookup) return;
+    if (!mapRef.current || routes.length === 0) return;
     const bounds = new LngLatBounds();
+    let hasCoord = false;
     for (const route of routes) {
-      for (const nodeId of route.path) {
-        const coord = posLookup[nodeId.toString()];
-        if (coord) bounds.extend(coord);
+      // Prefer GeoJSON coordinates (full street geometry)
+      const coords = route.geojson?.geometry?.coordinates;
+      if (coords && coords.length > 0) {
+        for (const c of coords) {
+          bounds.extend(c as [number, number]);
+          hasCoord = true;
+        }
+      } else if (posLookup) {
+        // Fallback to node lookup
+        for (const nodeId of route.path) {
+          const coord = posLookup[nodeId.toString()];
+          if (coord) { bounds.extend(coord); hasCoord = true; }
+        }
       }
     }
-    if (!bounds.isEmpty()) {
+    if (hasCoord && !bounds.isEmpty()) {
       mapRef.current.fitBounds(bounds, { padding: 60, duration: 600 });
     }
   }, [routes, posLookup]);
@@ -208,6 +220,11 @@ const MapView = memo(function MapView({
           sourceNodeId={srcNodeId}
           destNodeId={dstNodeId}
           posLookup={posLookup}
+        />
+
+        {/* EV Charging Station markers */}
+        <StationMarkers
+          routeStationIds={routes.length > 0 ? (routes[0].charging_stops ?? []) : []}
         />
 
         {/* EV Simulation overlay */}

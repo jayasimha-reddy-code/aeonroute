@@ -3,7 +3,13 @@ import { Source, Layer } from 'react-map-gl/maplibre';
 import type { Route } from '../../services/api';
 import { routeToGeoJSON } from '../../lib/geo';
 import { useAnimatedRoute } from '../../hooks/useAnimatedRoute';
-import { ROUTE_COLORS, ROUTE_COLORS_ARRAY } from './mapStyles';
+import { ROUTE_COLORS_ARRAY } from './mapStyles';
+
+/** Dedicated colours for alternative route types */
+const ALT_COLORS: Record<string, string> = {
+  eco: '#F59E0B',    // amber
+  scenic: '#06B6D4', // cyan
+};
 
 interface RouteLayerProps {
   routes: Route[];
@@ -72,10 +78,11 @@ export const RouteLayer = memo(function RouteLayer({
   return (
     <>
       {/* ── Non-highlighted routes: dashed, muted ─────── */}
-      {routes.map((_, idx) => {
+      {routes.map((r, idx) => {
         if (idx === hiIdx) return null;
         if (idx > 2) return null; // max 3 routes displayed
-        const color = ROUTE_COLORS_ARRAY[idx % ROUTE_COLORS_ARRAY.length];
+        // Choose colour based on route type label
+        const color = ALT_COLORS[r.route_type ?? ''] ?? ROUTE_COLORS_ARRAY[idx % ROUTE_COLORS_ARRAY.length];
         const geojson = routeGeoJSONs[idx];
         if (!geojson) return null;
 
@@ -86,14 +93,26 @@ export const RouteLayer = memo(function RouteLayer({
             type="geojson"
             data={geojson}
           >
+            {/* Alt glow */}
+            <Layer
+              id={`route-alt-glow-${idx}`}
+              type="line"
+              paint={{
+                'line-color': color,
+                'line-width': 10,
+                'line-opacity': 0.15,
+                'line-blur': 6,
+              }}
+              layout={{ 'line-cap': 'round', 'line-join': 'round' }}
+            />
             <Layer
               id={`route-alt-line-${idx}`}
               type="line"
               paint={{
                 'line-color': color,
-                'line-width': 2,
-                'line-opacity': 0.35,
-                'line-dasharray': [3, 3],
+                'line-width': 2.5,
+                'line-opacity': 0.5,
+                'line-dasharray': [4, 3],
               }}
               layout={{ 'line-cap': 'round', 'line-join': 'round' }}
             />
@@ -101,7 +120,7 @@ export const RouteLayer = memo(function RouteLayer({
         );
       })}
 
-      {/* ── Highlighted route: glow underlay ──────────── */}
+      {/* ── Highlighted route: outer glow ─────────────── */}
       <Source
         id="route-highlight-glow"
         type="geojson"
@@ -111,16 +130,34 @@ export const RouteLayer = memo(function RouteLayer({
           id="route-highlight-glow-layer"
           type="line"
           paint={{
-            'line-color': ROUTE_COLORS.glow,
+            'line-color': '#10b981',
             'line-width': 14,
-            'line-opacity': 0.4,
+            'line-opacity': 0.2,
             'line-blur': 8,
           }}
           layout={{ 'line-cap': 'round', 'line-join': 'round' }}
         />
       </Source>
 
-      {/* ── Highlighted route: energy gradient ────────── */}
+      {/* ── Highlighted route: core line ──────────────── */}
+      <Source
+        id="route-highlight-core"
+        type="geojson"
+        data={animatedGeoJSON}
+      >
+        <Layer
+          id="route-highlight-core-layer"
+          type="line"
+          paint={{
+            'line-color': '#10b981',
+            'line-width': 3,
+            'line-opacity': 0.9,
+          }}
+          layout={{ 'line-cap': 'round', 'line-join': 'round' }}
+        />
+      </Source>
+
+      {/* ── Highlighted route: energy gradient overlay ── */}
       <Source
         id="route-highlight-energy"
         type="geojson"
