@@ -8,6 +8,8 @@ import { useSystemStore, useTrainingProgress, useRewardHistory, useSSEConnected,
 import { useTrainingStream } from '../hooks/useTrainingStream';
 import { RewardCurveChart } from '../components/training/RewardCurveChart';
 import { PipelineStepper } from '../components/training/PipelineStepper';
+import { HardwareGauge } from '../components/training/HardwareGauge';
+import { LiveTerminal } from '../components/training/LiveTerminal';
 import { Brain, Play, Square, CheckCircle, Circle, Loader2, Settings2, Workflow, BarChart3, TrendingUp, Navigation } from 'lucide-react';
 import { cn } from '../lib/utils';
 
@@ -24,6 +26,8 @@ function Training() {
     episodes: 200, learning_rate: 0.1, discount_factor: 0.95,
     max_steps: 300,
   });
+  const [hardwareType, setHardwareType] = useState<'GPU' | 'TPU'>('GPU');
+  const [sseLogMessages, setSseLogMessages] = useState<string[]>([]);
 
   // Connect SSE stream when training is active
   useTrainingStream(trainingProgress.is_training);
@@ -129,6 +133,34 @@ function Training() {
             ) : (
               <Button variant="danger" fullWidth icon={Square} onClick={handleStop}>Stop Training</Button>
             )}
+
+            {/* Hardware Gauges */}
+            <div className="divider my-5" />
+            <div className="mb-3 flex items-center justify-between">
+              <span className="text-xs font-semibold text-white uppercase tracking-wider">Hardware</span>
+              <div className="flex rounded-lg bg-white/[0.04] border border-white/[0.06] overflow-hidden">
+                {(['GPU', 'TPU'] as const).map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => setHardwareType(t)}
+                    className={cn(
+                      'px-3 py-1 text-[10px] font-medium transition-colors',
+                      hardwareType === t ? 'bg-emerald/20 text-emerald' : 'text-slate-500 hover:text-slate-300',
+                    )}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="flex justify-center gap-6">
+              <div className="relative">
+                <HardwareGauge label="Temp" value={67} max={100} unit="°C" color="#f59e0b" size={100} />
+              </div>
+              <div className="relative">
+                <HardwareGauge label="Load" value={73} max={100} unit="%" color="#10b981" size={100} />
+              </div>
+            </div>
           </Card>
         </div>
 
@@ -224,6 +256,9 @@ function Training() {
               )}
             </Card>
           )}
+
+          {/* Live Terminal Logs */}
+          <LiveTerminal isSSEConnected={sseConnected} sseMessages={sseLogMessages} />
         </div>
       </motion.div>
     </motion.div>

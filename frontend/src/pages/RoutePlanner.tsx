@@ -15,6 +15,8 @@ import { buildPosLookup } from '../lib/geo';
 import { useEVSimulation } from '../hooks/useEVSimulation';
 import { BatteryGauge } from '../components/map/BatteryGauge';
 import { RouteTimeline } from '../components/map/RouteTimeline';
+import { WaypointList, type Waypoint } from '../components/route/WaypointList';
+import { ElevationProfile, type ElevationPoint } from '../components/route/ElevationProfile';
 
 /** Hyderabad landmark presets */
 const LANDMARKS = [
@@ -37,6 +39,11 @@ function RoutePlanner() {
   const [loading, setLoading] = useState(false);
   const [highlightIdx, setHighlightIdx] = useState<number | undefined>(undefined);
   const [routeType, setRouteType] = useState<'fast' | 'eco' | 'scenic'>('fast');
+  const [elevationData, setElevationData] = useState<ElevationPoint[]>([]);
+  const [waypoints, setWaypoints] = useState<Waypoint[]>([
+    { id: 'wp-start', label: 'Charminar', type: 'start', lat: 17.3616, lon: 78.4747 },
+    { id: 'wp-end', label: 'HITEC City', type: 'end', lat: 17.4435, lon: 78.3772 },
+  ]);
 
   const posLookup = useMemo(() => roadNetwork ? buildPosLookup(roadNetwork) : null, [roadNetwork]);
 
@@ -53,18 +60,26 @@ function RoutePlanner() {
       addToast({ type: 'warning', title: 'No Network', message: 'Road network must be loaded first.' });
       return;
     }
-    if (sourceLat === destLat && sourceLon === destLon) {
+    // Use first and last waypoint for source/dest
+    const startWp = waypoints[0];
+    const endWp = waypoints[waypoints.length - 1];
+    const sLat = startWp.lat ?? sourceLat;
+    const sLon = startWp.lon ?? sourceLon;
+    const dLat = endWp.lat ?? destLat;
+    const dLon = endWp.lon ?? destLon;
+    if (sLat === dLat && sLon === dLon) {
       addToast({ type: 'warning', title: 'Invalid Input', message: 'Source and destination must be different.' });
       return;
     }
     setLoading(true);
     setGeneratedRoutes([]);
+    setElevationData([]);
     try {
       const result = await api.generateRoute({
-        source_lat: sourceLat,
-        source_lon: sourceLon,
-        dest_lat: destLat,
-        dest_lon: destLon,
+        source_lat: sLat,
+        source_lon: sLon,
+        dest_lat: dLat,
+        dest_lon: dLon,
         battery_soc: currentEVState.battery_soc,
         battery_capacity_kwh: currentEVState.battery_capacity_kwh,
       });
@@ -74,6 +89,20 @@ function RoutePlanner() {
       if (routes.length > 0) {
         setSelectedRoute(routes[0]);
         setHighlightIdx(0);
+        // Extract elevation profile from response if available
+        if (result.route?.properties?.elevation_profile) {
+          setElevationData(result.route.properties.elevation_profile);
+        } else {
+          // Generate simulated elevation profile
+          const numPoints = 30;
+          const totalDist = result.route?.properties?.distance_km ?? 10;
+          const simElev: ElevationPoint[] = Array.from({ length: numPoints }, (_, i) => {
+            const d = (i / (numPoints - 1)) * totalDist;
+            const e = 500 + Math.sin(i * 0.4) * 40 + Math.sin(i * 0.15) * 80 + Math.random() * 15;
+            return { distance_km: +d.toFixed(2), elevation: +e.toFixed(1) };
+          });
+          setElevationData(simElev);
+        }
         addToast({ type: 'success', title: 'Routes Generated', message: `Found ${routes.length} candidate route${routes.length > 1 ? 's' : ''} (${result.route.properties.route_type === 'q_learning' ? 'Q-Learning Optimized' : 'Dijkstra'}).` });
       }
     } catch (error: any) {
@@ -124,45 +153,19 @@ function RoutePlanner() {
               <h3 className="text-sm font-semibold text-white uppercase tracking-wider">Route Parameters</h3>
             </div>
 
-            {/* Source */}
-            <div className="mb-4">
-              <label className="input-label flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald" /> Start Location
-              </label>
-              <select
-                value={sourceLabel}
-                onChange={(e) => {
-                  const lm = LANDMARKS.find(l => l.label === e.target.value);
-                  if (lm) { setSourceLat(lm.lat); setSourceLon(lm.lon); setSourceLabel(lm.label); }
-                }}
-                className="input-field"
-              >
-                {LANDMARKS.map(lm => (
-                  <option key={lm.label} value={lm.label}>{lm.label}</option>
-                ))}
-              </select>
-              <p className="text-[10px] text-muted mt-1 font-mono">{sourceLat.toFixed(4)}, {sourceLon.toFixed(4)}</p>
-            </div>
-
-            {/* Destination */}
-            <div className="mb-4">
-              <label className="input-label flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-rose" /> Destination
-              </label>
-              <select
-                value={destLabel}
-                onChange={(e) => {
-                  const lm = LANDMARKS.find(l => l.label === e.target.value);
-                  if (lm) { setDestLat(lm.lat); setDestLon(lm.lon); setDestLabel(lm.label); }
-                }}
-                className="input-field"
-              >
-                {LANDMARKS.map(lm => (
-                  <option key={lm.label} value={lm.label}>{lm.label}</option>
-                ))}
-              </select>
-              <p className="text-[10px] text-muted mt-1 font-mono">{destLat.toFixed(4)}, {destLon.toFixed(4)}</p>
-            </div>
+            {/* Multi-Stop Waypoint List */}
+            <WaypointList
+              waypoints={waypoints}
+              onChange={(updated) => {
+                setWaypoints(updated);
+                // Sync source/dest for backward compat
+                const start = updated[0];
+                const end = updated[updated.length - 1];
+                if (start.lat && start.lon) { setSourceLat(start.lat); setSourceLon(start.lon); setSourceLabel(start.label); }
+                if (end.lat && end.lon) { setDestLat(end.lat); setDestLon(end.lon); setDestLabel(end.label); }
+              }}
+              landmarks={LANDMARKS}
+            />
 
             {/* Battery */}
             <div className="mb-5">
@@ -301,6 +304,11 @@ function RoutePlanner() {
               posLookup={posLookup}
               currentSegmentIndex={simState?.currentSegmentIndex}
             />
+          )}
+
+          {/* Elevation Profile */}
+          {selectedRoute && elevationData.length > 0 && (
+            <ElevationProfile data={elevationData} />
           )}
         </div>
       </motion.div>

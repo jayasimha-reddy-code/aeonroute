@@ -14,6 +14,9 @@ import {
 } from 'recharts';
 import { Activity, TrendingUp, Zap, Timer, Route, Gauge, Network, Cpu, Calendar, Download, RefreshCw, Maximize2 } from 'lucide-react';
 import { tooltipStyle, axisStyle, gridStyle, areaGradient, CHART_COLORS, CHART_PALETTE, cursorStyle } from '../lib/chartConfig';
+import SystemHealthRadar from '../components/charts/SystemHealthRadar';
+import EnergyStackedBar from '../components/charts/EnergyStackedBar';
+import DemandHeatmap from '../components/charts/DemandHeatmap';
 
 /* ── Metric Pill ─────────────────────────────────── */
 function MetricTile({
@@ -382,6 +385,19 @@ function Analytics() {
             </AreaChart>
           </ResponsiveContainer>
         </Card>
+      </div>
+
+      {/* ── Charts Row 3: Bespoke Widgets ──────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 mb-5">
+        <div className="col-span-12 lg:col-span-4">
+          <DemandHeatmap />
+        </div>
+        <div className="col-span-12 lg:col-span-4">
+          <EnergyStackedBar />
+        </div>
+        <div className="col-span-12 lg:col-span-4">
+          <SystemHealthRadar />
+        </div>
       </div>
 
       {/* ── System Info Footer ────────────────────────── */}

@@ -12,8 +12,9 @@ import { ProgressRing } from '../components/ui';
 import { OverflowMenu } from '../components/ui/OverflowMenu';
 import { BarChart3, Activity, Navigation, Zap, Cpu, Clock, RefreshCw, ChevronUp } from 'lucide-react';
 import { hyperStaggerContainer, hyperStaggerItem } from '../lib/motion';
-import { AreaChart, Area, ResponsiveContainer } from 'recharts';
+import { AreaChart, Area, LineChart, Line, ResponsiveContainer } from 'recharts';
 import { areaGradient, CHART_COLORS } from '../lib/chartConfig';
+import WeatherWidget from '../components/map/WeatherWidget';
 
 function Dashboard() {
   const roadNetwork = useRoadNetwork();
@@ -112,8 +113,24 @@ function Dashboard() {
           Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)
         ) : (
           <>
-            <StatCard title="Network Nodes" value={stats?.road_network?.nodes ?? 0} icon={Navigation} accent="emerald" trend={{ value: 5, label: 'this week' }} />
-            <StatCard title="Avg Energy" value={`${metrics?.avg_energy_kwh?.toFixed(1) ?? '—'} kWh`} icon={Zap} accent="amber" subtitle="Per route" />
+            <StatCard title="Network Nodes" value={stats?.road_network?.nodes ?? 0} icon={Navigation} accent="emerald" trend={{ value: 5, label: 'this week' }}>
+              <div className="h-8 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={Array.from({ length: 20 }, (_, i) => ({ v: 300 + i * 8 + Math.sin(i * 0.7) * 20 }))}>
+                    <Line type="monotone" dataKey="v" stroke="#10b981" strokeWidth={1.5} dot={false} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </StatCard>
+            <StatCard title="Avg Energy" value={`${metrics?.avg_energy_kwh?.toFixed(1) ?? '—'} kWh`} icon={Zap} accent="amber" subtitle="Per route">
+              <div className="h-8 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={Array.from({ length: 20 }, (_, i) => ({ v: 30 + Math.sin(i * 0.5) * 10 + Math.random() * 5 }))}>
+                    <Line type="monotone" dataKey="v" stroke="#f59e0b" strokeWidth={1.5} dot={false} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </StatCard>
             <StatCard title="Avg Time" value={`${metrics?.avg_time_minutes?.toFixed(0) ?? '—'} min`} icon={Clock} accent="cyan" subtitle="Traffic factor" />
             <StatCard title="Traffic Factor" value="" icon={Activity} accent="emerald">
               <ProgressRing value={33} size={56} strokeWidth={4} label="Traffic" />
@@ -126,9 +143,12 @@ function Dashboard() {
       <motion.div variants={hyperStaggerItem} className="grid grid-cols-12 gap-4 mb-6" style={{ minHeight: 520 }}>
         {/* Map — 8 columns */}
         <div className="col-span-12 lg:col-span-8">
-          <div className="h-full rounded-3xl overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
+          <div className="h-full rounded-3xl overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.5)] relative">
             {roadNetwork ? (
-              <NetworkMap network={roadNetwork} />
+              <>
+                <NetworkMap network={roadNetwork} />
+                <WeatherWidget />
+              </>
             ) : (
               <div className="h-full min-h-[420px] flex items-center justify-center bg-midnight/50">
                 <Spinner size="lg" label="Loading network…" />
