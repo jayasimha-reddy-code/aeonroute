@@ -303,7 +303,7 @@ Plans:
 
 ### Phase 14: Critical System Reset — Nuke, Consolidate & Rebuild
 **Goal:** Eliminate AI spaghetti accumulated over 13 phases. Delete duplicate Docker/config files, fix fatal MapLibre crash, write real Q-Learning training logic, make routes follow actual streets (not fly through buildings), and enforce true smoked-glass glassmorphism across the entire UI.
-**Status:** ◆ In Progress (1/6 plans complete)
+**Status:** ◆ In Progress (2/6 plans complete)
 **Dependencies:** Phase 13
 **Requirements:** STAB-01, BACK-01, MAP-01, UI-01
 
@@ -329,7 +329,7 @@ Plans:
 
 Plans:
 - [x] 14-01-PLAN.md — Wave 1: Architecture Consolidation & Cleanup (Docker nuke, requirements merge, Vite/MapLibre fix)
-- [ ] 14-02-PLAN.md — Wave 2: The Missing AI Brain & Scalability Dial (fix 503s, Q-Learning training, Start Training button)
+- [x] 14-02-PLAN.md — Wave 2: The Missing AI Brain & Scalability Dial (fix 503s, Q-Learning training, Start Training button)
 - [ ] 14-03-PLAN.md — Wave 3: True GeoJSON Routing (street-geometry LineStrings, neon polylines, station markers, simulation fix)
 - [ ] 14-04-PLAN.md — Wave 4: Strict Target UI Enforcement (smoked-glass audit, gradient AreaCharts, reference image match)
 - [ ] 14-05-PLAN.md — Wave 5: Complex UI Primitives & Bespoke Charts (RadarChart, stacked bars, heatmap, waypoint list, elevation profile, SVG gauges, live terminal, sparklines, weather widget)
