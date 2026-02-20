@@ -124,6 +124,65 @@
   to { stroke-dashoffset: -24; }
 }
 
+.flow-path {
+  animation: dash-flow 1.5s linear infinite;
+}
+
+/* ── Neon Slider ─────────────────────────────────── */
+.neon-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(
+    to right,
+    #10b981 0%,
+    #10b981 var(--fill-pct, 50%),
+    rgba(255, 255, 255, 0.1) var(--fill-pct, 50%),
+    rgba(255, 255, 255, 0.1) 100%
+  );
+  outline: none;
+  cursor: pointer;
+}
+.neon-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: white;
+  border: 2px solid #10b981;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.6), 0 0 20px rgba(16, 185, 129, 0.3);
+  cursor: pointer;
+  transition: box-shadow 0.2s;
+}
+.neon-slider::-webkit-slider-thumb:hover {
+  box-shadow: 0 0 14px rgba(16, 185, 129, 0.8), 0 0 28px rgba(16, 185, 129, 0.5);
+}
+.neon-slider::-moz-range-track {
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(
+    to right,
+    #10b981 0%,
+    #10b981 var(--fill-pct, 50%),
+    rgba(255, 255, 255, 0.1) var(--fill-pct, 50%),
+    rgba(255, 255, 255, 0.1) 100%
+  );
+}
+.neon-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: white;
+  border: 2px solid #10b981;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.6), 0 0 20px rgba(16, 185, 129, 0.3);
+  cursor: pointer;
+}
+.neon-slider::-moz-range-thumb:hover {
+  box-shadow: 0 0 14px rgba(16, 185, 129, 0.8), 0 0 28px rgba(16, 185, 129, 0.5);
+}
+
 @keyframes route-draw {
   from { stroke-dashoffset: var(--route-length, 1000); }
   to { stroke-dashoffset: 0; }

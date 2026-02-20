@@ -17,6 +17,8 @@ import { BatteryGauge } from '../components/map/BatteryGauge';
 import { RouteTimeline } from '../components/map/RouteTimeline';
 import { WaypointList, type Waypoint } from '../components/route/WaypointList';
 import { ElevationProfile, type ElevationPoint } from '../components/route/ElevationProfile';
+import { CarbonSavedCard } from '../components/route/CarbonSavedCard';
+import { SegmentList } from '../components/route/SegmentList';
 
 /** Hyderabad landmark presets */
 const LANDMARKS = [
@@ -309,6 +311,19 @@ function RoutePlanner() {
           {/* Elevation Profile */}
           {selectedRoute && elevationData.length > 0 && (
             <ElevationProfile data={elevationData} />
+          )}
+
+          {/* Bottom Row: Segment List + Carbon Saved */}
+          {selectedRoute && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+              <SegmentList />
+              <CarbonSavedCard
+                percentage={Math.round(Math.random() * 20 + 20)}
+                energyKwh={selectedRoute.energy_kwh ? Math.round(selectedRoute.energy_kwh) : 173}
+                timeHours={selectedRoute.time_minutes ? Math.round(selectedRoute.time_minutes / 60) : 19}
+                energyPct={56}
+              />
+            </div>
           )}
         </div>
       </motion.div>

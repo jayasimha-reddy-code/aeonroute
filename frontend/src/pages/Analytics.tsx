@@ -17,6 +17,7 @@ import { tooltipStyle, axisStyle, gridStyle, areaGradient, CHART_COLORS, CHART_P
 import SystemHealthRadar from '../components/charts/SystemHealthRadar';
 import EnergyStackedBar from '../components/charts/EnergyStackedBar';
 import DemandHeatmap from '../components/charts/DemandHeatmap';
+import AIInsightsPanel from '../components/analytics/AIInsightsPanel';
 
 /* ── Metric Pill ─────────────────────────────────── */
 function MetricTile({
@@ -398,6 +399,11 @@ function Analytics() {
         <div className="col-span-12 lg:col-span-4">
           <SystemHealthRadar />
         </div>
+      </div>
+
+      {/* ── AI Insights Panel ──────────────────────── */}
+      <div className="mb-5">
+        <AIInsightsPanel />
       </div>
 
       {/* ── System Info Footer ────────────────────────── */}

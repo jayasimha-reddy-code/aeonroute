@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useSidebarCollapsed, useToggleSidebar, type AppTab } from '../store/store';
-import { LayoutDashboard, Map, BarChart3, Zap, Settings, Brain, Target, Activity, ChevronDown, ChevronUp, PanelLeftClose, PanelLeft, Circle, Moon, Clock, MinusCircle, User, LogOut } from 'lucide-react';
+import { LayoutDashboard, Map, BarChart3, Zap, Settings, Brain, Target, Activity, ChevronDown, ChevronUp, PanelLeftClose, PanelLeft, Circle, Moon, Clock, MinusCircle, User, LogOut, GraduationCap } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 const statusOptions = [
@@ -14,6 +14,7 @@ const statusOptions = [
 const navItems: Array<{ id: AppTab; label: string; icon: React.ComponentType<{ className?: string }> }> = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'routing', label: 'Map', icon: Map },
+  { id: 'training', label: 'Training', icon: GraduationCap },
   { id: 'analytics', label: 'Overview', icon: BarChart3 },
   { id: 'stations', label: 'Stations', icon: Zap },
   { id: 'settings', label: 'Settings', icon: Settings },

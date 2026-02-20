@@ -7,9 +7,10 @@ import { Card, Button, Badge, ProgressBar } from '../components/ui';
 import { useSystemStore, useTrainingProgress, useRewardHistory, useSSEConnected, useResetTrainingData, useSetActiveTab } from '../store/store';
 import { useTrainingStream } from '../hooks/useTrainingStream';
 import { RewardCurveChart } from '../components/training/RewardCurveChart';
-import { PipelineStepper } from '../components/training/PipelineStepper';
 import { HardwareGauge } from '../components/training/HardwareGauge';
 import { LiveTerminal } from '../components/training/LiveTerminal';
+import { PipelineFlowchart } from '../components/training/PipelineFlowchart';
+import { NeonSlider } from '../components/ui/NeonSlider';
 import { Brain, Play, Square, CheckCircle, Circle, Loader2, Settings2, Workflow, BarChart3, TrendingUp, Navigation } from 'lucide-react';
 import { cn } from '../lib/utils';
 
@@ -27,7 +28,7 @@ function Training() {
     max_steps: 300,
   });
   const [hardwareType, setHardwareType] = useState<'GPU' | 'TPU'>('GPU');
-  const [sseLogMessages, setSseLogMessages] = useState<string[]>([]);
+  const [sseLogMessages] = useState<string[]>([]);
 
   // Connect SSE stream when training is active
   useTrainingStream(trainingProgress.is_training);
@@ -64,13 +65,6 @@ function Training() {
     }
   };
 
-  const configFields = [
-    { key: 'episodes',        label: 'Episodes',           min: 50,  max: 1000, icon: '🎯' },
-    { key: 'learning_rate',   label: 'Learning Rate',      min: 0.01, max: 1.0, icon: '📈', step: 0.01 },
-    { key: 'discount_factor', label: 'Discount Factor',    min: 0.5, max: 0.99, icon: '⚖️', step: 0.01 },
-    { key: 'max_steps',       label: 'Max Steps/Episode',  min: 50,  max: 1000, icon: '👣' },
-  ] as const;
-
   return (
     <motion.div
       className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto"
@@ -83,47 +77,57 @@ function Training() {
           title="Model Training"
           subtitle="Configure and train the complete EV routing AI pipeline"
           icon={Brain}
-        actions={
-          <>
-            {trainingProgress.is_training && (
-              <div className="flex items-center gap-2">
-                <span className={cn('w-2 h-2 rounded-full', sseConnected ? 'bg-emerald' : 'bg-rose')} />
-                <Badge variant="success" dot>Training in Progress</Badge>
-              </div>
-            )}
-            {!trainingProgress.is_training && trainingProgress.progress >= 100 && (
-              <Badge variant="primary" dot>Complete</Badge>
-            )}
-          </>
-        }
+          actions={
+            <>
+              {trainingProgress.is_training && (
+                <div className="flex items-center gap-2">
+                  <span className={cn('w-2 h-2 rounded-full', sseConnected ? 'bg-emerald' : 'bg-rose')} />
+                  <Badge variant="success" dot>Training in Progress</Badge>
+                </div>
+              )}
+              {!trainingProgress.is_training && trainingProgress.progress >= 100 && (
+                <Badge variant="primary" dot>Complete</Badge>
+              )}
+            </>
+          }
         />
       </motion.div>
 
       <motion.div variants={hyperStaggerItem} className="grid grid-cols-12 gap-6">
-        {/* ── Config Panel ──────────────────────────────── */}
-        <div className="col-span-12 lg:col-span-3">
+        {/* ═══ LEFT COLUMN: Configuration + Hardware ═══ */}
+        <div className="col-span-12 lg:col-span-3 space-y-5">
+          {/* Configuration Card — Neon Sliders */}
           <Card className="sticky top-20">
             <div className="flex items-center gap-2.5 mb-5">
               <div className="p-1.5 rounded-lg bg-emerald-dim"><Settings2 className="w-3.5 h-3.5 text-emerald" /></div>
               <h3 className="text-sm font-semibold text-white uppercase tracking-wider">Configuration</h3>
             </div>
 
-            <div className="space-y-3">
-              {configFields.map(({ key, label, min, max, icon, ...rest }) => (
-                <div key={key}>
-                  <label className="input-label flex items-center gap-1.5">
-                    <span className="text-xs">{icon}</span> {label}
-                  </label>
-                  <input
-                    type="number" min={min} max={max}
-                    step={'step' in rest ? (rest as any).step : 1}
-                    value={(config as any)[key]}
-                    onChange={(e) => setConfig({ ...config, [key]: parseFloat(e.target.value) || min })}
-                    disabled={trainingProgress.is_training}
-                    className="input-field disabled:opacity-40"
-                  />
-                </div>
-              ))}
+            <div className="space-y-4">
+              <NeonSlider
+                label="Episodes" icon="🎯" value={config.episodes}
+                onChange={(v) => setConfig({ ...config, episodes: v })}
+                min={50} max={1000} step={10}
+                disabled={trainingProgress.is_training}
+              />
+              <NeonSlider
+                label="Learning Rate" icon="📈" value={config.learning_rate}
+                onChange={(v) => setConfig({ ...config, learning_rate: v })}
+                min={0.01} max={1.0} step={0.01}
+                disabled={trainingProgress.is_training}
+              />
+              <NeonSlider
+                label="Discount Factor" icon="⚖️" value={config.discount_factor}
+                onChange={(v) => setConfig({ ...config, discount_factor: v })}
+                min={0.5} max={0.99} step={0.01}
+                disabled={trainingProgress.is_training}
+              />
+              <NeonSlider
+                label="Max Steps/Episode" icon="👣" value={config.max_steps}
+                onChange={(v) => setConfig({ ...config, max_steps: v })}
+                min={50} max={1000} step={10}
+                disabled={trainingProgress.is_training}
+              />
             </div>
 
             <div className="divider my-5" />
@@ -134,7 +138,7 @@ function Training() {
               <Button variant="danger" fullWidth icon={Square} onClick={handleStop}>Stop Training</Button>
             )}
 
-            {/* Hardware Gauges */}
+            {/* ── Hardware Gauges ── */}
             <div className="divider my-5" />
             <div className="mb-3 flex items-center justify-between">
               <span className="text-xs font-semibold text-white uppercase tracking-wider">Hardware</span>
@@ -154,17 +158,13 @@ function Training() {
               </div>
             </div>
             <div className="flex justify-center gap-6">
-              <div className="relative">
-                <HardwareGauge label="Temp" value={67} max={100} unit="°C" color="#f59e0b" size={100} />
-              </div>
-              <div className="relative">
-                <HardwareGauge label="Load" value={73} max={100} unit="%" color="#10b981" size={100} />
-              </div>
+              <HardwareGauge label="Temp" value={67} max={100} unit="°C" color="#f59e0b" size={100} />
+              <HardwareGauge label="Load" value={73} max={100} unit="%" color="#10b981" size={100} />
             </div>
           </Card>
         </div>
 
-        {/* ── Progress Panel ────────────────────────────── */}
+        {/* ═══ RIGHT COLUMN: Pipeline + Progress + Terminal ═══ */}
         <div className="col-span-12 lg:col-span-9 space-y-5">
           {/* Overall Progress */}
           <Card>
@@ -183,41 +183,30 @@ function Training() {
                 <p className="text-[11px] text-muted">{trainingProgress.current_step || 'Waiting to start…'}</p>
               </div>
             </div>
-
             <ProgressBar value={trainingProgress.progress} variant="gradient" size="lg" showValue label="Overall Progress" />
           </Card>
 
-          {/* Pipeline Timeline */}
+          {/* Training Pipeline — Node-Based Flowchart */}
           <Card>
             <div className="flex items-center gap-2.5 mb-5">
               <div className="p-1.5 rounded-lg bg-amber-dim"><Workflow className="w-3.5 h-3.5 text-amber" /></div>
               <h3 className="text-sm font-semibold text-white uppercase tracking-wider">Training Pipeline</h3>
             </div>
-
-            <PipelineStepper
+            <PipelineFlowchart
               progress={trainingProgress.progress}
               isTraining={trainingProgress.is_training}
-              currentStep={trainingProgress.current_step}
-              ganEpoch={trainingProgress.gan_epoch}
-              ganTotalEpochs={trainingProgress.gan_total_epochs}
-              rlEpisode={trainingProgress.rl_episode}
-              rlTotalEpisodes={trainingProgress.rl_total_episodes}
             />
           </Card>
 
-          {/* GAN Loss Curves — hidden for Q-Learning only pipeline */}
-
           {/* Q-Learning Reward */}
           {(rewardHistory.length > 0 || trainingProgress.current_step.toLowerCase().includes('agent') || trainingProgress.current_step.toLowerCase().includes('training') || trainingProgress.current_step.toLowerCase().includes('q-learning')) && (
-            <div>
-              <Card>
-                <div className="flex items-center gap-2.5 mb-4">
-                  <div className="p-1.5 rounded-lg bg-emerald-dim"><TrendingUp className="w-3.5 h-3.5 text-emerald" /></div>
-                  <h3 className="text-sm font-semibold text-white uppercase tracking-wider">Q-Learning Reward</h3>
-                </div>
-                <RewardCurveChart data={rewardHistory} rlEpisode={trainingProgress.rl_episode} rlTotalEpisodes={trainingProgress.rl_total_episodes} />
-              </Card>
-            </div>
+            <Card>
+              <div className="flex items-center gap-2.5 mb-4">
+                <div className="p-1.5 rounded-lg bg-emerald-dim"><TrendingUp className="w-3.5 h-3.5 text-emerald" /></div>
+                <h3 className="text-sm font-semibold text-white uppercase tracking-wider">Q-Learning Reward</h3>
+              </div>
+              <RewardCurveChart data={rewardHistory} rlEpisode={trainingProgress.rl_episode} rlTotalEpisodes={trainingProgress.rl_total_episodes} />
+            </Card>
           )}
 
           {/* Results */}
@@ -238,7 +227,7 @@ function Training() {
                 ))}
               </div>
 
-              {/* Post-training success indicator */}
+              {/* Post-training success */}
               {!trainingProgress.is_training && trainingProgress.progress >= 100 && (
                 <div className="mt-4 pt-4 border-t border-white/[0.05]">
                   <div className="flex items-center gap-2 mb-3">
@@ -257,7 +246,7 @@ function Training() {
             </Card>
           )}
 
-          {/* Live Terminal Logs */}
+          {/* Real-time Logs — Terminal */}
           <LiveTerminal isSSEConnected={sseConnected} sseMessages={sseLogMessages} />
         </div>
       </motion.div>
