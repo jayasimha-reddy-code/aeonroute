@@ -174,15 +174,16 @@ export const RouteLayer = memo(function RouteLayer({
           type="line"
           paint={{
             'line-width': 4,
+            'line-opacity': 0.7,
             'line-gradient': [
               'interpolate',
               ['linear'],
               ['line-progress'],
-              0, '#10b981',
-              0.4, '#f59e0b',
+              0, highlightColor,
+              0.5, highlightColor,
               0.8, '#ef4444',
               1, '#dc2626',
-            ],
+            ] as any,
           }}
           layout={{ 'line-cap': 'round', 'line-join': 'round' }}
         />

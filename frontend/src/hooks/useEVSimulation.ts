@@ -47,7 +47,7 @@ const INITIAL_STATE: SimulationState = {
   chargingProgress: 0,
 };
 
-const BASE_MS_PER_KM = 600; // animation base duration per km of route
+const BASE_MS_PER_KM = 4000; // animation base duration per km — 15km route = ~60s at 1×
 const CHARGE_DURATION_MS = 2500;
 const CHARGE_AMOUNT = 30;
 const CHARGING_PROXIMITY_KM = 0.05; // 50 m
