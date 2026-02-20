@@ -21,6 +21,9 @@ export default defineConfig({
       }
     }
   },
+  optimizeDeps: {
+    include: ['maplibre-gl', 'react-map-gl/maplibre']
+  },
   build: {
     chunkSizeWarningLimit: 600,
     rollupOptions: {

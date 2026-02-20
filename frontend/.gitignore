@@ -30,3 +30,6 @@ dist-ssr
 
 # Build
 tsconfig.app.tsbuildinfo
+vite.config.js
+vite.config.d.ts
+*.tsbuildinfo

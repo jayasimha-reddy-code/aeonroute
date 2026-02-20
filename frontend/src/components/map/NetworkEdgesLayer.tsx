@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import { Source, Layer } from 'react-map-gl/maplibre';
-import type { LineLayerSpecification } from 'maplibre-gl';
+import type { LineLayerSpecification } from '@maplibre/maplibre-gl-style-spec';
 
 interface NetworkEdgesLayerProps {
   edgesGeoJSON: GeoJSON.FeatureCollection<GeoJSON.LineString> | null;

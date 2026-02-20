@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import { Source, Layer } from 'react-map-gl/maplibre';
-import type { CircleLayerSpecification } from 'maplibre-gl';
+import type { CircleLayerSpecification } from '@maplibre/maplibre-gl-style-spec';
 
 interface NetworkNodesLayerProps {
   nodesGeoJSON: GeoJSON.FeatureCollection<GeoJSON.Point> | null;
