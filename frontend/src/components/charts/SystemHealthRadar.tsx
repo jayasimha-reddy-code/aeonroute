@@ -4,8 +4,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { Card } from '../ui';
-import { OverflowMenu } from '../ui/OverflowMenu';
-import { Shield, Download, RefreshCw, Maximize2 } from 'lucide-react';
+import { Shield } from 'lucide-react';
 
 interface RadarMetric {
   subject: string;
@@ -53,13 +52,7 @@ export function SystemHealthRadar() {
             System Health Metrics
           </h3>
         </div>
-        <OverflowMenu
-          items={[
-            { label: 'Export PNG', icon: Download, onClick: () => console.log('Export: Radar') },
-            { label: 'Refresh Data', icon: RefreshCw, onClick: () => console.log('Refresh: Radar') },
-            { label: 'Full Screen', icon: Maximize2, onClick: () => console.log('Fullscreen: Radar') },
-          ]}
-        />
+
       </div>
       <ResponsiveContainer width="100%" height={280}>
         <RadarChart data={data} cx="50%" cy="50%" outerRadius="70%">

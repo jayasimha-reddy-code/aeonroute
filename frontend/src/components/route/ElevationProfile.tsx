@@ -2,8 +2,7 @@ import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
 } from 'recharts';
 import { Card } from '../ui';
-import { OverflowMenu } from '../ui/OverflowMenu';
-import { Mountain, Download, RefreshCw, Maximize2 } from 'lucide-react';
+import { Mountain } from 'lucide-react';
 import { tooltipStyle } from '../../lib/chartConfig';
 
 export interface ElevationPoint {
@@ -29,13 +28,7 @@ export function ElevationProfile({ data }: ElevationProfileProps) {
             Elevation Profile
           </h3>
         </div>
-        <OverflowMenu
-          items={[
-            { label: 'Export PNG', icon: Download, onClick: () => console.log('Export: Elevation') },
-            { label: 'Refresh Data', icon: RefreshCw, onClick: () => console.log('Refresh: Elevation') },
-            { label: 'Full Screen', icon: Maximize2, onClick: () => console.log('Fullscreen: Elevation') },
-          ]}
-        />
+
       </div>
       <ResponsiveContainer width="100%" height={160}>
         <AreaChart data={data} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>

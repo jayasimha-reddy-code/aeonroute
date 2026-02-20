@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Card } from '../ui';
-import { OverflowMenu } from '../ui/OverflowMenu';
-import { Leaf, Download, RefreshCw, Maximize2 } from 'lucide-react';
+import { Leaf } from 'lucide-react';
 
 interface CarbonSavedCardProps {
   /** 0–100 percentage */
@@ -39,13 +38,7 @@ export function CarbonSavedCard({
             Estimated Carbon Saved
           </h3>
         </div>
-        <OverflowMenu
-          items={[
-            { label: 'Export PNG', icon: Download, onClick: () => {} },
-            { label: 'Refresh Data', icon: RefreshCw, onClick: () => {} },
-            { label: 'Full Screen', icon: Maximize2, onClick: () => {} },
-          ]}
-        />
+
       </div>
 
       {/* Progress Ring */}

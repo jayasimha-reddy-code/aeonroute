@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Terminal as TerminalIcon, Minus, X } from 'lucide-react';
+import { Terminal as TerminalIcon } from 'lucide-react';
 
 const IDLE_LINE = '[idle] Waiting for training to start…';
 
@@ -27,14 +27,7 @@ export function LiveTerminal({ logs }: LiveTerminalProps) {
           <TerminalIcon className="w-3.5 h-3.5 text-emerald" />
           <span className="text-xs font-medium text-slate-300">Real-time Logs</span>
         </div>
-        <div className="flex items-center gap-1.5">
-          <button className="p-1 text-slate-600 hover:text-slate-400 transition-colors">
-            <Minus className="w-3 h-3" />
-          </button>
-          <button className="p-1 text-slate-600 hover:text-slate-400 transition-colors">
-            <X className="w-3 h-3" />
-          </button>
-        </div>
+
       </div>
 
       {/* Log body */}

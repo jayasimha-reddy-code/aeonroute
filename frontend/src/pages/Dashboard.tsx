@@ -9,10 +9,9 @@ import TrafficSlider from '../components/dashboard/TrafficSlider';
 import { Card, Spinner, ProgressBar } from '../components/ui';
 import { StatCardSkeleton } from '../components/ui/Skeleton';
 import { ProgressRing } from '../components/ui';
-import { OverflowMenu } from '../components/ui/OverflowMenu';
-import { BarChart3, Activity, Navigation, Zap, Cpu, Clock, RefreshCw, ChevronUp } from 'lucide-react';
+import { BarChart3, Activity, Navigation, Zap, Cpu, Clock, RefreshCw } from 'lucide-react';
 import { hyperStaggerContainer, hyperStaggerItem } from '../lib/motion';
-import { AreaChart, Area, LineChart, Line, ResponsiveContainer } from 'recharts';
+import { AreaChart, Area, ResponsiveContainer } from 'recharts';
 import { areaGradient, CHART_COLORS } from '../lib/chartConfig';
 import WeatherWidget from '../components/map/WeatherWidget';
 
@@ -113,24 +112,8 @@ function Dashboard() {
           Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)
         ) : (
           <>
-            <StatCard title="Network Nodes" value={stats?.road_network?.nodes ?? 0} icon={Navigation} accent="emerald" trend={{ value: 5, label: 'this week' }}>
-              <div className="h-8 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={Array.from({ length: 20 }, (_, i) => ({ v: 300 + i * 8 + Math.sin(i * 0.7) * 20 }))}>
-                    <Line type="monotone" dataKey="v" stroke="#10b981" strokeWidth={1.5} dot={false} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </StatCard>
-            <StatCard title="Avg Energy" value={`${metrics?.avg_energy_kwh?.toFixed(1) ?? '—'} kWh`} icon={Zap} accent="amber" subtitle="Per route">
-              <div className="h-8 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={Array.from({ length: 20 }, (_, i) => ({ v: 30 + Math.sin(i * 0.5) * 10 + Math.random() * 5 }))}>
-                    <Line type="monotone" dataKey="v" stroke="#f59e0b" strokeWidth={1.5} dot={false} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </StatCard>
+            <StatCard title="Network Nodes" value={stats?.road_network?.nodes ?? 0} icon={Navigation} accent="emerald" trend={{ value: 5, label: 'this week' }} />
+            <StatCard title="Avg Energy" value={`${metrics?.avg_energy_kwh?.toFixed(1) ?? '—'} kWh`} icon={Zap} accent="amber" subtitle="Per route" />
             <StatCard title="Avg Time" value={`${metrics?.avg_time_minutes?.toFixed(0) ?? '—'} min`} icon={Clock} accent="cyan" subtitle="Traffic factor" />
             <StatCard title="Traffic Factor" value="" icon={Activity} accent="emerald">
               <ProgressRing value={33} size={56} strokeWidth={4} label="Traffic" />
@@ -166,9 +149,6 @@ function Dashboard() {
                 <Cpu className="w-4 h-4 text-emerald" />
                 <h3 className="text-sm font-semibold text-white">AI Model Status</h3>
               </div>
-              <button className="text-white/30 hover:text-white/60 transition-colors">
-                <ChevronUp className="w-4 h-4" />
-              </button>
             </div>
             <div className="space-y-3">
               <ModelStatusRow label="SG-GAN" value={stats?.models?.gan_trained ? 78 : 0} color="emerald" />
@@ -182,13 +162,6 @@ function Dashboard() {
           <Card padding="lg" className="flex-1">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-semibold text-white">Recent Activity</h3>
-              <OverflowMenu
-                items={[
-                  { label: 'View All Activity', onClick: () => console.log('View all activity') },
-                  { label: 'Export Log', onClick: () => console.log('Export activity log') },
-                  { label: 'Clear History', onClick: () => console.log('Clear history'), variant: 'danger' as const },
-                ]}
-              />
             </div>
             <div className="space-y-1">
               {[
@@ -197,15 +170,14 @@ function Dashboard() {
                 { id: 3, dot: 'bg-amber', text: 'Battery warning at node 24', time: '3h ago' },
                 { id: 4, dot: 'bg-emerald', text: 'Network updated (437 nodes)', time: '5h ago' },
               ].map((item) => (
-                <button
+                <div
                   key={item.id}
-                  onClick={() => console.log('View activity:', item.id)}
-                  className="w-full flex items-center gap-2 text-xs px-3 py-2.5 hover:bg-white/[0.04] cursor-pointer transition-colors duration-200 rounded-lg text-left"
+                  className="flex items-center gap-2 text-xs px-3 py-2.5 rounded-lg"
                 >
                   <span className={`w-1.5 h-1.5 rounded-full ${item.dot} shrink-0`} />
                   <span className="text-slate-300 flex-1">{item.text}</span>
                   <span className="text-slate-500">{item.time}</span>
-                </button>
+                </div>
               ))}
             </div>
           </Card>

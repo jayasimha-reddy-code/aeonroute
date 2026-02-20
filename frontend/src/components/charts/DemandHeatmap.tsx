@@ -1,7 +1,6 @@
 import { useRef, useEffect, useState, useCallback } from 'react';
 import { Card } from '../ui';
-import { OverflowMenu } from '../ui/OverflowMenu';
-import { Flame, Download, RefreshCw, Maximize2 } from 'lucide-react';
+import { Flame } from 'lucide-react';
 
 interface HotspotPoint {
   x: number;
@@ -126,13 +125,7 @@ export function DemandHeatmap() {
             Charging Demand Hotspots
           </h3>
         </div>
-        <OverflowMenu
-          items={[
-            { label: 'Export PNG', icon: Download, onClick: () => console.log('Export: Heatmap') },
-            { label: 'Refresh Data', icon: RefreshCw, onClick: () => console.log('Refresh: Heatmap') },
-            { label: 'Full Screen', icon: Maximize2, onClick: () => console.log('Fullscreen: Heatmap') },
-          ]}
-        />
+
       </div>
       <div ref={containerRef} className="relative w-full h-[240px] rounded-xl overflow-hidden">
         <canvas

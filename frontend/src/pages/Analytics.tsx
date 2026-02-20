@@ -5,14 +5,13 @@ import { useSystemStore, useViewMode } from '../store/store';
 import PageHeader from '../components/PageHeader';
 import { Card, Badge } from '../components/ui';
 import { StatCardSkeleton } from '../components/ui/Skeleton';
-import { OverflowMenu } from '../components/ui/OverflowMenu';
 import { cn } from '../lib/utils';
 import { hyperStaggerContainer, hyperStaggerItem } from '../lib/motion';
 import {
   BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts';
-import { Activity, TrendingUp, Zap, Timer, Route, Gauge, Network, Cpu, Calendar, Download, RefreshCw, Maximize2 } from 'lucide-react';
+import { Activity, TrendingUp, Zap, Timer, Route, Gauge, Network, Cpu } from 'lucide-react';
 import { tooltipStyle, axisStyle, gridStyle, areaGradient, CHART_COLORS, CHART_PALETTE, cursorStyle } from '../lib/chartConfig';
 import SystemHealthRadar from '../components/charts/SystemHealthRadar';
 import EnergyStackedBar from '../components/charts/EnergyStackedBar';
@@ -236,13 +235,7 @@ function Analytics() {
                 {trainingHistory?.reward_history?.length ? 'Agent Reward History' : 'Energy & Distance'}
               </h3>
             </div>
-            <OverflowMenu
-              items={[
-                { label: 'Export PNG', icon: Download, onClick: () => console.log('Export: Energy chart') },
-                { label: 'Refresh Data', icon: RefreshCw, onClick: () => console.log('Refresh: Energy chart') },
-                { label: 'Full Screen', icon: Maximize2, onClick: () => console.log('Full screen: Energy chart') },
-              ]}
-            />
+
           </div>
           {evalLoading ? (
             <div className="h-[280px] flex items-center justify-center text-label text-sm">Loading…</div>
@@ -294,13 +287,7 @@ function Analytics() {
               <div className="p-1.5 rounded-lg bg-emerald/10"><TrendingUp className="w-3.5 h-3.5 text-emerald" /></div>
               <h3 className="text-sm font-semibold text-white uppercase tracking-wider">Route Quality</h3>
             </div>
-            <OverflowMenu
-              items={[
-                { label: 'Export PNG', icon: Download, onClick: () => console.log('Export: Route Quality') },
-                { label: 'Refresh Data', icon: RefreshCw, onClick: () => console.log('Refresh: Route Quality') },
-                { label: 'Full Screen', icon: Maximize2, onClick: () => console.log('Full screen: Route Quality') },
-              ]}
-            />
+
           </div>
           <ResponsiveContainer width="100%" height={280}>
             <PieChart>
@@ -330,13 +317,7 @@ function Analytics() {
                 {ganEval ? 'GAN Quality Metrics' : 'Distance Distribution'} <span className="text-label normal-case font-normal">{ganEval ? '' : '(km)'}</span>
               </h3>
             </div>
-            <OverflowMenu
-              items={[
-                { label: 'Export PNG', icon: Download, onClick: () => console.log('Export: GAN Quality') },
-                { label: 'Refresh Data', icon: RefreshCw, onClick: () => console.log('Refresh: GAN Quality') },
-                { label: 'Full Screen', icon: Maximize2, onClick: () => console.log('Full screen: GAN Quality') },
-              ]}
-            />
+
           </div>
           {evalLoading ? (
             <div className="h-[260px] flex items-center justify-center text-label text-sm">Loading…</div>
@@ -362,13 +343,7 @@ function Analytics() {
               <div className="p-1.5 rounded-lg bg-amber/10"><Cpu className="w-3.5 h-3.5 text-amber" /></div>
               <h3 className="text-sm font-semibold text-white uppercase tracking-wider">GAN Training Loss</h3>
             </div>
-            <OverflowMenu
-              items={[
-                { label: 'Export PNG', icon: Download, onClick: () => console.log('Export: Training Loss') },
-                { label: 'Refresh Data', icon: RefreshCw, onClick: () => console.log('Refresh: Training Loss') },
-                { label: 'Full Screen', icon: Maximize2, onClick: () => console.log('Full screen: Training Loss') },
-              ]}
-            />
+
           </div>
           <ResponsiveContainer width="100%" height={260}>
             <AreaChart data={trainingConvergence}>

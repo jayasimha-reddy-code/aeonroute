@@ -2,8 +2,7 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend,
 } from 'recharts';
 import { Card } from '../ui';
-import { OverflowMenu } from '../ui/OverflowMenu';
-import { Battery, Download, RefreshCw, Maximize2 } from 'lucide-react';
+import { Battery } from 'lucide-react';
 import { tooltipStyle, axisStyle } from '../../lib/chartConfig';
 
 const ENERGY_DATA = [
@@ -29,13 +28,7 @@ export function EnergyStackedBar() {
             Energy Source Breakdown (Solar vs Grid)
           </h3>
         </div>
-        <OverflowMenu
-          items={[
-            { label: 'Export PNG', icon: Download, onClick: () => console.log('Export: Energy') },
-            { label: 'Refresh Data', icon: RefreshCw, onClick: () => console.log('Refresh: Energy') },
-            { label: 'Full Screen', icon: Maximize2, onClick: () => console.log('Fullscreen: Energy') },
-          ]}
-        />
+
       </div>
       <ResponsiveContainer width="100%" height={280}>
         <BarChart data={ENERGY_DATA}>

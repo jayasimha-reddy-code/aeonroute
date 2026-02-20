@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Card } from '../ui';
-import { OverflowMenu } from '../ui/OverflowMenu';
-import { ChevronDown, ChevronUp, Download, RefreshCw, Maximize2, List } from 'lucide-react';
+import { ChevronDown, ChevronUp, List } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
 export interface Segment {
@@ -48,13 +47,7 @@ export function SegmentList({ segments }: SegmentListProps) {
             : <ChevronUp className="w-3.5 h-3.5 text-slate-500" />
           }
         </button>
-        <OverflowMenu
-          items={[
-            { label: 'Export CSV', icon: Download, onClick: () => {} },
-            { label: 'Refresh', icon: RefreshCw, onClick: () => {} },
-            { label: 'Full Screen', icon: Maximize2, onClick: () => {} },
-          ]}
-        />
+
       </div>
 
       {!collapsed && (
