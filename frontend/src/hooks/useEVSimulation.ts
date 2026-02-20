@@ -47,7 +47,7 @@ const INITIAL_STATE: SimulationState = {
   chargingProgress: 0,
 };
 
-const MS_PER_KM = 800; // animation duration per km of route
+const BASE_MS_PER_KM = 600; // animation base duration per km of route
 const CHARGE_DURATION_MS = 2500;
 const CHARGE_AMOUNT = 30;
 const CHARGING_PROXIMITY_KM = 0.05; // 50 m
@@ -164,7 +164,7 @@ export function useEVSimulation(options: UseEVSimulationOptions) {
 
       // ── Movement logic using Turf.js ──
       const elapsed = now - int.startTime - int.totalPausedMs;
-      const totalDurationMs = rd.totalLengthKm * MS_PER_KM / speedMultiplier;
+      const totalDurationMs = rd.totalLengthKm * BASE_MS_PER_KM / speedMultiplier;
       const progress = Math.min(elapsed / totalDurationMs, 1);
 
       // Distance traveled along the route
