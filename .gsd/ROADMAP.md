@@ -337,6 +337,32 @@ Plans:
 
 ---
 
+### Phase 15: The Great Wiring
+**Goal:** Rip out all fake data, mock logs, and static UI elements. Wire the frontend to real backend APIs — Q-Learning routing with mode selection, real SSE training stream, live analytics, functional settings, and real station data. Remove every dead button and non-functional menu.
+**Status:** ○ Planned
+**Dependencies:** Phase 14
+**Requirements:** PROD-06 (Frontend Integration), LIVE-01, LIVE-02, SIM-01, SIM-02
+
+**Success Criteria:**
+1. Map shows only roads, stations, and route — zero green OSMnx node dots
+2. Generate Routes sends route_mode (fast/eco/scenic) to backend, returns Q-Learning routes
+3. EV simulation uses car icon with turf.along()/turf.bearing() animation and speed controls
+4. LiveTerminal shows real SSE logs — MOCK_LOGS deleted
+5. PipelineFlowchart highlights active training stage from SSE data
+6. Settings page changes (vehicle, energy weight, simulation scale) affect global API behavior
+7. Stations page fetches real data from /api/stations with "Route Here" navigation
+8. Dashboard/Analytics use live API data — zero mock arrays
+9. All unwired OverflowMenus and dead-click buttons removed
+
+**Plans:** 3 plans
+
+Plans:
+- [ ] 15-01-PLAN.md — Wave 1: Map cleanup, Q-Learning route modes, car simulation with physics
+- [ ] 15-02-PLAN.md — Wave 2: Kill fake training logs, wire SSE stream, device recommendations
+- [ ] 15-03-PLAN.md — Wave 3: Functional settings, live stations/dashboard/analytics, nuke dead menus
+
+---
+
 ### Phase Sizing Summary
 
 | Phase | Name | Plans | Complexity | Dependencies |
@@ -355,6 +381,7 @@ Plans:
 | 12 | Hyper-Fidelity UI & Functional Replication | 5 | Heavy | 11 |
 | 13 | Production Transition — Real Data & AI | 2 | Heavy | 12 |
 | 14 | Critical System Reset: Nuke & Rebuild | 6 | Heavy | 13 |
+| 15 | The Great Wiring | 3 | Heavy | 14 |
 
 ---
 
