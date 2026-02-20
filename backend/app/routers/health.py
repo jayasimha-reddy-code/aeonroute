@@ -1,5 +1,6 @@
 ﻿from fastapi import APIRouter, Depends, Request
 from datetime import datetime
+import os
 from backend.app.state import AppState, get_state
 from backend.app.models.responses import ok, fail
 
@@ -35,6 +36,10 @@ async def get_system_stats(request: Request, state: AppState = Depends(get_state
         },
         "models": {
             "q_table_loaded": state.q_table is not None,
+            # Frontend-expected fields
+            "gan_trained": os.path.exists("models/sg_gan/traffic_gan_generator.keras"),
+            "agent_trained": state.q_table is not None or os.path.exists("models/q_learning/q_table_hyderabad.pkl"),
+            "gnn_gan_trained": os.path.exists("models/gnn_gan"),
         },
         "training_status": state.training_status,
     }
