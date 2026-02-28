@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { hyperStaggerContainer, hyperStaggerItem } from '../lib/motion';
@@ -7,14 +7,14 @@ import api, { geoJSONRouteToLegacy } from '../services/api';
 import NetworkMap from '../components/NetworkMap';
 import RouteCard from '../components/RouteCard';
 import PageHeader from '../components/PageHeader';
-import { Card, Button, EmptyState, Spinner, ProgressBar } from '../components/ui';
+import { Card, Button, EmptyState, Spinner } from '../components/ui';
 import { ViewToggle } from '../components/ui/ViewToggle';
 import { Map, MapPin, Navigation, Sparkles, Zap, Play, Pause, RotateCcw, Leaf, Mountain } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { RouteCardSkeleton } from '../components/ui/Skeleton';
 import { buildPosLookup } from '../lib/geo';
 import { useEVSimulation } from '../hooks/useEVSimulation';
-import { BatteryGauge } from '../components/map/BatteryGauge';
+
 import { RouteTimeline } from '../components/map/RouteTimeline';
 import { WaypointList, type Waypoint } from '../components/route/WaypointList';
 import { ElevationProfile, type ElevationPoint } from '../components/route/ElevationProfile';
@@ -64,6 +64,28 @@ function RoutePlanner() {
     setEVState({ ...currentEVState, battery_capacity_kwh: settingsBattery });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settingsBattery]);
+
+  // Auto-regenerate route when route type changes (300ms debounce)
+  const autoRegenTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!roadNetwork) return;
+    const startWp = waypoints[0];
+    const endWp = waypoints[waypoints.length - 1];
+    const sLat = startWp.lat ?? sourceLat;
+    const sLon = startWp.lon ?? sourceLon;
+    const dLat = endWp.lat ?? destLat;
+    const dLon = endWp.lon ?? destLon;
+    // Only auto-regen if source and destination are defined and different
+    if (sLat === dLat && sLon === dLon) return;
+    if (autoRegenTimer.current) clearTimeout(autoRegenTimer.current);
+    autoRegenTimer.current = setTimeout(() => {
+      handleGenerateRoutes();
+    }, 300);
+    return () => {
+      if (autoRegenTimer.current) clearTimeout(autoRegenTimer.current);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [routeType]);
   const [loading, setLoading] = useState(false);
   const [highlightIdx, setHighlightIdx] = useState<number | undefined>(undefined);
   const [routeType, setRouteType] = useState<'fast' | 'eco' | 'scenic'>('fast');
@@ -83,6 +105,7 @@ function RoutePlanner() {
       startSOC: currentEVState.battery_soc,
       batteryCapacityKWh: currentEVState.battery_capacity_kwh,
       speedMultiplier,
+      routeMode,
     });
 
   const handleGenerateRoutes = async () => {
@@ -229,63 +252,6 @@ function RoutePlanner() {
             {generatedRoutes.length > 0 && (
               <p className="text-xs text-center text-muted mt-3">{generatedRoutes.length} routes found</p>
             )}
-
-            {/* ── Simulation Controls ──────────────── */}
-            {selectedRoute && (
-              <div className="mt-4">
-                <div className="divider mb-4" />
-                <div className="flex items-center gap-2.5 mb-3">
-                  <div className="p-1.5 rounded-lg bg-amber-500/10"><Zap className="w-3.5 h-3.5 text-amber-500" /></div>
-                  <h3 className="text-sm font-semibold text-white uppercase tracking-wider">Simulation</h3>
-                </div>
-                <BatteryGauge
-                  soc={simState.currentSOC}
-                  capacityKWh={currentEVState.battery_capacity_kwh}
-                  isCharging={simState.isCharging}
-                  isSimulating={simState.isSimulating}
-                />
-                <div className="flex gap-2 mt-3">
-                  {!simState.isSimulating ? (
-                    <Button variant="primary" fullWidth icon={Play} onClick={startSim}>Simulate</Button>
-                  ) : simState.isPaused ? (
-                    <Button variant="primary" fullWidth icon={Play} onClick={resumeSim}>Resume</Button>
-                  ) : (
-                    <Button variant="secondary" fullWidth icon={Pause} onClick={pauseSim}>Pause</Button>
-                  )}
-                  {simState.isSimulating && (
-                    <Button variant="ghost" icon={RotateCcw} onClick={resetSim} />
-                  )}
-                </div>
-                {/* Speed multiplier controls */}
-                <div className="mt-3">
-                  <p className="text-xs text-muted mb-1.5 uppercase tracking-wider">Speed</p>
-                  <div className="flex gap-1.5">
-                    {([1, 2, 4] as const).map((s) => (
-                      <button
-                        key={s}
-                        onClick={() => setSpeedMultiplier(s)}
-                        className={cn(
-                          'flex-1 text-xs font-semibold py-1.5 rounded-lg border transition-colors',
-                          speedMultiplier === s
-                            ? 'bg-emerald/20 border-emerald text-emerald'
-                            : 'bg-white/[0.04] border-white/10 text-muted hover:text-white hover:border-white/20',
-                        )}
-                      >
-                        {s}×
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                {simState.isSimulating && (
-                  <div className="mt-3">
-                    <ProgressBar value={simState.progress * 100} size="sm" variant={simState.isCharging ? 'warning' : 'primary'} />
-                    <p className="text-xs text-muted mt-1.5 text-center">
-                      {simState.isCharging ? 'Charging…' : `Segment ${simState.currentSegmentIndex + 1}/${(selectedRoute?.path?.length ?? 1) - 1}`}
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
           </Card>
         </div>
 
@@ -316,6 +282,119 @@ function RoutePlanner() {
             </div>
           </Card>
 
+          {/* ── Simulation Controller ─────────────────── */}
+          {selectedRoute && (
+            <div className="bg-white/[0.03] backdrop-blur-xl border border-white/[0.06] rounded-xl px-5 py-4">
+              {simState.isBatteryDepleted ? (
+                /* Battery Depleted State */
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+                    <span className="text-sm font-semibold text-rose-400">Battery Depleted</span>
+                    <span className="text-xs text-muted ml-2">0% SOC reached</span>
+                  </div>
+                  <Button variant="ghost" icon={RotateCcw} onClick={resetSim}>Reset</Button>
+                </div>
+              ) : !simState.isSimulating && simState.progress >= 1 ? (
+                /* Route Complete State */
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-emerald" />
+                    <span className="text-sm font-semibold text-emerald-400">Route Complete</span>
+                    {selectedRoute?.energy_kwh && (
+                      <span className="text-xs text-muted ml-2">
+                        {selectedRoute.energy_kwh.toFixed(1)} kWh used
+                      </span>
+                    )}
+                  </div>
+                  <Button variant="ghost" icon={RotateCcw} onClick={resetSim}>Restart</Button>
+                </div>
+              ) : (
+                /* Active Simulation Controls */
+                <div className="flex items-center gap-4 flex-wrap">
+                  {/* Play/Pause + Reset */}
+                  <div className="flex items-center gap-2">
+                    {!simState.isSimulating ? (
+                      <Button variant="primary" icon={Play} onClick={startSim}>Simulate</Button>
+                    ) : simState.isPaused ? (
+                      <Button variant="primary" icon={Play} onClick={resumeSim}>Resume</Button>
+                    ) : (
+                      <Button variant="secondary" icon={Pause} onClick={pauseSim}>Pause</Button>
+                    )}
+                    {(simState.isSimulating || simState.progress > 0) && (
+                      <Button variant="ghost" icon={RotateCcw} onClick={resetSim} />
+                    )}
+                  </div>
+
+                  {/* Speed pills */}
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs text-muted mr-0.5">Speed</span>
+                    {([1, 2, 4] as const).map((s) => (
+                      <button
+                        key={s}
+                        onClick={() => setSpeedMultiplier(s)}
+                        className={cn(
+                          'text-xs font-semibold px-2.5 py-1 rounded-lg border transition-colors',
+                          speedMultiplier === s
+                            ? 'bg-emerald/20 border-emerald text-emerald'
+                            : 'bg-white/[0.04] border-white/10 text-muted hover:text-white hover:border-white/20',
+                        )}
+                      >
+                        {s}×
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Battery gauge — compact inline */}
+                  <div className="flex items-center gap-2 flex-1 min-w-[120px]">
+                    <Zap className={cn('w-3.5 h-3.5 flex-shrink-0', simState.isBatteryLow ? 'text-amber-400 animate-pulse' : 'text-muted')} />
+                    <div className="flex-1 h-2 rounded-full bg-white/[0.06] overflow-hidden">
+                      <div
+                        className={cn(
+                          'h-full rounded-full transition-all duration-500',
+                          simState.isBatteryLow ? 'bg-amber-400' : 'bg-emerald',
+                        )}
+                        style={{ width: `${Math.max(0, simState.currentSOC)}%` }}
+                      />
+                    </div>
+                    <span className={cn('text-xs font-mono w-9 text-right', simState.isBatteryLow ? 'text-amber-400' : 'text-white')}>
+                      {simState.currentSOC.toFixed(0)}%
+                    </span>
+                    {simState.isBatteryLow && (
+                      <span className="text-xs text-amber-400 animate-pulse">Low</span>
+                    )}
+                  </div>
+
+                  {/* Distance progress */}
+                  {simState.isSimulating && selectedRoute?.distance_km && (
+                    <div className="flex items-center gap-1.5 text-xs text-muted">
+                      <span className="text-white font-mono">
+                        {(simState.progress * selectedRoute.distance_km).toFixed(1)}
+                      </span>
+                      <span>/</span>
+                      <span>{selectedRoute.distance_km.toFixed(1)} km</span>
+                    </div>
+                  )}
+
+                  {/* ETA */}
+                  {simState.isSimulating && selectedRoute?.time_minutes && !simState.isCharging && (
+                    <div className="text-xs text-muted">
+                      ~{Math.max(0, Math.round(selectedRoute.time_minutes * (1 - simState.progress)))} min remaining
+                    </div>
+                  )}
+
+                  {/* Charging indicator */}
+                  {simState.isCharging && (
+                    <div className="flex items-center gap-1.5 text-xs text-amber-400">
+                      <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
+                      Charging…
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Route Cards */}
           <div>
             <div className="flex items-center justify-between mb-3">
@@ -333,6 +412,21 @@ function RoutePlanner() {
                 onChange={setRouteType}
                 size="sm"
               />
+            </div>
+            {/* Route color legend */}
+            <div className="flex items-center gap-4 mb-3 text-xs text-muted">
+              <span className="flex items-center gap-1.5">
+                <span className="w-3 h-1.5 rounded-full inline-block" style={{ background: '#3b82f6' }} />
+                Fast
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-3 h-1.5 rounded-full inline-block" style={{ background: '#10b981' }} />
+                Eco
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-3 h-1.5 rounded-full inline-block" style={{ background: '#a855f7' }} />
+                Scenic
+              </span>
             </div>
 
             {loading ? (
