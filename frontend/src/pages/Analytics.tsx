@@ -11,7 +11,7 @@ import {
   BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts';
-import { Activity, TrendingUp, Zap, Timer, Route, Gauge, Network, Cpu } from 'lucide-react';
+import { Activity, TrendingUp, Zap, Timer, Route, Gauge, Network, Cpu, Calendar } from 'lucide-react';
 import { tooltipStyle, axisStyle, gridStyle, areaGradient, CHART_COLORS, CHART_PALETTE, cursorStyle } from '../lib/chartConfig';
 import SystemHealthRadar from '../components/charts/SystemHealthRadar';
 import EnergyStackedBar from '../components/charts/EnergyStackedBar';

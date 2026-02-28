@@ -1,7 +1,8 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { hyperStaggerContainer, hyperStaggerItem } from '../lib/motion';
-import { useSystemStore } from '../store/store';
+import { useSystemStore, useEnergyWeight, useBatteryCapacity } from '../store/store';
 import api, { geoJSONRouteToLegacy } from '../services/api';
 import NetworkMap from '../components/NetworkMap';
 import RouteCard from '../components/RouteCard';
@@ -32,12 +33,37 @@ const LANDMARKS = [
 
 function RoutePlanner() {
   const { roadNetwork, generatedRoutes, setGeneratedRoutes, selectedRoute, setSelectedRoute, currentEVState, setEVState, addToast } = useSystemStore();
+  const energyWeight = useEnergyWeight();
+  const settingsBattery = useBatteryCapacity();
+  const [searchParams] = useSearchParams();
   const [sourceLat, setSourceLat] = useState(17.3616);
   const [sourceLon, setSourceLon] = useState(78.4747);
   const [destLat, setDestLat] = useState(17.4435);
   const [destLon, setDestLon] = useState(78.3772);
   const [sourceLabel, setSourceLabel] = useState('Charminar');
   const [destLabel, setDestLabel] = useState('HITEC City');
+
+  // Pre-fill destination from URL params (set by Stations "Route Here" button)
+  useEffect(() => {
+    const pLat = parseFloat(searchParams.get('destLat') ?? '');
+    const pLon = parseFloat(searchParams.get('destLon') ?? '');
+    const pLabel = searchParams.get('destLabel') ?? '';
+    if (!isNaN(pLat) && !isNaN(pLon)) {
+      setDestLat(pLat);
+      setDestLon(pLon);
+      if (pLabel) setDestLabel(pLabel);
+      setWaypoints((prev) => prev.map((wp, i) =>
+        i === prev.length - 1 ? { ...wp, lat: pLat, lon: pLon, label: pLabel || wp.label } : wp
+      ));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Sync EV battery capacity from settings
+  useEffect(() => {
+    setEVState({ ...currentEVState, battery_capacity_kwh: settingsBattery });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settingsBattery]);
   const [loading, setLoading] = useState(false);
   const [highlightIdx, setHighlightIdx] = useState<number | undefined>(undefined);
   const [routeType, setRouteType] = useState<'fast' | 'eco' | 'scenic'>('fast');
@@ -87,6 +113,7 @@ function RoutePlanner() {
         battery_soc: currentEVState.battery_soc,
         battery_capacity_kwh: currentEVState.battery_capacity_kwh,
         route_mode: routeType,
+        energy_weight: energyWeight,
       });
       // Convert GeoJSON routes to legacy Route format
       const routes = [geoJSONRouteToLegacy(result.route), ...result.alternatives.map(geoJSONRouteToLegacy)];
@@ -342,7 +369,11 @@ function RoutePlanner() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
               <SegmentList />
               <CarbonSavedCard
-                percentage={Math.round(Math.random() * 20 + 20)}
+                percentage={Math.max(0,
+                  selectedRoute.distance_km && selectedRoute.energy_kwh
+                    ? Math.round((1 - selectedRoute.energy_kwh / (selectedRoute.distance_km * 0.25)) * 100)
+                    : 0
+                )}
                 energyKwh={selectedRoute.energy_kwh ? Math.round(selectedRoute.energy_kwh) : 173}
                 timeHours={selectedRoute.time_minutes ? Math.round(selectedRoute.time_minutes / 60) : 19}
                 energyPct={56}

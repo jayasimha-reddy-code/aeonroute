@@ -46,6 +46,7 @@ export type AppTab = 'dashboard' | 'routing' | 'training' | 'analytics' | 'stati
 
 export type UnitSystem = 'metric' | 'imperial';
 export type ViewMode = 'grid' | 'list';
+export type SimulationScale = 'light' | 'standard' | 'full';
 
 export interface UserSettings {
   units: UnitSystem;
@@ -53,6 +54,10 @@ export interface UserSettings {
   optimizeBattery: boolean;
   notifications: boolean;
   viewMode: ViewMode;
+  energyWeight: number;       // kWh/km — 0.10 to 0.30
+  simulationScale: SimulationScale;
+  vehicleProfile: string;
+  batteryCapacity: number;    // kWh
 }
 
 // ─── Store Interface ──────────────────────────────────────
@@ -88,6 +93,10 @@ interface SystemState {
   setOptimizeBattery: (optimize: boolean) => void;
   setNotifications: (enabled: boolean) => void;
   setViewMode: (mode: ViewMode) => void;
+  setEnergyWeight: (weight: number) => void;
+  setSimulationScale: (scale: SimulationScale) => void;
+  setVehicleProfile: (profile: string) => void;
+  setBatteryCapacity: (capacity: number) => void;
 
   // ── Loading / Error ──
   isLoading: boolean;
@@ -156,12 +165,20 @@ export const useSystemStore = create<SystemState>()(
         optimizeBattery: true,
         notifications: true,
         viewMode: 'grid',
+        energyWeight: 0.18,
+        simulationScale: 'standard',
+        vehicleProfile: 'tesla_model_3_lr',
+        batteryCapacity: 82,
       },
       setUnits: (units) => set((s) => ({ settings: { ...s.settings, units } })),
       setAvoidTolls: (avoidTolls) => set((s) => ({ settings: { ...s.settings, avoidTolls } })),
       setOptimizeBattery: (optimizeBattery) => set((s) => ({ settings: { ...s.settings, optimizeBattery } })),
       setNotifications: (notifications) => set((s) => ({ settings: { ...s.settings, notifications } })),
       setViewMode: (viewMode) => set((s) => ({ settings: { ...s.settings, viewMode } })),
+      setEnergyWeight: (energyWeight) => set((s) => ({ settings: { ...s.settings, energyWeight } })),
+      setSimulationScale: (simulationScale) => set((s) => ({ settings: { ...s.settings, simulationScale } })),
+      setVehicleProfile: (vehicleProfile) => set((s) => ({ settings: { ...s.settings, vehicleProfile } })),
+      setBatteryCapacity: (batteryCapacity) => set((s) => ({ settings: { ...s.settings, batteryCapacity } })),
 
       // Loading / Error
       isLoading: false,
@@ -276,6 +293,14 @@ export const useSystemStore = create<SystemState>()(
         sidebarCollapsed: state.sidebarCollapsed,
         settings: state.settings,
       }),
+      // Deep-merge persisted settings with current defaults so any newly-added
+      // fields (energyWeight, simulationScale, vehicleProfile, batteryCapacity)
+      // always exist even when restoring a stale localStorage snapshot.
+      merge: (persisted, current) => {
+        const merged = { ...current, ...(persisted as any) };
+        merged.settings = { ...current.settings, ...((persisted as any)?.settings ?? {}) };
+        return merged;
+      },
     }
   )
 );
@@ -306,6 +331,14 @@ export const useSetOptimizeBattery = () => useSystemStore((s) => s.setOptimizeBa
 export const useSetNotifications = () => useSystemStore((s) => s.setNotifications);
 export const useViewMode = () => useSystemStore((s) => s.settings.viewMode);
 export const useSetViewMode = () => useSystemStore((s) => s.setViewMode);
+export const useEnergyWeight = () => useSystemStore((s) => s.settings.energyWeight);
+export const useSimulationScale = () => useSystemStore((s) => s.settings.simulationScale);
+export const useVehicleProfile = () => useSystemStore((s) => s.settings.vehicleProfile);
+export const useBatteryCapacity = () => useSystemStore((s) => s.settings.batteryCapacity);
+export const useSetEnergyWeight = () => useSystemStore((s) => s.setEnergyWeight);
+export const useSetSimulationScale = () => useSystemStore((s) => s.setSimulationScale);
+export const useSetVehicleProfile = () => useSystemStore((s) => s.setVehicleProfile);
+export const useSetBatteryCapacity = () => useSystemStore((s) => s.setBatteryCapacity);
 
 export const useRoutes = () => useSystemStore((s) => ({
   generatedRoutes: s.generatedRoutes,
