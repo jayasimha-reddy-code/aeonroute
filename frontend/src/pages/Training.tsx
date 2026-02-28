@@ -5,7 +5,7 @@ import api, { type SystemHealth } from '../services/api';
 import PageHeader from '../components/PageHeader';
 import { Card, Button, Badge, ProgressBar } from '../components/ui';
 import { useSystemStore, useTrainingProgress, useRewardHistory, useSSEConnected, useResetTrainingData, useSetActiveTab, useTrainingLogs, useSimulationScale, useAddActivity } from '../store/store';
-import { useTrainingStream } from '../hooks/useTrainingStream';
+// useTrainingStream import removed — SSE now managed globally in App.tsx via TrainingSSEManager
 import { RewardCurveChart } from '../components/training/RewardCurveChart';
 import { HardwareGauge } from '../components/training/HardwareGauge';
 import { LiveTerminal } from '../components/training/LiveTerminal';
@@ -39,7 +39,7 @@ function Training() {
     if (!userOverrodeEpisodes) {
       setConfig((c) => ({ ...c, episodes: SCALE_EPISODES[simulationScale] ?? 200 }));
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [simulationScale]);
   const [hardwareType, setHardwareType] = useState<'GPU' | 'TPU'>('GPU');
 
@@ -98,21 +98,11 @@ function Training() {
     (entry) => `[${entry.timestamp}] ${entry.message}`
   );
 
-  // Connect SSE stream when training is active
-  useTrainingStream(trainingProgress.is_training);
+  // SSE stream is now managed globally by TrainingSSEManager in App.tsx.
+  // Training page simply reads from Zustand state — no local SSE hook needed.
+  // useTrainingStream(trainingProgress.is_training); // @deprecated
 
-  // Polling fallback when SSE disconnected but training active
-  useEffect(() => {
-    if (!sseConnected && trainingProgress.is_training) {
-      const pollInterval = setInterval(async () => {
-        try {
-          const status = await api.getTrainingStatus();
-          useSystemStore.getState().updateTrainingFromSSE(status);
-        } catch { /* retry silently */ }
-      }, 3000);
-      return () => clearInterval(pollInterval);
-    }
-  }, [sseConnected, trainingProgress.is_training]);
+  // Polling fallback removed — TrainingSSEManager handles reconnection with exponential backoff.
 
   const handleStart = async () => {
     try {

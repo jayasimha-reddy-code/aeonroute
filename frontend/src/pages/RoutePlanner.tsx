@@ -13,7 +13,8 @@ import { Map, MapPin, Navigation, Sparkles, Zap, Play, Pause, RotateCcw, Leaf, M
 import { cn } from '../lib/utils';
 import { RouteCardSkeleton } from '../components/ui/Skeleton';
 import { buildPosLookup } from '../lib/geo';
-import { useEVSimulation } from '../hooks/useEVSimulation';
+// useEVSimulation import removed — replaced by global simulationStore (Wave 1)
+import { useSimulationStore } from '../store/simulationStore';
 
 import { RouteTimeline } from '../components/map/RouteTimeline';
 import { WaypointList, type Waypoint } from '../components/route/WaypointList';
@@ -43,10 +44,6 @@ function RoutePlanner() {
   const KM_TO_MI = 0.621371;
   const toDistDisplay = (km: number) =>
     units === 'imperial' ? `${(km * KM_TO_MI).toFixed(1)} mi` : `${km.toFixed(1)} km`;
-  const toEffDisplay = (kwhPerKm: number) =>
-    units === 'imperial'
-      ? `${(kwhPerKm / KM_TO_MI).toFixed(2)} kWh/mi`
-      : `${kwhPerKm.toFixed(2)} kWh/km`;
   const [searchParams] = useSearchParams();
   const [sourceLat, setSourceLat] = useState(17.3616);
   const [sourceLon, setSourceLon] = useState(78.4747);
@@ -68,14 +65,28 @@ function RoutePlanner() {
         i === prev.length - 1 ? { ...wp, lat: pLat, lon: pLon, label: pLabel || wp.label } : wp
       ));
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Sync EV battery capacity from settings
   useEffect(() => {
     setEVState({ ...currentEVState, battery_capacity_kwh: settingsBattery });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settingsBattery]);
+
+  const [loading, setLoading] = useState(false);
+  const [highlightIdx, setHighlightIdx] = useState<number | undefined>(undefined);
+  const [routeType, setRouteType] = useState<'fast' | 'eco' | 'scenic'>('fast');
+  const [speedMultiplier, setSpeedMultiplierLocal] = useState<1 | 2 | 4>(1);
+  const setSpeedMultiplier = (s: 1 | 2 | 4) => {
+    setSpeedMultiplierLocal(s);
+    simState.setSpeedMultiplier(s); // sync to global engine
+  };
+  const [elevationData, setElevationData] = useState<ElevationPoint[]>([]);
+  const [waypoints, setWaypoints] = useState<Waypoint[]>([
+    { id: 'wp-start', label: 'Charminar', type: 'start', lat: 17.3616, lon: 78.4747 },
+    { id: 'wp-end', label: 'HITEC City', type: 'end', lat: 17.4435, lon: 78.3772 },
+  ]);
 
   // Auto-regenerate route when route type changes (300ms debounce)
   const autoRegenTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -96,29 +107,25 @@ function RoutePlanner() {
     return () => {
       if (autoRegenTimer.current) clearTimeout(autoRegenTimer.current);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [routeType]);
-  const [loading, setLoading] = useState(false);
-  const [highlightIdx, setHighlightIdx] = useState<number | undefined>(undefined);
-  const [routeType, setRouteType] = useState<'fast' | 'eco' | 'scenic'>('fast');
-  const [speedMultiplier, setSpeedMultiplier] = useState<1 | 2 | 4>(1);
-  const [elevationData, setElevationData] = useState<ElevationPoint[]>([]);
-  const [waypoints, setWaypoints] = useState<Waypoint[]>([
-    { id: 'wp-start', label: 'Charminar', type: 'start', lat: 17.3616, lon: 78.4747 },
-    { id: 'wp-end', label: 'HITEC City', type: 'end', lat: 17.4435, lon: 78.3772 },
-  ]);
 
   const posLookup = useMemo(() => roadNetwork ? buildPosLookup(roadNetwork) : null, [roadNetwork]);
 
-  const { state: simState, start: startSim, pause: pauseSim, resume: resumeSim, reset: resetSim } =
-    useEVSimulation({
-      route: selectedRoute,
-      posLookup,
-      startSOC: currentEVState.battery_soc,
-      batteryCapacityKWh: currentEVState.battery_capacity_kwh,
-      speedMultiplier,
-      routeMode: routeType,
-    });
+  // ── Global Simulation Store (replaces useEVSimulation hook) ──────────
+  // The SimulationEngine singleton owns the rAF loop — it survives navigation.
+  const simState = useSimulationStore();
+  const startSim = () => simState.startSimulation({
+    route: selectedRoute!,
+    posLookup,
+    startSOC: currentEVState.battery_soc,
+    batteryCapacityKWh: currentEVState.battery_capacity_kwh,
+    speedMultiplier,
+    routeMode: routeType,
+  });
+  const pauseSim = () => simState.pauseSimulation();
+  const resumeSim = () => simState.resumeSimulation();
+  const resetSim = () => simState.resetSimulation();
 
   const handleGenerateRoutes = async () => {
     if (!roadNetwork) {
@@ -159,7 +166,10 @@ function RoutePlanner() {
         setHighlightIdx(0);
         // Extract elevation profile from response if available
         if (result.route?.properties?.elevation_profile) {
-          setElevationData(result.route.properties.elevation_profile);
+          setElevationData(result.route.properties.elevation_profile.map((pt: any) => ({
+            distance_km: pt.distance_km,
+            elevation: pt.elevation_m ?? pt.elevation ?? 500,
+          })));
         } else {
           // Generate simulated elevation profile
           const numPoints = 30;
@@ -363,30 +373,30 @@ function RoutePlanner() {
 
                   {/* Battery gauge — compact inline */}
                   {simulationScale !== 'light' && (
-                  <div className="flex items-center gap-2 flex-1 min-w-[120px]">
-                    <Zap className={cn('w-3.5 h-3.5 flex-shrink-0', simState.isBatteryLow ? 'text-amber-400 animate-pulse' : 'text-muted')} />
-                    <div className="flex-1 h-2 rounded-full bg-white/[0.06] overflow-hidden">
-                      <div
-                        className={cn(
-                          'h-full rounded-full transition-all duration-500',
-                          simState.isBatteryLow ? 'bg-amber-400' : 'bg-emerald',
-                          simulationScale === 'full' ? 'shadow-[0_0_8px_rgba(16,185,129,0.7)]' : '',
-                        )}
-                        style={{ width: `${Math.max(0, simState.currentSOC)}%` }}
-                      />
-                    </div>
-                    <span className={cn('text-xs font-mono w-9 text-right', simState.isBatteryLow ? 'text-amber-400' : 'text-white')}>
-                      {simState.currentSOC.toFixed(0)}%
-                    </span>
-                    {simulationScale === 'full' && (
-                      <span className="text-[10px] text-slate-500 font-mono">
-                        {(simState.currentSOC / 100 * currentEVState.battery_capacity_kwh).toFixed(1)} kWh
+                    <div className="flex items-center gap-2 flex-1 min-w-[120px]">
+                      <Zap className={cn('w-3.5 h-3.5 flex-shrink-0', simState.isBatteryLow ? 'text-amber-400 animate-pulse' : 'text-muted')} />
+                      <div className="flex-1 h-2 rounded-full bg-white/[0.06] overflow-hidden">
+                        <div
+                          className={cn(
+                            'h-full rounded-full transition-all duration-500',
+                            simState.isBatteryLow ? 'bg-amber-400' : 'bg-emerald',
+                            simulationScale === 'full' ? 'shadow-[0_0_8px_rgba(16,185,129,0.7)]' : '',
+                          )}
+                          style={{ width: `${Math.max(0, simState.currentSOC)}%` }}
+                        />
+                      </div>
+                      <span className={cn('text-xs font-mono w-9 text-right', simState.isBatteryLow ? 'text-amber-400' : 'text-white')}>
+                        {simState.currentSOC.toFixed(0)}%
                       </span>
-                    )}
-                    {simState.isBatteryLow && (
-                      <span className="text-xs text-amber-400 animate-pulse">Low</span>
-                    )}
-                  </div>
+                      {simulationScale === 'full' && (
+                        <span className="text-[10px] text-slate-500 font-mono">
+                          {(simState.currentSOC / 100 * currentEVState.battery_capacity_kwh).toFixed(1)} kWh
+                        </span>
+                      )}
+                      {simState.isBatteryLow && (
+                        <span className="text-xs text-amber-400 animate-pulse">Low</span>
+                      )}
+                    </div>
                   )}
 
                   {/* Distance progress */}

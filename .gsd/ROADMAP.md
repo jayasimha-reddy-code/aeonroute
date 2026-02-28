@@ -413,6 +413,29 @@ Plans:
 
 ---
 
+### Phase 17: Production Architecture & True Physics
+**Goal:** Fix three critical production defects: (1) training SSE and simulation rAF loops dying on page navigation, (2) routing engine ignoring battery limits and not auto-injecting charging stops, (3) simulation battery drain being a fake linear visual effect instead of deterministic per-segment physics.
+**Status:** ⬜ Not Started
+**Dependencies:** Phase 16
+**Requirements:** STAB-01, SIM-01, SIM-02, PROD-06, MAP-01
+
+**Success Criteria:**
+1. Training SSE and simulation rAF survive all page navigations — global state managers, not component hooks
+2. Low-SOC routes automatically detour through nearest EV charging station
+3. Energy calculations use user's energy weight setting and route mode multiplier, not hardcoded 0.18
+4. Simulation battery drain is deterministic per-segment (binary search segment lookup)
+5. Battery depletion at 0% SOC physically stops the simulation and fires a critical alert
+6. Injected charging stops render as distinct amber markers with charging time ETA
+
+**Plans:** 3 plans (3 waves, sequential)
+
+Plans:
+- [ ] 17-01-PLAN.md — Wave 1: Global State Resilience (SSE + Simulation lifecycle → Zustand singletons)
+- [ ] 17-02-PLAN.md — Wave 2: Range Anxiety & Smart Waypoint Injection (battery-aware routing + frontend viz)
+- [ ] 17-03-PLAN.md — Wave 3: Deterministic Physics Engine (per-segment energy drain + depletion detection)
+
+---
+
 ### Phase Sizing Summary (Updated)
 
 | Phase | Name | Plans | Complexity | Dependencies |

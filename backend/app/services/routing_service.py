@@ -255,6 +255,147 @@ def _dijkstra_route_weighted(hg, source: int, dest: int, weight_fn) -> Optional[
         return None
 
 
+# ── Battery-aware charging stop injection ───────────────
+
+RECHARGE_THRESHOLD = 15.0  # % SOC — inject charging stop below this
+FAST_CHARGE_TARGET_SOC = 80.0  # % — recharge to this level
+
+_MODE_DRAIN_MULTIPLIER: Dict[str, float] = {
+    "fast": 1.2,
+    "eco": 0.85,
+    "scenic": 1.0,
+}
+
+
+def _inject_charging_stops(
+    hg,
+    state: AppState,
+    path: List[int],
+    battery_soc: float,
+    battery_capacity_kwh: float,
+    energy_weight: float = 0.18,
+    route_mode: str = "fast",
+) -> Dict[str, Any]:
+    """Walk path edge-by-edge; inject charging detours when SOC < RECHARGE_THRESHOLD.
+
+    Returns a dict with:
+      - path: (possibly modified) list of node indices
+      - charging_stop_details: list of injected stop dicts
+      - charging_time_penalty_minutes: total charging time added
+      - battery_warning: True if battery insufficient even after all attempts
+    """
+    drain_multiplier = _MODE_DRAIN_MULTIPLIER.get(route_mode, 1.0)
+    effective_kwh_per_km = energy_weight * drain_multiplier
+
+    remaining_soc = float(battery_soc)
+    new_path: List[int] = [path[0]]
+    injected_stops: List[Dict[str, Any]] = []
+    total_charging_minutes = 0.0
+    battery_warning = False
+
+    charging_station_set = set(hg.charging_stations)
+    # Map graph node idx -> station metadata
+    station_meta: Dict[int, Dict] = {}
+    for s in state.charging_stations:
+        nid = s.get("graph_node_id")
+        if nid is not None:
+            station_meta[nid] = s
+
+    i = 0
+    while i < len(path) - 1:
+        from_idx = path[i]
+        to_idx = path[i + 1]
+        edge_data = hg.get_edge_data(from_idx, to_idx)
+        seg_dist = edge_data.get("distance_km", 0.0)
+        seg_energy = seg_dist * effective_kwh_per_km
+        seg_soc_drain = (seg_energy / battery_capacity_kwh) * 100.0 if battery_capacity_kwh > 0 else 0.0
+        remaining_soc -= seg_soc_drain
+        new_path.append(to_idx)
+
+        if remaining_soc < RECHARGE_THRESHOLD and charging_station_set:
+            # Find nearest charging station by graph distance from current node
+            current_osm = hg.idx_to_osm(from_idx)
+            best_station_idx: Optional[int] = None
+            best_dist: float = float("inf")
+
+            for station_node_idx in charging_station_set:
+                if station_node_idx == from_idx:
+                    best_station_idx = station_node_idx
+                    best_dist = 0.0
+                    break
+                station_osm = hg.idx_to_osm(station_node_idx)
+                if station_osm == -1:
+                    continue
+                try:
+                    d = nx.shortest_path_length(hg.graph, current_osm, station_osm, weight="length")
+                    if d < best_dist:
+                        best_dist = d
+                        best_station_idx = station_node_idx
+                except (nx.NetworkXNoPath, nx.NodeNotFound):
+                    continue
+
+            if best_station_idx is not None:
+                # Build detour path: current → station → original dest
+                stn_osm = hg.idx_to_osm(best_station_idx)
+                dest_osm = hg.idx_to_osm(path[-1])
+                # Path from station to remaining destination
+                try:
+                    stn_to_dest_osm = nx.shortest_path(hg.graph, stn_osm, dest_osm, weight="length")
+                    stn_to_dest = [hg.osm_to_idx(n) for n in stn_to_dest_osm]
+                except (nx.NetworkXNoPath, nx.NodeNotFound):
+                    stn_to_dest = None
+
+                # Path from current node to station
+                current_osm_node = hg.idx_to_osm(from_idx)
+                try:
+                    cur_to_stn_osm = nx.shortest_path(hg.graph, current_osm_node, stn_osm, weight="length")
+                    cur_to_stn = [hg.osm_to_idx(n) for n in cur_to_stn_osm]
+                except (nx.NetworkXNoPath, nx.NodeNotFound):
+                    cur_to_stn = None
+
+                if cur_to_stn and stn_to_dest:
+                    # Splice detour into new_path (skip duplicate start of cur_to_stn)
+                    new_path.extend(cur_to_stn[1:])  # to station
+                    # The rest of the original path is replaced by stn_to_dest
+                    path = stn_to_dest
+                    i = 0  # restart walking from station
+
+                    # Record injected stop details
+                    soc_at_arrival = max(0.0, remaining_soc)
+                    charging_kwh_needed = ((FAST_CHARGE_TARGET_SOC - soc_at_arrival) / 100.0) * battery_capacity_kwh
+                    # Assume 50 kW charger
+                    charging_time_min = (charging_kwh_needed / 50.0) * 60.0
+                    remaining_soc = FAST_CHARGE_TARGET_SOC
+                    total_charging_minutes += charging_time_min
+
+                    pos = hg.get_node_pos(best_station_idx)
+                    meta = station_meta.get(best_station_idx, {})
+                    injected_stops.append({
+                        "node_id": best_station_idx,
+                        "lat": meta.get("lat", pos["y"]),
+                        "lon": meta.get("lon", pos["x"]),
+                        "name": meta.get("name", "Charging Station"),
+                        "soc_at_arrival": round(soc_at_arrival, 1),
+                        "charge_to_soc": FAST_CHARGE_TARGET_SOC,
+                        "charging_time_minutes": round(charging_time_min, 1),
+                        "injected": True,
+                    })
+                    continue  # don't increment i — restart from new path[0]
+                else:
+                    # Detour not possible → flag warning
+                    battery_warning = True
+            else:
+                battery_warning = True
+        i += 1
+
+    return {
+        "path": new_path,
+        "charging_stop_details": injected_stops,
+        "charging_time_penalty_minutes": round(total_charging_minutes, 1),
+        "battery_warning": battery_warning,
+    }
+
+
 def generate_route(
     state: AppState,
     source: int,
@@ -262,6 +403,7 @@ def generate_route(
     battery_soc: float = 80.0,
     battery_capacity_kwh: float = 60.0,
     route_mode: str = "fast",
+    energy_weight: float = 0.18,
 ) -> Dict[str, Any]:
     """Generate a route over Hyderabad streets. Supports fast/eco/scenic modes.
 
@@ -294,7 +436,20 @@ def generate_route(
     if path is None:
         fail("No path found between the given nodes", 404)
 
-    route_feature = _build_route_feature(hg, state, path, route_type, battery_soc, battery_capacity_kwh)
+    # Battery-aware: inject charging stops if SOC is too low
+    injection = _inject_charging_stops(hg, state, path, battery_soc, battery_capacity_kwh, energy_weight, route_mode)
+    path = injection["path"]
+    injected_stop_details = injection["charging_stop_details"]
+    charging_time_penalty = injection["charging_time_penalty_minutes"]
+    battery_warning_flag = injection["battery_warning"]
+
+    route_feature = _build_route_feature(
+        hg, state, path, route_type, battery_soc, battery_capacity_kwh,
+        energy_weight=energy_weight,
+        injected_stop_details=injected_stop_details,
+        charging_time_penalty_minutes=charging_time_penalty,
+        battery_warning=battery_warning_flag,
+    )
 
     # Generate an alternative route for comparison
     alternatives = []
@@ -462,7 +617,18 @@ def generate_multi_stop_route(state: AppState, waypoints: List[Dict[str, Any]], 
     return {"route": route, "alternatives": []}
 
 
-def _build_route_feature(hg, state: AppState, path: List[int], route_type: str, battery_soc: float, battery_capacity_kwh: float) -> Dict[str, Any]:
+def _build_route_feature(
+    hg,
+    state: AppState,
+    path: List[int],
+    route_type: str,
+    battery_soc: float,
+    battery_capacity_kwh: float,
+    energy_weight: float = 0.18,
+    injected_stop_details: Optional[List[Dict[str, Any]]] = None,
+    charging_time_penalty_minutes: float = 0.0,
+    battery_warning: bool = False,
+) -> Dict[str, Any]:
     """Build a GeoJSON Feature for a computed path with full street geometry."""
     coordinates: List[List[float]] = []
     total_distance_km = 0.0
@@ -481,7 +647,7 @@ def _build_route_feature(hg, state: AppState, path: List[int], route_type: str, 
         edge_coords = _extract_edge_geometry(hg.graph, from_osm, to_osm, from_pos, to_pos)
         edge_data = hg.get_edge_data(from_idx, to_idx)
         seg_dist = edge_data.get("distance_km", 0.0)
-        seg_energy = seg_dist * 0.18
+        seg_energy = seg_dist * energy_weight
         seg_time = edge_data.get("base_time_minutes", seg_dist / 40.0 * 60.0)
 
         # Avoid duplicate coordinates at segment junctions
@@ -512,8 +678,8 @@ def _build_route_feature(hg, state: AppState, path: List[int], route_type: str, 
                     })
                     break
 
-    energy_kwh = total_distance_km * 0.18
-    time_minutes = total_distance_km / 40.0 * 60.0
+    energy_kwh = total_distance_km * energy_weight
+    time_minutes = total_distance_km / 40.0 * 60.0 + charging_time_penalty_minutes
     battery_remaining = battery_soc - (energy_kwh / battery_capacity_kwh * 100.0)
 
     # Simulated elevation profile
@@ -528,6 +694,9 @@ def _build_route_feature(hg, state: AppState, path: List[int], route_type: str, 
             "time_minutes": round(time_minutes, 1),
             "battery_remaining_pct": round(max(battery_remaining, 0), 1),
             "charging_stops": charging_stops,
+            "charging_stop_details": injected_stop_details or [],
+            "charging_time_penalty_minutes": charging_time_penalty_minutes,
+            "battery_warning": battery_warning,
             "path_node_ids": path,
             "route_type": route_type,
             "segments": segments,

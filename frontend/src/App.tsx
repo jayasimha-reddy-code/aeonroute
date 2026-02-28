@@ -1,7 +1,8 @@
 import { useEffect, lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useSetActiveTab, useSetRoadNetwork, useLoading, useAddToast, type AppTab } from './store/store';
+import { useSetActiveTab, useSetRoadNetwork, useLoading, useAddToast, useTrainingProgress, type AppTab } from './store/store';
+import { trainingSSE } from './store/trainingSSEManager';
 import api from './services/api';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
@@ -24,6 +25,7 @@ function App() {
   const setRoadNetwork = useSetRoadNetwork();
   const { setIsLoading } = useLoading();
   const addToast = useAddToast();
+  const trainingProgress = useTrainingProgress();
 
   // Keep Zustand activeTab in sync with URL for backward compat
   useEffect(() => {
@@ -33,6 +35,17 @@ function App() {
       setActiveTab(segment as AppTab);
     }
   }, [location.pathname, setActiveTab]);
+
+  // ── Global SSE Training Manager ──────────────────────────
+  // The singleton manages the EventSource lifecycle independently of any
+  // component. Connecting here means navigation never kills the stream.
+  useEffect(() => {
+    if (trainingProgress.is_training) {
+      trainingSSE.connect();
+    } else {
+      trainingSSE.disconnect();
+    }
+  }, [trainingProgress.is_training]);
 
   useEffect(() => {
     const loadInitialData = async () => {

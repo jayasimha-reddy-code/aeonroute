@@ -11,13 +11,13 @@ When an evaluator sees this app, they immediately understand this is production-
 ## Current State
 
 **Milestone:** v1 — Presentation Release
-**Current Phase:** Phase 16 — The Ultimate Reality Check
-**Phase Status:** ○ In progress — 3/5 waves complete
-**Overall Progress:** 15/16 phases complete
+**Current Phase:** Phase 17 — Production Architecture & True Physics
+**Phase Status:** ⬜ Not Started — Planned (3 waves)
+**Overall Progress:** 15/17 phases complete
 
-Progress: ███████████████ 95%
+Progress: ████████████████ 88%
 
-**Last Activity:** 2026-02-28 — Completed 16-03-PLAN.md (training wiring: SSE race fix, connection status dot, real pipeline stages, psutil gauges)
+**Last Activity:** 2026-02-28 — Phase 17 planned (3 waves: global state resilience, smart routing, deterministic physics)
 
 ## Phase Tracker
 
@@ -38,7 +38,8 @@ Progress: ███████████████ 95%
 | 13 | Production Transition — Real Data & AI | ✅ | 2/2 | 100% |
 | 14 | Critical System Reset: Nuke & Rebuild | ◆ | 5/6 | 83% |
 | 15 | The Great Wiring | ✅ | 3/3 | 100% |
-| 16 | The Ultimate Reality Check | ○ | 3/5 | 60% |
+| 16 | The Ultimate Reality Check | ○ | 4/5 | 80% |
+| 17 | Production Architecture & True Physics | ⬜ | 0/3 | 0% |
 
 ## Configuration
 
