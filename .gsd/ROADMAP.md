@@ -385,5 +385,56 @@ Plans:
 
 ---
 
+### Phase 16: The Ultimate Reality Check
+**Goal:** Eliminate every crash, hardcoded mock value, dead UI element, and disconnected component. Fix the Zustand hydration crash, missing Calendar import, random carbon savings. Wire route mode colors, vehicle-aware car simulation, real training pipeline, hardware profiling, global settings propagation, live dashboard metrics, and station "Route Here" buttons. After this phase, every pixel on every page reflects real backend data.
+**Status:** ○ In progress — 3/5 plans complete
+**Dependencies:** Phase 15
+**Requirements:** STAB-01, PROD-06, LIVE-01, LIVE-02, SIM-01, SIM-02, MAP-01, UI-01
+
+**Success Criteria:**
+1. Zero runtime crashes (no TypeError, no ReferenceError) on any page with any localStorage state
+2. Route mode colors: Blue=Fast, Green=Eco, Purple=Scenic — auto-regenerate on mode switch
+3. Car simulation uses vehicle profile from Settings with physics-based battery drain
+4. Training page: Start button triggers real Q-Learning, terminal shows real SSE logs, pipeline tracks real stages
+5. Hardware profiling recommends simulation scale based on CPU/RAM
+6. Settings changes propagate globally (energy weight, units, vehicle, scale)
+7. Dashboard/Analytics show 100% live API data — zero hardcoded metrics
+8. Station map popups have functional "Route Here" button
+9. All stations verified within Hyderabad coordinates
+
+**Plans:** 5 plans (5 waves, sequential)
+
+Plans:
+- [x] 16-01-PLAN.md — Wave 1: Fatal Crashes & Dead UI Purge (Zustand hydration, Calendar import, dead buttons, random carbon)
+- [x] 16-02-PLAN.md — Wave 2: Map Clean-up & True Physics Simulation (node filtering, mode colors, vehicle icons, battery physics, sim controller)
+- [x] 16-03-PLAN.md — Wave 3: Forcing the Python Brain Awake (training wiring, real SSE terminal, pipeline flowchart, hardware gauges)
+- [ ] 16-04-PLAN.md — Wave 4: Dynamic Hardware Profiling & Settings Context (hardware detection, settings propagation to all pages)
+- [ ] 16-05-PLAN.md — Wave 5: Live Data Injection (real dashboard metrics, activity log, station Route Here, analytics empty states)
+
+---
+
+### Phase Sizing Summary (Updated)
+
+| Phase | Name | Plans | Complexity | Dependencies |
+|-------|------|-------|------------|--------------|
+| 01 | Foundation & Stability | 2–3 | Light | None |
+| 02 | Backend Restructure | 4 | Heavy | 01 |
+| 03 | Design System & UI Polish | 2–3 | Medium | 01 |
+| 04 | Map & Route Visualization | 2 | Medium-Heavy | 03 |
+| 05 | Live Data & Training | 2–3 | Medium-Heavy | 02 |
+| 06 | EV Simulation & Interactivity | 2 | Hard | 04 |
+| 07 | ML Pipeline Upgrade | 2–3 | Medium | 01 |
+| 08 | Testing & Demo Hardening | 2 | Light-Medium | 02, 03, 04, 05, 06, 07 |
+| 09 | UI Polish & Bug Fixes | 7 | Medium-Heavy | 03, 04, 05, 08 |
+| 10 | Nuclear UI Rebuild | 3 | Medium | 09 | ⊘ Superseded |
+| 11 | Ultra-Premium Bento UI Rebuild | 5 | Heavy | 09 |
+| 12 | Hyper-Fidelity UI & Functional Replication | 5 | Heavy | 11 |
+| 13 | Production Transition — Real Data & AI | 2 | Heavy | 12 |
+| 14 | Critical System Reset: Nuke & Rebuild | 6 | Heavy | 13 |
+| 15 | The Great Wiring | 3 | Heavy | 14 |
+| 16 | The Ultimate Reality Check | 5 | Heavy | 15 |
+
+---
+
 _Roadmap created: 2026-02-16_
-_Last updated: 2026-02-19 (Phase 13 complete — all phases done)_
+_Last updated: 2026-02-28 (Phase 16 planned — 5-wave ultimate reality check)_

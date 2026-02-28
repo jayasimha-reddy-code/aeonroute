@@ -11,13 +11,13 @@ When an evaluator sees this app, they immediately understand this is production-
 ## Current State
 
 **Milestone:** v1 — Presentation Release
-**Current Phase:** Phase 15 — The Great Wiring
-**Phase Status:** ✅ Complete — 3/3 plans complete
-**Overall Progress:** 14/15 phases complete
+**Current Phase:** Phase 16 — The Ultimate Reality Check
+**Phase Status:** ○ In progress — 3/5 waves complete
+**Overall Progress:** 15/16 phases complete
 
-Progress: ██████████████░ 96%
+Progress: ███████████████ 95%
 
-**Last Activity:** 2026-02-21 — Completed 15-03 (wire settings context, replace mock Stations data, purge all dead OverflowMenus)
+**Last Activity:** 2026-02-28 — Completed 16-03-PLAN.md (training wiring: SSE race fix, connection status dot, real pipeline stages, psutil gauges)
 
 ## Phase Tracker
 
@@ -38,6 +38,7 @@ Progress: ██████████████░ 96%
 | 13 | Production Transition — Real Data & AI | ✅ | 2/2 | 100% |
 | 14 | Critical System Reset: Nuke & Rebuild | ◆ | 5/6 | 83% |
 | 15 | The Great Wiring | ✅ | 3/3 | 100% |
+| 16 | The Ultimate Reality Check | ○ | 3/5 | 60% |
 
 ## Configuration
 
@@ -95,6 +96,10 @@ Progress: ██████████████░ 96%
 - [x] Phase 14 plan 05 execution
 - [x] Phase 15 planning
 - [x] Phase 15 plan 02 execution
+- [x] Phase 16 planning
+- [x] Phase 16 plan 01 execution
+- [x] Phase 16 plan 02 execution
+- [x] Phase 16 plan 03 execution
 
 ## Key Dates
 
@@ -136,7 +141,10 @@ Progress: ██████████████░ 96%
 | Phase 14 plan 04 complete | 2026-02-20 |
 | Phase 14 plan 05 complete | 2026-02-20 |
 | Phase 15 plan 02 complete | 2026-02-21 |
+| Phase 16 plan 01 complete | 2026-02-28 |
+| Phase 16 plan 02 complete | 2026-02-28 |
+| Phase 16 plan 03 complete | 2026-02-28 |
 
 ---
 
-_Last updated: 2026-02-21 (Phase 15 plan 02 complete — MOCK_LOGS killed, Training page wired to real SSE)_
+_Last updated: 2026-02-28 (16-03 complete — training page fully wired to real Python backend)_
