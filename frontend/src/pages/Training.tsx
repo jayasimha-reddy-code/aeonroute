@@ -86,11 +86,19 @@ function Training() {
 
   const handleStart = async () => {
     try {
-      await api.startTraining(config);
+      // Reset stale data first, then optimistically set is_training=true so the
+      // SSE hook opens its EventSource *before* the server response arrives.
       resetTrainingData();
+      useSystemStore.getState().updateTrainingFromSSE({ is_training: true, current_step: 'Starting…' });
+      await api.startTraining(config);
       addToast({ type: 'info', title: 'Training Started', message: 'Q-Learning pipeline kicked off.' });
     } catch (error: any) {
-      addToast({ type: 'error', title: 'Failed to Start', message: error?.message });
+      // Rollback optimistic update on failure
+      useSystemStore.getState().updateTrainingFromSSE({ is_training: false, current_step: '' });
+      const msg = (error?.response?.status === 409)
+        ? 'Training is already in progress.'
+        : (error?.message ?? 'Unknown error');
+      addToast({ type: 'error', title: 'Failed to Start', message: msg });
     }
   };
 
