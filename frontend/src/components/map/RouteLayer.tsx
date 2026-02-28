@@ -7,8 +7,9 @@ import { ROUTE_COLORS_ARRAY } from './mapStyles';
 
 /** Dedicated colours for alternative route types */
 const ALT_COLORS: Record<string, string> = {
-  eco: '#F59E0B',    // amber
-  scenic: '#06B6D4', // cyan
+  eco: '#10b981',    // emerald green
+  scenic: '#a855f7', // purple
+  fast: '#3b82f6',   // blue
 };
 
 interface RouteLayerProps {
@@ -37,7 +38,8 @@ export const RouteLayer = memo(function RouteLayer({
   const hiIdx = highlightIndex ?? 0;
 
   // Determine highlight color based on route mode
-  const highlightColor = routeMode === 'eco' ? '#f59e0b' : routeMode === 'scenic' ? '#06b6d4' : '#10b981';
+  // Fast=Blue, Eco=Green, Scenic=Purple
+  const highlightColor = routeMode === 'eco' ? '#10b981' : routeMode === 'scenic' ? '#a855f7' : '#3b82f6';
 
   // Convert all routes to GeoJSON
   const routeGeoJSONs = useMemo(
