@@ -446,6 +446,7 @@ def generate_route(
     route_feature = _build_route_feature(
         hg, state, path, route_type, battery_soc, battery_capacity_kwh,
         energy_weight=energy_weight,
+        route_mode=route_mode,
         injected_stop_details=injected_stop_details,
         charging_time_penalty_minutes=charging_time_penalty,
         battery_warning=battery_warning_flag,
@@ -457,13 +458,13 @@ def generate_route(
         # Offer Dijkstra as a spatial alternative to Q-Learning
         alt_path = _dijkstra_route(hg, source, dest)
         if alt_path and alt_path != path:
-            alt_feature = _build_route_feature(hg, state, alt_path, "dijkstra", battery_soc, battery_capacity_kwh)
+            alt_feature = _build_route_feature(hg, state, alt_path, "dijkstra", battery_soc, battery_capacity_kwh, route_mode=route_mode)
             alternatives.append(alt_feature)
     elif route_mode in ("eco", "scenic"):
         # Offer fast Dijkstra as baseline comparison
         alt_path = _dijkstra_route(hg, source, dest)
         if alt_path and alt_path != path:
-            alt_feature = _build_route_feature(hg, state, alt_path, "dijkstra", battery_soc, battery_capacity_kwh)
+            alt_feature = _build_route_feature(hg, state, alt_path, "dijkstra", battery_soc, battery_capacity_kwh, route_mode=route_mode)
             alternatives.append(alt_feature)
 
     return {"route": route_feature, "alternatives": alternatives}
@@ -625,6 +626,7 @@ def _build_route_feature(
     battery_soc: float,
     battery_capacity_kwh: float,
     energy_weight: float = 0.18,
+    route_mode: str = "fast",
     injected_stop_details: Optional[List[Dict[str, Any]]] = None,
     charging_time_penalty_minutes: float = 0.0,
     battery_warning: bool = False,
@@ -634,6 +636,10 @@ def _build_route_feature(
     total_distance_km = 0.0
     charging_stops: List[Dict[str, Any]] = []
     segments: List[Dict[str, Any]] = []
+
+    mode_multiplier = _MODE_DRAIN_MULTIPLIER.get(route_mode, 1.0)
+    cumulative_dist_km = 0.0
+    cumulative_energy_kwh = 0.0
 
     for i in range(len(path) - 1):
         from_idx = path[i]
@@ -647,7 +653,8 @@ def _build_route_feature(
         edge_coords = _extract_edge_geometry(hg.graph, from_osm, to_osm, from_pos, to_pos)
         edge_data = hg.get_edge_data(from_idx, to_idx)
         seg_dist = edge_data.get("distance_km", 0.0)
-        seg_energy = seg_dist * energy_weight
+        seg_energy = seg_dist * energy_weight                           # base energy (kWh)
+        seg_mode_energy = seg_dist * energy_weight * mode_multiplier    # mode-adjusted energy (kWh)
         seg_time = edge_data.get("base_time_minutes", seg_dist / 40.0 * 60.0)
 
         # Avoid duplicate coordinates at segment junctions
@@ -655,12 +662,17 @@ def _build_route_feature(
             edge_coords = edge_coords[1:]
         coordinates.extend(edge_coords)
         total_distance_km += seg_dist
+        cumulative_dist_km += seg_dist
+        cumulative_energy_kwh += seg_mode_energy
 
         segments.append({
             "from_node": from_idx,
             "to_node": to_idx,
             "distance_km": round(seg_dist, 3),
+            "cumulative_distance_km": round(cumulative_dist_km, 3),
             "energy_kwh": round(seg_energy, 3),
+            "mode_energy_kwh": round(seg_mode_energy, 3),
+            "cumulative_energy_kwh": round(cumulative_energy_kwh, 3),
             "road_type": edge_data.get("road_type", "residential"),
         })
 
@@ -682,6 +694,9 @@ def _build_route_feature(
     time_minutes = total_distance_km / 40.0 * 60.0 + charging_time_penalty_minutes
     battery_remaining = battery_soc - (energy_kwh / battery_capacity_kwh * 100.0)
 
+    # Build segment_boundaries_km: cumulative distances at each segment end (for binary search)
+    segment_boundaries_km = [round(s["cumulative_distance_km"], 3) for s in segments]
+
     # Simulated elevation profile
     elevation_profile = _generate_elevation_profile(total_distance_km, seed=hash((path[0], path[-1])) % 2**31)
 
@@ -699,6 +714,10 @@ def _build_route_feature(
             "battery_warning": battery_warning,
             "path_node_ids": path,
             "route_type": route_type,
+            "route_mode": route_mode,
+            "energy_weight": energy_weight,
+            "mode_multiplier": mode_multiplier,
+            "segment_boundaries_km": segment_boundaries_km,
             "segments": segments,
             "elevation_profile": elevation_profile,
         },

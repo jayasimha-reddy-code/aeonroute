@@ -145,7 +145,8 @@ Progress: ████████████████ 88%
 | Phase 16 plan 01 complete | 2026-02-28 |
 | Phase 16 plan 02 complete | 2026-02-28 |
 | Phase 16 plan 03 complete | 2026-02-28 |
+| Phase 17 plan 02 complete | 2026-02-28 |
 
 ---
 
-_Last updated: 2026-02-28 (16-03 complete — training page fully wired to real Python backend)_
+_Last updated: 2026-02-28 (17-02 complete — range anxiety routing: battery-aware detour, charging stop injection, pulsing amber map markers)_
