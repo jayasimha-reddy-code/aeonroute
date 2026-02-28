@@ -4,7 +4,7 @@ import { hyperStaggerContainer, hyperStaggerItem } from '../lib/motion';
 import api, { type SystemHealth } from '../services/api';
 import PageHeader from '../components/PageHeader';
 import { Card, Button, Badge, ProgressBar } from '../components/ui';
-import { useSystemStore, useTrainingProgress, useRewardHistory, useSSEConnected, useResetTrainingData, useSetActiveTab, useTrainingLogs } from '../store/store';
+import { useSystemStore, useTrainingProgress, useRewardHistory, useSSEConnected, useResetTrainingData, useSetActiveTab, useTrainingLogs, useSimulationScale } from '../store/store';
 import { useTrainingStream } from '../hooks/useTrainingStream';
 import { RewardCurveChart } from '../components/training/RewardCurveChart';
 import { HardwareGauge } from '../components/training/HardwareGauge';
@@ -13,6 +13,8 @@ import { PipelineFlowchart } from '../components/training/PipelineFlowchart';
 import { NeonSlider } from '../components/ui/NeonSlider';
 import { Brain, Play, Square, CheckCircle, Circle, Loader2, Settings2, Workflow, BarChart3, TrendingUp, Navigation, Cpu } from 'lucide-react';
 import { cn } from '../lib/utils';
+
+const SCALE_EPISODES: Record<string, number> = { light: 50, standard: 200, full: 500 };
 
 function Training() {
   const { addToast } = useSystemStore();
@@ -23,11 +25,21 @@ function Training() {
   const resetTrainingData = useResetTrainingData();
   const setActiveTab = useSetActiveTab();
   const trainingLogs = useTrainingLogs();
+  const simulationScale = useSimulationScale();
 
   const [config, setConfig] = useState({
     episodes: 200, learning_rate: 0.1, discount_factor: 0.95,
     max_steps: 300,
   });
+  const [userOverrodeEpisodes, setUserOverrodeEpisodes] = useState(false);
+
+  // Pre-populate episode count from simulationScale (only when not user-overridden)
+  useEffect(() => {
+    if (!userOverrodeEpisodes) {
+      setConfig((c) => ({ ...c, episodes: SCALE_EPISODES[simulationScale] ?? 200 }));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [simulationScale]);
   const [hardwareType, setHardwareType] = useState<'GPU' | 'TPU'>('GPU');
 
   // Real system metrics (CPU / memory) from /api/system-health
@@ -169,10 +181,13 @@ function Training() {
             <div className="space-y-4">
               <NeonSlider
                 label="Episodes" icon="🎯" value={config.episodes}
-                onChange={(v) => setConfig({ ...config, episodes: v })}
+                onChange={(v) => { setConfig({ ...config, episodes: v }); setUserOverrodeEpisodes(true); }}
                 min={50} max={1000} step={10}
                 disabled={trainingProgress.is_training}
               />
+              <p className="text-[10px] text-slate-500 -mt-2">
+                Recommended: <span className="text-cyan-400">{SCALE_EPISODES[simulationScale] ?? 200} episodes</span> for your hardware
+              </p>
               <NeonSlider
                 label="Learning Rate" icon="📈" value={config.learning_rate}
                 onChange={(v) => setConfig({ ...config, learning_rate: v })}

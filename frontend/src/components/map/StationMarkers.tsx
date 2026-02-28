@@ -1,23 +1,53 @@
 import { memo, useState, useEffect, useMemo } from 'react';
 import { Marker, Popup } from 'react-map-gl/maplibre';
 import api, { type StationData } from '../../services/api';
+import { useStations, useSetStations, useSettings } from '../../store/store';
+
+const KM_TO_MI = 0.621371;
 
 interface StationMarkersProps {
   /** Node IDs of stations along the active route (for highlight) */
   routeStationIds?: number[];
+  /** Optional user/map-center coordinates for distance calculation */
+  userLat?: number;
+  userLon?: number;
 }
 
-export const StationMarkers = memo(function StationMarkers({ routeStationIds = [] }: StationMarkersProps) {
-  const [stations, setStations] = useState<StationData[]>([]);
+export const StationMarkers = memo(function StationMarkers({
+  routeStationIds = [],
+  userLat,
+  userLon,
+}: StationMarkersProps) {
+  const storeStations = useStations();
+  const setStoreStations = useSetStations();
+  const settings = useSettings();
+  const units = settings.units;
   const [selected, setSelected] = useState<StationData | null>(null);
 
+  // Fetch stations only if Zustand store is empty (single source of truth — no double-fetch)
   useEffect(() => {
+    if (storeStations.length > 0) return; // already populated — skip fetch
     let cancelled = false;
     api.getStations().then((res) => {
-      if (!cancelled) setStations(res.stations ?? []);
+      if (!cancelled) setStoreStations(res.stations ?? []);
     }).catch(() => {});
     return () => { cancelled = true; };
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Use Zustand stations as the source of truth
+  const stations = storeStations;
+
+  /** Calculate straight-line distance from user position to station, honoring unit setting */
+  const stationDistance = (s: StationData): string | null => {
+    if (userLat == null || userLon == null) return null;
+    const dLat = (s.lat - userLat) * (Math.PI / 180);
+    const dLon = (s.lon - userLon) * (Math.PI / 180);
+    const a = Math.sin(dLat / 2) ** 2 +
+      Math.cos(userLat * (Math.PI / 180)) * Math.cos(s.lat * (Math.PI / 180)) * Math.sin(dLon / 2) ** 2;
+    const distKm = 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    if (units === 'imperial') return `${(distKm * KM_TO_MI).toFixed(1)} mi`;
+    return `${distKm.toFixed(1)} km`;
+  };
 
   const routeSet = useMemo(() => new Set(routeStationIds), [routeStationIds]);
 
@@ -108,6 +138,9 @@ export const StationMarkers = memo(function StationMarkers({ routeStationIds = [
               <p className="text-muted">
                 Charge time (20→80%): ~{Math.round(0.6 * 60 / Math.max(selected.power_kw, 1) * 60)} min
               </p>
+              {stationDistance(selected) && (
+                <p className="text-muted">Distance: {stationDistance(selected)}</p>
+              )}
             </div>
           </div>
         </Popup>

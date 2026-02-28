@@ -2,7 +2,7 @@ import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { hyperStaggerContainer, hyperStaggerItem } from '../lib/motion';
-import { useSystemStore, useEnergyWeight, useBatteryCapacity } from '../store/store';
+import { useSystemStore, useEnergyWeight, useBatteryCapacity, useVehicleProfile, useSimulationScale, useSettings } from '../store/store';
 import api, { geoJSONRouteToLegacy } from '../services/api';
 import NetworkMap from '../components/NetworkMap';
 import RouteCard from '../components/RouteCard';
@@ -35,6 +35,17 @@ function RoutePlanner() {
   const { roadNetwork, generatedRoutes, setGeneratedRoutes, selectedRoute, setSelectedRoute, currentEVState, setEVState, addToast } = useSystemStore();
   const energyWeight = useEnergyWeight();
   const settingsBattery = useBatteryCapacity();
+  const vehicleProfile = useVehicleProfile();
+  const simulationScale = useSimulationScale();
+  const settings = useSettings();
+  const units = settings.units;
+  const KM_TO_MI = 0.621371;
+  const toDistDisplay = (km: number) =>
+    units === 'imperial' ? `${(km * KM_TO_MI).toFixed(1)} mi` : `${km.toFixed(1)} km`;
+  const toEffDisplay = (kwhPerKm: number) =>
+    units === 'imperial'
+      ? `${(kwhPerKm / KM_TO_MI).toFixed(2)} kWh/mi`
+      : `${kwhPerKm.toFixed(2)} kWh/km`;
   const [searchParams] = useSearchParams();
   const [sourceLat, setSourceLat] = useState(17.3616);
   const [sourceLon, setSourceLon] = useState(78.4747);
@@ -105,7 +116,7 @@ function RoutePlanner() {
       startSOC: currentEVState.battery_soc,
       batteryCapacityKWh: currentEVState.battery_capacity_kwh,
       speedMultiplier,
-      routeMode,
+      routeMode: routeType,
     });
 
   const handleGenerateRoutes = async () => {
@@ -137,6 +148,7 @@ function RoutePlanner() {
         battery_capacity_kwh: currentEVState.battery_capacity_kwh,
         route_mode: routeType,
         energy_weight: energyWeight,
+        vehicle_profile: vehicleProfile,
       });
       // Convert GeoJSON routes to legacy Route format
       const routes = [geoJSONRouteToLegacy(result.route), ...result.alternatives.map(geoJSONRouteToLegacy)];
@@ -346,6 +358,7 @@ function RoutePlanner() {
                   </div>
 
                   {/* Battery gauge — compact inline */}
+                  {simulationScale !== 'light' && (
                   <div className="flex items-center gap-2 flex-1 min-w-[120px]">
                     <Zap className={cn('w-3.5 h-3.5 flex-shrink-0', simState.isBatteryLow ? 'text-amber-400 animate-pulse' : 'text-muted')} />
                     <div className="flex-1 h-2 rounded-full bg-white/[0.06] overflow-hidden">
@@ -353,6 +366,7 @@ function RoutePlanner() {
                         className={cn(
                           'h-full rounded-full transition-all duration-500',
                           simState.isBatteryLow ? 'bg-amber-400' : 'bg-emerald',
+                          simulationScale === 'full' ? 'shadow-[0_0_8px_rgba(16,185,129,0.7)]' : '',
                         )}
                         style={{ width: `${Math.max(0, simState.currentSOC)}%` }}
                       />
@@ -360,19 +374,34 @@ function RoutePlanner() {
                     <span className={cn('text-xs font-mono w-9 text-right', simState.isBatteryLow ? 'text-amber-400' : 'text-white')}>
                       {simState.currentSOC.toFixed(0)}%
                     </span>
+                    {simulationScale === 'full' && (
+                      <span className="text-[10px] text-slate-500 font-mono">
+                        {(simState.currentSOC / 100 * currentEVState.battery_capacity_kwh).toFixed(1)} kWh
+                      </span>
+                    )}
                     {simState.isBatteryLow && (
                       <span className="text-xs text-amber-400 animate-pulse">Low</span>
                     )}
                   </div>
+                  )}
 
                   {/* Distance progress */}
                   {simState.isSimulating && selectedRoute?.distance_km && (
                     <div className="flex items-center gap-1.5 text-xs text-muted">
                       <span className="text-white font-mono">
-                        {(simState.progress * selectedRoute.distance_km).toFixed(1)}
+                        {toDistDisplay(simState.progress * selectedRoute.distance_km)}
                       </span>
                       <span>/</span>
-                      <span>{selectedRoute.distance_km.toFixed(1)} km</span>
+                      <span>{toDistDisplay(selectedRoute.distance_km)}</span>
+                    </div>
+                  )}
+
+                  {/* Particle trail indicator for full mode */}
+                  {simulationScale === 'full' && simState.isSimulating && !simState.isPaused && (
+                    <div className="flex items-center gap-1 text-[10px] text-emerald/60">
+                      <span className="animate-ping inline-block w-1 h-1 rounded-full bg-emerald/40" />
+                      <span className="animate-ping inline-block w-1 h-1 rounded-full bg-emerald/30 delay-75" />
+                      <span className="animate-ping inline-block w-1 h-1 rounded-full bg-emerald/20 delay-150" />
                     </div>
                   )}
 

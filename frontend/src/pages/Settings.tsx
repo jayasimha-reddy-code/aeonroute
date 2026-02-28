@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Car, Gauge, Palette, Globe, Save, MapPin, Cpu, Zap } from 'lucide-react';
 import { Card, ToggleSwitch } from '../components/ui';
@@ -11,6 +11,7 @@ import {
   type SimulationScale,
 } from '../store/store';
 import api, { SystemConfig } from '../services/api';
+import { getHardwareProfile } from '../lib/hardware';
 
 const VEHICLE_PROFILES: Record<string, { label: string; capacity: number; range: string }> = {
   tesla_model_3_lr: { label: 'Tesla Model 3 LR', capacity: 82, range: '358 mi' },
@@ -18,6 +19,13 @@ const VEHICLE_PROFILES: Record<string, { label: string; capacity: number; range:
   rivian_r1t:       { label: 'Rivian R1T',        capacity: 135, range: '314 mi' },
   ford_mach_e:      { label: 'Ford Mustang Mach-E', capacity: 91, range: '312 mi' },
   bmw_ix:           { label: 'BMW iX xDrive50',   capacity: 105, range: '324 mi' },
+};
+
+const SCALE_ORDER: Record<string, number> = { light: 0, standard: 1, full: 2 };
+const TIER_MAX: Record<string, SimulationScale> = {
+  'low-end': 'light',
+  'mid-range': 'standard',
+  'high-end': 'full',
 };
 
 const SIM_SCALE_INFO: Record<SimulationScale, { episodes: number; time: string; hw: string }> = {
@@ -54,6 +62,9 @@ export default function Settings() {
       setBatteryCapacity(profile.capacity);
     }
   };
+
+  const hwProfile = useMemo(() => getHardwareProfile(), []);
+  const isAboveTier = SCALE_ORDER[simulationScale] > SCALE_ORDER[TIER_MAX[hwProfile.tier]];
 
   const currentVehicle = VEHICLE_PROFILES[settings.vehicleProfile] ?? VEHICLE_PROFILES['tesla_model_3_lr'];
   const simInfo = SIM_SCALE_INFO[simulationScale];
@@ -154,6 +165,13 @@ export default function Settings() {
             </div>
           </div>
           <div className="space-y-4">
+            {/* Recommended scale badge */}
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-label">Select Mode</span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald/10 text-emerald border border-emerald/20">
+                Recommended: {hwProfile.recommendations.simulationScale}
+              </span>
+            </div>
             <div className="flex gap-2">
               {(['light', 'standard', 'full'] as SimulationScale[]).map((scale) => (
                 <button
@@ -168,6 +186,30 @@ export default function Settings() {
                   {scale.charAt(0).toUpperCase() + scale.slice(1)}
                 </button>
               ))}
+            </div>
+            {/* Warning if scale is above hardware tier */}
+            {isAboveTier && (
+              <div className="p-2.5 rounded-xl bg-amber/5 border border-amber/20 text-xs text-amber flex items-start gap-2">
+                <span>⚠</span>
+                <span>
+                  May cause lag on your hardware ({hwProfile.cpuCores} cores
+                  {hwProfile.deviceMemoryGB ? `, ${hwProfile.deviceMemoryGB}GB RAM` : ''})
+                </span>
+              </div>
+            )}
+            {/* System Info */}
+            <div className="flex items-center gap-2 text-[10px] text-muted">
+              <span className="px-2 py-0.5 rounded-md bg-white/[0.04] border border-white/[0.06]">
+                {hwProfile.cpuCores} CPU cores
+              </span>
+              {hwProfile.deviceMemoryGB && (
+                <span className="px-2 py-0.5 rounded-md bg-white/[0.04] border border-white/[0.06]">
+                  {hwProfile.deviceMemoryGB}GB RAM
+                </span>
+              )}
+              <span className="px-2 py-0.5 rounded-md bg-white/[0.04] border border-white/[0.06] capitalize">
+                {hwProfile.tier}
+              </span>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="p-3 rounded-xl bg-[#0a0f16]/30">
