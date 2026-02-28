@@ -1,62 +1,79 @@
 import { useMemo } from 'react';
 import { cn } from '../../lib/utils';
 
-/* ── Node definitions ─────────────────────────────── */
+// ─── Node definitions ──────────────────────────────────────────────────────
+// Stages match the ACTUAL backend _run_pipeline() in training_service.py:
+//   Step 1: loading_graph    → Load Graph
+//   Step 2: loading_stations → Load Stations
+//   Step 3: creating_env     → Init Environment
+//   Step 4: training         → Train Q-Learning
+//   Step 5: saving           → Save Q-table
+//   Step 6: complete         → Complete
+//
+// Layout: 2-column (col-1: steps 1-3, bridge, col-2: steps 4-6)
+// ───────────────────────────────────────────────────────────────────────────
+
 interface FlowNode {
   id: string;
   label: string;
   subtitle: string;
   x: number;
   y: number;
-  color?: string;
-  /** Whether this node participates in active/complete/pending state logic */
-  isProcessing?: boolean;
-  /** Ordered index among processing nodes (0-based) */
-  stageIndex?: number;
+  color: string;
+  stageIndex: number;
 }
 
 interface FlowEdge {
   from: string;
   to: string;
+  bridge?: boolean;
 }
 
+const NODE_W = 175;
+const NODE_H = 50;
+
+const COL1_X = 15;
+const COL2_X = 430;
+const ROW1_Y = 20;
+const ROW2_Y = 120;
+const ROW3_Y = 220;
+
 const NODES: FlowNode[] = [
-  { id: 'data-train',  label: 'Training Data',  subtitle: 'Data packets',     x: 40,  y: 55 },
-  { id: 'data-traffic', label: 'Traffic Data',   subtitle: 'Data packets',     x: 40,  y: 175 },
-  { id: 'sg-gan',      label: 'SG-GAN',         subtitle: 'Traffic synthesis', x: 260, y: 40,  color: '#f59e0b', isProcessing: true, stageIndex: 0 },
-  { id: 'q-learning',  label: 'Q-Learning',     subtitle: 'RL agent',          x: 260, y: 140, color: '#10b981', isProcessing: true, stageIndex: 1 },
-  { id: 'gnn',         label: 'GNN',            subtitle: 'Route model',       x: 260, y: 240, color: '#06b6d4', isProcessing: true, stageIndex: 2 },
-  { id: 'out-routes',  label: 'Route Output',   subtitle: 'Optimized routes',  x: 480, y: 90 },
-  { id: 'out-traffic', label: 'Traffic Output',  subtitle: 'Predictions',       x: 480, y: 200 },
+  { id: 'load-graph',    label: 'Load Graph',       subtitle: 'Hyderabad OSM',     x: COL1_X, y: ROW1_Y, color: '#10b981', stageIndex: 0 },
+  { id: 'load-stations', label: 'Load Stations',    subtitle: 'Charging points',   x: COL1_X, y: ROW2_Y, color: '#10b981', stageIndex: 1 },
+  { id: 'init-env',      label: 'Init Environment', subtitle: 'Gymnasium RL',      x: COL1_X, y: ROW3_Y, color: '#f59e0b', stageIndex: 2 },
+  { id: 'train-ql',      label: 'Train Q-Learning', subtitle: 'RL agent episodes', x: COL2_X, y: ROW1_Y, color: '#f59e0b', stageIndex: 3 },
+  { id: 'save-model',    label: 'Save Q-table',     subtitle: 'Persist to disk',   x: COL2_X, y: ROW2_Y, color: '#10b981', stageIndex: 4 },
+  { id: 'complete-node', label: 'Complete',          subtitle: 'Model loaded',      x: COL2_X, y: ROW3_Y, color: '#10b981', stageIndex: 5 },
 ];
 
 const EDGES: FlowEdge[] = [
-  { from: 'data-train',   to: 'sg-gan' },
-  { from: 'data-traffic',  to: 'sg-gan' },
-  { from: 'data-train',   to: 'q-learning' },
-  { from: 'data-traffic',  to: 'q-learning' },
-  { from: 'sg-gan',       to: 'gnn' },
-  { from: 'q-learning',   to: 'gnn' },
-  { from: 'gnn',          to: 'out-routes' },
-  { from: 'q-learning',   to: 'out-routes' },
-  { from: 'sg-gan',       to: 'out-traffic' },
+  { from: 'load-graph',    to: 'load-stations'  },
+  { from: 'load-stations', to: 'init-env'        },
+  { from: 'init-env',      to: 'train-ql', bridge: true },
+  { from: 'train-ql',      to: 'save-model'      },
+  { from: 'save-model',    to: 'complete-node'   },
 ];
 
-const NODE_W = 140;
-const NODE_H = 50;
+const STAGE_ORDER = NODES.map(n => n.id);
 
-/** Map backend current_step values -> node ID */
+/** Map SSE current_step / phase values → node id */
 function stepToNodeId(step: string): string | null {
-  const s = step.toLowerCase();
-  if (s.includes('sg_gan') || s.includes('sg-gan') || s.includes('traffic_generation') || s.includes('gan')) return 'sg-gan';
-  if (s.includes('q_learning') || s.includes('q-learning') || s.includes('rl_training') || s.includes('rl training') || s.includes('agent')) return 'q-learning';
-  if (s.includes('gnn') || s.includes('route_generation') || s.includes('route generation')) return 'gnn';
-  if (s === 'complete' || s === 'done' || s === 'finished') return '__complete__';
+  const s = step.toLowerCase().trim();
+  if (s === 'loading_graph'    || (s.includes('loading') && s.includes('graph')))    return 'load-graph';
+  if (s === 'loading_stations' || (s.includes('loading') && s.includes('station'))) return 'load-stations';
+  if (s === 'creating_env'     || s.includes('creating') || s.includes('gymnas'))   return 'init-env';
+  if (s === 'training'         || s.includes('q-learning') || s.includes('q_learning') || s.includes('episode') || s.includes('agent')) return 'train-ql';
+  if (s === 'saving'           || s.includes('saving') || s.includes('q-table') || s.includes('q_table')) return 'save-model';
+  if (s === 'complete' || s === 'done' || s === 'finished' || s.includes('complete')) return '__complete__';
+  // English fallbacks from legacy _update() calls
+  if (s.includes('hyderabad') || s.includes('graph'))    return 'load-graph';
+  if (s.includes('station'))                              return 'load-stations';
+  if (s.includes('environment') || s.includes('rl env')) return 'init-env';
+  if (s.includes('training'))                             return 'train-ql';
+  if (s.includes('sav'))                                  return 'save-model';
   return null;
 }
-
-/** Stage order for determining completed nodes */
-const STAGE_ORDER = ['sg-gan', 'q-learning', 'gnn'];
 
 function getNodeCenter(node: FlowNode): [number, number] {
   return [node.x + NODE_W / 2, node.y + NODE_H / 2];
@@ -69,62 +86,61 @@ interface PipelineFlowchartProps {
 }
 
 export function PipelineFlowchart({ isTraining = false, currentStep = '', progress = 0 }: PipelineFlowchartProps) {
-  const activeNodeId = stepToNodeId(currentStep);
-  const allComplete = activeNodeId === '__complete__' || (!isTraining && progress >= 100);
-  const activeStageIndex = activeNodeId ? STAGE_ORDER.indexOf(activeNodeId) : -1;
+  const activeNodeId   = stepToNodeId(currentStep);
+  const allComplete    = activeNodeId === '__complete__' || (!isTraining && progress >= 100);
+  const activeStageIdx = activeNodeId ? STAGE_ORDER.indexOf(activeNodeId) : -1;
 
   const paths = useMemo(() => {
     const nodeMap = new Map(NODES.map(n => [n.id, n]));
     return EDGES.map((edge, i) => {
       const fromNode = nodeMap.get(edge.from)!;
-      const toNode = nodeMap.get(edge.to)!;
-      const [x1, y1] = getNodeCenter(fromNode);
-      const [x2, y2] = getNodeCenter(toNode);
-      const mx = (x1 + x2) / 2;
-      const cpx = mx;
-      const cpy = y1 + (y2 - y1) * 0.2;
-      const d = `M ${x1} ${y1} Q ${cpx} ${cpy} ${x2} ${y2}`;
-      const isActiveEdge = allComplete || edge.from === activeNodeId || edge.to === activeNodeId;
+      const toNode   = nodeMap.get(edge.to)!;
+      const [, y1]   = getNodeCenter(fromNode);
+      const [, y2]   = getNodeCenter(toNode);
+
+      let d: string;
+      if (edge.bridge) {
+        const startX = fromNode.x + NODE_W;
+        const endX   = toNode.x;
+        const cpX    = (startX + endX) / 2;
+        d = `M ${startX} ${y1} C ${cpX} ${y1}, ${cpX} ${y2}, ${endX} ${y2}`;
+      } else {
+        const [x1] = getNodeCenter(fromNode);
+        const [x2] = getNodeCenter(toNode);
+        const mx = (x1 + x2) / 2;
+        d = `M ${x1} ${y1} Q ${mx} ${y1 + (y2 - y1) * 0.4} ${x2} ${y2}`;
+      }
+
+      const fromIdx     = STAGE_ORDER.indexOf(edge.from);
+      const toIdx       = STAGE_ORDER.indexOf(edge.to);
+      const isActiveEdge = allComplete
+        || (activeStageIdx !== -1 && (fromIdx < activeStageIdx || toIdx <= activeStageIdx));
+
       return { d, key: `${edge.from}-${edge.to}-${i}`, isActiveEdge };
     });
-  }, [activeNodeId, allComplete]);
-
-  const legendItems = [
-    { label: 'Fast',   color: '#10b981' },
-    { label: 'Eco',    color: '#f59e0b' },
-    { label: 'Scenic', color: '#06b6d4' },
-  ];
+  }, [activeNodeId, allComplete, activeStageIdx]);
 
   return (
-    <div className="relative w-full" style={{ minHeight: 320 }}>
-      {/* Legend pills */}
-      <div className="absolute top-0 right-0 flex items-center gap-3 z-10">
-        {legendItems.map(item => (
-          <div key={item.label} className="flex items-center gap-1.5">
-            <svg width="20" height="3"><line x1="0" y1="1.5" x2="20" y2="1.5" stroke={item.color} strokeWidth="2" strokeDasharray="6 3" /></svg>
-            <span className="text-[10px] text-slate-400 font-medium">{item.label}</span>
-          </div>
-        ))}
-      </div>
-
-      {/* Single SVG canvas */}
-      <svg className="relative w-full h-full" viewBox="0 0 620 310" preserveAspectRatio="xMidYMid meet">
+    <div className="relative w-full" style={{ minHeight: 290 }}>
+      <svg
+        className="relative w-full h-full"
+        viewBox="0 0 620 290"
+        preserveAspectRatio="xMidYMid meet"
+      >
         <defs>
-          <filter id="pathGlow">
+          <filter id="pathGlow2">
             <feGaussianBlur stdDeviation="2.5" result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
+            <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
           </filter>
-          <filter id="nodeGlow">
+          <filter id="nodeGlow2">
             <feGaussianBlur stdDeviation="4" result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
+            <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
           </filter>
         </defs>
+
+        {/* Subtle column divider */}
+        <line x1="310" y1="10" x2="310" y2="280"
+          stroke="white" strokeWidth="1" strokeDasharray="4 8" opacity="0.05" />
 
         {/* Connection paths */}
         {paths.map(p => (
@@ -135,64 +151,57 @@ export function PipelineFlowchart({ isTraining = false, currentStep = '', progre
             stroke="#10b981"
             strokeWidth={p.isActiveEdge ? 2.5 : 1.5}
             strokeDasharray="8 4"
-            filter={p.isActiveEdge ? 'url(#pathGlow)' : undefined}
+            filter={p.isActiveEdge ? 'url(#pathGlow2)' : undefined}
             className={cn(p.isActiveEdge && isTraining && 'flow-path')}
-            style={{ opacity: p.isActiveEdge ? 0.85 : 0.25, transition: 'opacity 0.5s' }}
+            style={{ opacity: p.isActiveEdge ? 0.85 : 0.18, transition: 'opacity 0.5s' }}
           />
         ))}
 
         {/* Nodes */}
         {NODES.map(node => {
-          const borderColor = node.color || '#ffffff';
-          const isActive = !allComplete && node.id === activeNodeId;
-          const isComplete = allComplete ||
-            (node.isProcessing && activeStageIndex !== -1 && (node.stageIndex ?? 99) < activeStageIndex);
-          const isPending = !isActive && !isComplete && node.isProcessing && isTraining;
-
-          const opacity = isPending ? 0.35 : 1.0;
-          const borderOpacity = isActive ? 'cc' : isComplete ? '99' : '1a';
-          const borderWidth = isActive ? 2 : 1;
+          const isActive   = !allComplete && node.id === activeNodeId;
+          const isComplete = allComplete || (activeStageIdx !== -1 && node.stageIndex < activeStageIdx);
+          const isPending  = !isActive && !isComplete && isTraining;
+          const opacity    = isPending ? 0.35 : 1.0;
+          const borderAlpha = isActive ? 'cc' : isComplete ? '88' : '22';
 
           let subtitle = node.subtitle;
-          if (node.isProcessing) {
-            if (isComplete) subtitle = '\u2713 Complete';
-            else if (isActive) subtitle = `${Math.round(progress)}%`;
-          }
+          if (isComplete) subtitle = '\u2713 Complete';
+          else if (isActive) subtitle = `${Math.round(progress)}%`;
 
           return (
             <g key={node.id} style={{ opacity, transition: 'opacity 0.5s' }}>
               {isActive && (
-                <rect
-                  x={node.x - 3}
-                  y={node.y - 3}
-                  width={NODE_W + 6}
-                  height={NODE_H + 6}
-                  rx={14}
-                  fill="none"
-                  stroke={borderColor}
-                  strokeWidth={3}
-                  filter="url(#nodeGlow)"
-                  style={{ opacity: 0.55 }}
-                />
+                <rect x={node.x - 3} y={node.y - 3}
+                  width={NODE_W + 6} height={NODE_H + 6} rx={13}
+                  fill="none" stroke={node.color} strokeWidth={3}
+                  filter="url(#nodeGlow2)" style={{ opacity: 0.5 }} />
               )}
-              <rect
-                x={node.x}
-                y={node.y}
-                width={NODE_W}
-                height={NODE_H}
-                rx={12}
-                fill="rgba(10, 15, 22, 0.6)"
-                stroke={`${borderColor}${borderOpacity}`}
-                strokeWidth={borderWidth}
-              />
-              <text x={node.x + 12} y={node.y + 20} fill={isActive ? 'white' : 'white'} fontSize="11" fontWeight="600" fontFamily="inherit">
+              <rect x={node.x} y={node.y}
+                width={NODE_W} height={NODE_H} rx={11}
+                fill="rgba(10, 15, 22, 0.65)"
+                stroke={`${node.color}${borderAlpha}`}
+                strokeWidth={isActive ? 2 : 1} />
+              {/* Step number badge */}
+              <rect x={node.x + 8} y={node.y + 12}
+                width={18} height={18} rx={5}
+                fill={isComplete ? '#10b981' : isActive ? node.color : 'rgba(255,255,255,0.05)'}
+                style={{ transition: 'fill 0.4s' }} />
+              <text x={node.x + 17} y={node.y + 25}
+                fill={isComplete || isActive ? '#000' : '#64748b'}
+                fontSize="9" fontWeight="700" textAnchor="middle" fontFamily="inherit">
+                {node.stageIndex + 1}
+              </text>
+              {/* Label */}
+              <text x={node.x + 34} y={node.y + 20}
+                fill="white" fontSize="11" fontWeight="600" fontFamily="inherit">
                 {node.label}
               </text>
-              <text x={node.x + 12} y={node.y + 36} fill={isComplete ? '#10b981' : '#94a3b8'} fontSize="9" fontFamily="inherit">
+              {/* Subtitle */}
+              <text x={node.x + 34} y={node.y + 35}
+                fill={isComplete ? '#10b981' : '#94a3b8'}
+                fontSize="9" fontFamily="inherit">
                 {subtitle}
-              </text>
-              <text x={node.x + NODE_W - 16} y={node.y + 28} fill={isComplete ? '#10b981' : '#475569'} fontSize={isComplete ? '16' : '14'} textAnchor="middle">
-                {isComplete ? '\u2713' : '\u22ee'}
               </text>
             </g>
           );
