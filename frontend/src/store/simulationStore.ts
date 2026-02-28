@@ -91,6 +91,10 @@ interface RouteCache {
     chargingStopCoords: { coord: [number, number]; nodeId: number; name: string }[];
     path: number[];
     totalEnergyKwh: number;
+    // Segment-based deterministic physics
+    segmentBoundaries: number[];   // cumulative distance at each segment END (km)
+    segmentEnergies: number[];     // mode_energy_kwh for each segment
+    cumulativeEnergies: number[];  // cumulative energy at each segment END (kWh)
 }
 
 interface InternalRefs {
@@ -150,12 +154,60 @@ class SimulationEngine {
             });
         }
 
+        // ── Pre-compute segment physics arrays ────────────────
+        const geojsonSegments = (route.geojson?.properties as any)?.segments as Array<{
+            distance_km: number;
+            mode_energy_kwh?: number;
+            energy_kwh?: number;
+            cumulative_distance_km?: number;
+            cumulative_energy_kwh?: number;
+        }> | undefined;
+
+        // energyWeight and modeMultiplier come from the backend route properties
+        const modeMultiplier: number = (route.geojson?.properties as any)?.mode_multiplier ?? (MODE_DRAIN_MULTIPLIERS[opts.routeMode ?? 'fast'] ?? 1.0);
+        const segmentBoundaries: number[] = [];
+        const segmentEnergies: number[] = [];
+        const cumulativeEnergies: number[] = [];
+
+        if (geojsonSegments && geojsonSegments.length > 0) {
+            // Use server-provided per-segment data
+            if ('cumulative_distance_km' in geojsonSegments[0] && 'cumulative_energy_kwh' in geojsonSegments[0]) {
+                // Rich server-side data — use directly
+                for (const seg of geojsonSegments) {
+                    segmentBoundaries.push(seg.cumulative_distance_km ?? 0);
+                    segmentEnergies.push(seg.mode_energy_kwh ?? (seg.energy_kwh ?? 0) * modeMultiplier);
+                    cumulativeEnergies.push(seg.cumulative_energy_kwh ?? 0);
+                }
+            } else {
+                // Fallback: accumulate from individual segment fields
+                let cumDist = 0;
+                let cumEnergy = 0;
+                for (const seg of geojsonSegments) {
+                    cumDist += seg.distance_km ?? 0;
+                    const segModeEnergy = (seg.mode_energy_kwh ?? ((seg.energy_kwh ?? 0) * modeMultiplier));
+                    cumEnergy += segModeEnergy;
+                    segmentBoundaries.push(cumDist);
+                    segmentEnergies.push(segModeEnergy);
+                    cumulativeEnergies.push(cumEnergy);
+                }
+            }
+        } else {
+            // No segments from backend — derive from total energy (degrades to linear for single segment)
+            const totalRouteEnergy = route.energy_kwh * modeMultiplier;
+            segmentBoundaries.push(totalLengthKm);
+            segmentEnergies.push(totalRouteEnergy);
+            cumulativeEnergies.push(totalRouteEnergy);
+        }
+
         this.routeCache = {
             lineString,
             totalLengthKm,
             chargingStopCoords,
             path: route.path,
             totalEnergyKwh: route.energy_kwh,
+            segmentBoundaries,
+            segmentEnergies,
+            cumulativeEnergies,
         };
         return true;
     }
@@ -224,7 +276,7 @@ class SimulationEngine {
         if (!prev.isSimulating || prev.isPaused) return;
 
         const refs = this.refs;
-        const drainMultiplier = MODE_DRAIN_MULTIPLIERS[opts.routeMode ?? 'fast'] ?? 1.0;
+        // Mode drain is pre-computed in loadRoute() — no runtime multiplier needed here
 
         // ── Charging logic ──────────────────────────────
         if (prev.isCharging) {
@@ -256,16 +308,35 @@ class SimulationEngine {
         const aheadPoint = turf.along(rd.lineString, lookAhead, { units: 'kilometers' });
         const bearing = turf.bearing(pointFeature, aheadPoint);
 
-        // SOC drain — linear approximation (Wave 3 upgrades to per-segment)
-        const energyUsed = rd.totalEnergyKwh * progress * drainMultiplier;
-        const socDrain = (energyUsed / opts.batteryCapacityKWh) * 100;
-        const currentSOC = Math.max(0, opts.startSOC - socDrain);
+        // ── Segment-based deterministic SOC drain ────────────
+        // Use binary search on segmentBoundaries to find the exact segment we're in
+        const segBounds = rd.segmentBoundaries;
+        let segIdx = 0;
+        if (segBounds.length > 0) {
+            // Binary search: find leftmost index where segBounds[idx] >= distanceTraveled
+            let lo = 0;
+            let hi = segBounds.length - 1;
+            while (lo < hi) {
+                const mid = (lo + hi) >> 1;
+                if (segBounds[mid] < distanceTraveled) lo = mid + 1;
+                else hi = mid;
+            }
+            segIdx = Math.min(lo, segBounds.length - 1);
+        }
+        const segStart = segIdx > 0 ? segBounds[segIdx - 1] : 0;
+        const segEnd = segBounds[segIdx] ?? rd.totalLengthKm;
+        const segLength = Math.max(segEnd - segStart, 1e-9);
+        const progressInSegment = Math.max(0, Math.min((distanceTraveled - segStart) / segLength, 1));
+        const energyBeforeSegment = segIdx > 0 ? (rd.cumulativeEnergies[segIdx - 1] ?? 0) : 0;
+        const energyInSegment = (rd.segmentEnergies[segIdx] ?? 0) * progressInSegment;
+        const totalEnergyConsumed = energyBeforeSegment + energyInSegment;
+        const currentSOC = Math.max(0, opts.startSOC - (totalEnergyConsumed / opts.batteryCapacityKWh) * 100);
         const isBatteryLow = currentSOC < BATTERY_LOW_THRESHOLD && currentSOC > 0;
         const isBatteryDepleted = currentSOC <= 0;
 
         const totalNodes = rd.path.length;
-        const segIdx = Math.min(Math.floor(progress * (totalNodes - 1)), totalNodes - 2);
-        const currentNodeId = rd.path[segIdx] ?? 0;
+        const nodeSegIdx = Math.min(Math.floor(progress * (totalNodes - 1)), totalNodes - 2);
+        const currentNodeId = rd.path[nodeSegIdx] ?? 0;
 
         // ── Battery depleted → stop ─────────────────────
         if (isBatteryDepleted) {

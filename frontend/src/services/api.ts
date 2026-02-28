@@ -77,9 +77,13 @@ export interface GeoJSONRouteProperties {
   battery_warning?: boolean;
   path_node_ids: number[];
   route_type: 'q_learning' | 'dijkstra' | 'multi_stop';
-  segments?: { from_node: number; to_node: number; distance_km: number; energy_kwh: number; road_type: string }[];
+  segments?: { from_node: number; to_node: number; distance_km: number; cumulative_distance_km?: number; energy_kwh: number; mode_energy_kwh?: number; cumulative_energy_kwh?: number; road_type: string }[];
   legs?: { from: number; to: number; distance_km: number; energy_kwh: number; time_minutes: number; route_type: string }[];
   elevation_profile?: { distance_km: number; elevation_m: number }[];
+  segment_boundaries_km?: number[];
+  energy_weight?: number;
+  mode_multiplier?: number;
+  route_mode?: string;
 }
 
 export interface GeoJSONRoute {
