@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { hyperStaggerContainer, hyperStaggerItem } from '../lib/motion';
-import api from '../services/api';
+import api, { type SystemHealth } from '../services/api';
 import PageHeader from '../components/PageHeader';
 import { Card, Button, Badge, ProgressBar } from '../components/ui';
 import { useSystemStore, useTrainingProgress, useRewardHistory, useSSEConnected, useResetTrainingData, useSetActiveTab, useTrainingLogs } from '../store/store';
@@ -29,6 +29,23 @@ function Training() {
     max_steps: 300,
   });
   const [hardwareType, setHardwareType] = useState<'GPU' | 'TPU'>('GPU');
+
+  // Real system metrics (CPU / memory) from /api/system-health
+  const [sysHealth, setSysHealth] = useState<SystemHealth | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    const fetchHealth = async () => {
+      try {
+        const health = await api.getSystemHealth();
+        if (!cancelled) setSysHealth(health);
+      } catch { /* backend may not have psutil — gauges show 0 */ }
+    };
+    fetchHealth();
+    // Poll every 5 s while training is active, every 30 s otherwise
+    const interval = setInterval(fetchHealth, trainingProgress.is_training ? 5000 : 30000);
+    return () => { cancelled = true; clearInterval(interval); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trainingProgress.is_training]);
 
   // ETA tracking
   const epochStartRef = useRef<number | null>(null);
@@ -244,8 +261,22 @@ function Training() {
               </div>
             </div>
             <div className="flex justify-center gap-6">
-              <HardwareGauge label="Temp" value={67} max={100} unit="°C" color="#f59e0b" size={100} />
-              <HardwareGauge label="Load" value={73} max={100} unit="%" color="#10b981" size={100} />
+              <HardwareGauge
+                label="CPU"
+                value={sysHealth?.cpu_percent ?? 0}
+                max={100}
+                unit="%"
+                color="#f59e0b"
+                size={100}
+              />
+              <HardwareGauge
+                label="RAM"
+                value={sysHealth?.memory_percent ?? 0}
+                max={100}
+                unit="%"
+                color="#10b981"
+                size={100}
+              />
             </div>
           </Card>
         </div>

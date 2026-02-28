@@ -45,3 +45,32 @@ async def get_system_stats(request: Request, state: AppState = Depends(get_state
     }
     state.system_stats_cache["stats"] = result
     return ok(result)
+
+
+@router.get("/api/system-health", summary="Real-time CPU and memory metrics")
+async def get_system_health(request: Request):
+    """Returns live CPU %, memory %, and Python/uptime metadata via psutil."""
+    try:
+        import psutil, time
+        cpu_pct  = psutil.cpu_percent(interval=0.2)
+        mem      = psutil.virtual_memory()
+        uptime_s = int(time.time() - psutil.boot_time())
+        import platform
+        return ok({
+            "cpu_percent":     round(cpu_pct, 1),
+            "memory_percent":  round(mem.percent, 1),
+            "memory_used_gb":  round(mem.used  / 1024**3, 2),
+            "memory_total_gb": round(mem.total / 1024**3, 2),
+            "python_version":  platform.python_version(),
+            "uptime_seconds":  uptime_s,
+        })
+    except ImportError:
+        # psutil not installed — return dash values so UI shows "—"
+        return ok({
+            "cpu_percent":     None,
+            "memory_percent":  None,
+            "memory_used_gb":  None,
+            "memory_total_gb": None,
+            "python_version":  None,
+            "uptime_seconds":  None,
+        })

@@ -62,6 +62,7 @@ export interface RouteRequest {
   ev_state?: EVState;
   num_candidates?: number;
   route_mode?: 'fast' | 'eco' | 'scenic';
+  energy_weight?: number;
 }
 
 export interface GeoJSONRouteProperties {
@@ -141,6 +142,15 @@ export interface SystemStats {
     gnn_gan_trained: boolean;
   };
   training_status: TrainingStatus;
+}
+
+export interface SystemHealth {
+  cpu_percent:     number | null;
+  memory_percent:  number | null;
+  memory_used_gb:  number | null;
+  memory_total_gb: number | null;
+  python_version:  string | null;
+  uptime_seconds:  number | null;
 }
 
 export interface RouteMetrics {
@@ -288,6 +298,10 @@ class APIClient {
 
   async getSystemStats(): Promise<SystemStats> {
     return (await this.client.get('/api/system-stats')).data;
+  }
+
+  async getSystemHealth(): Promise<SystemHealth> {
+    return (await this.client.get('/api/system-health')).data;
   }
 
   // ─── Analytics Evaluation ─────────────────────────────

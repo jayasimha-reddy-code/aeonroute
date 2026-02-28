@@ -35,3 +35,6 @@ cachetools>=5.3             # Caching
 
 # HTTP Client
 requests>=2.28.0            # HTTP client for OpenChargeMap
+
+# System metrics
+psutil>=5.9.0               # CPU / memory gauge endpoint (/api/system-health)
