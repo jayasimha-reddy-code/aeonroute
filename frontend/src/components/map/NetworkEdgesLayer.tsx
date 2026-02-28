@@ -24,7 +24,7 @@ const edgesLayerStyle = (): LineLayerSpecification => ({
   paint: {
     'line-color': 'rgba(255, 255, 255, 0.08)',
     'line-width': 1,
-    'line-opacity': 0.18,
+    'line-opacity': 0.25,
   },
   layout: {
     'line-cap': 'round',
