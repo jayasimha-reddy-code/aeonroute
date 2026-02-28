@@ -185,6 +185,14 @@ function RoutePlanner() {
         const startLabel = waypoints[0]?.label ?? 'Origin';
         const endLabel = waypoints[waypoints.length - 1]?.label ?? 'Destination';
         addActivity('route', `Route generated: ${startLabel} → ${endLabel} (${result.route.properties.distance_km?.toFixed(1) ?? '?'} km)`);
+        // Log auto-injected charging stops
+        const injectedDetails = result.route.properties.charging_stop_details ?? [];
+        const injectedStops = injectedDetails.filter((s: any) => s.injected);
+        if (injectedStops.length > 0) {
+          for (const stop of injectedStops) {
+            addActivity('route', `Charging stop auto-injected at ${stop.name}`);
+          }
+        }
       }
     } catch (error: any) {
       addToast({ type: 'error', title: 'Route Generation Failed', message: error?.message });

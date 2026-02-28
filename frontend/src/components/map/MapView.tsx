@@ -1,5 +1,5 @@
 import { memo, useRef, useMemo, useCallback, useState, useEffect } from 'react';
-import Map, { NavigationControl, Popup } from 'react-map-gl/maplibre';
+import Map, { NavigationControl, Popup, Marker } from 'react-map-gl/maplibre';
 import type { MapRef, MapLayerMouseEvent } from 'react-map-gl/maplibre';
 import { LngLatBounds } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -79,6 +79,22 @@ const MapView = memo(function MapView({
   const [cursor, setCursor] = useState('auto');
   const [hoverInfo, setHoverInfo] = useState<HoverInfo | null>(null);
   const [edgeHoverInfo, setEdgeHoverInfo] = useState<EdgeHoverInfo | null>(null);
+  const [selectedInjectedStop, setSelectedInjectedStop] = useState<{
+    lng: number; lat: number; name: string; soc_at_arrival: number; charge_to_soc: number; charging_time_minutes: number;
+  } | null>(null);
+
+  // Collect injected charging stops from all routes
+  const injectedStops = useMemo(() => {
+    const stops: Array<{ lng: number; lat: number; name: string; soc_at_arrival: number; charge_to_soc: number; charging_time_minutes: number }> = [];
+    for (const route of routes) {
+      if (route.charging_stop_details) {
+        for (const s of route.charging_stop_details) {
+          if (s.injected) stops.push({ lng: s.lon, lat: s.lat, name: s.name, soc_at_arrival: s.soc_at_arrival, charge_to_soc: s.charge_to_soc, charging_time_minutes: s.charging_time_minutes });
+        }
+      }
+    }
+    return stops;
+  }, [routes]);
 
   // ── Derived geo data ──────────────────────────────────
   const posLookup = useMemo(
@@ -229,6 +245,50 @@ const MapView = memo(function MapView({
         <StationMarkers
           routeStationIds={routes.length > 0 ? (routes[0].charging_stops ?? []) : []}
         />
+
+        {/* Injected charging stop markers (auto-added by range anxiety logic) */}
+        {injectedStops.map((stop, idx) => (
+          <Marker key={`injected-${idx}`} longitude={stop.lng} latitude={stop.lat} anchor="center">
+            <button
+              title={`Auto Charging Stop — ${stop.name}`}
+              onClick={() => setSelectedInjectedStop(stop)}
+              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+            >
+              <div style={{ position: 'relative', width: 28, height: 28 }}>
+                {/* Pulsing ring */}
+                <div style={{
+                  position: 'absolute', inset: 0, borderRadius: '50%',
+                  background: 'rgba(251,191,36,0.25)', animation: 'ping 1.2s cubic-bezier(0,0,0.2,1) infinite',
+                }} />
+                {/* Core */}
+                <div style={{
+                  position: 'absolute', inset: 4, borderRadius: '50%',
+                  background: '#f59e0b', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 11, boxShadow: '0 0 10px rgba(245,158,11,0.7)',
+                }}>⚡</div>
+              </div>
+            </button>
+          </Marker>
+        ))}
+
+        {/* Popup for selected injected stop */}
+        {selectedInjectedStop && (
+          <Popup
+            longitude={selectedInjectedStop.lng}
+            latitude={selectedInjectedStop.lat}
+            closeButton={true}
+            onClose={() => setSelectedInjectedStop(null)}
+            anchor="bottom"
+            offset={18}
+          >
+            <div className="text-xs space-y-1 min-w-[180px]">
+              <p className="font-semibold text-amber-500">⚡ Auto Charging Stop</p>
+              <p className="font-medium">{selectedInjectedStop.name}</p>
+              <p className="text-muted">Arrive at {selectedInjectedStop.soc_at_arrival.toFixed(0)}% → Charge to {selectedInjectedStop.charge_to_soc}%</p>
+              <p className="text-muted">{selectedInjectedStop.charging_time_minutes} min charging</p>
+            </div>
+          </Popup>
+        )}
 
         {/* EV Simulation overlay */}
         {simulationState?.isSimulating && (

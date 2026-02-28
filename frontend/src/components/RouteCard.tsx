@@ -85,18 +85,48 @@ const RouteCard = React.memo(function RouteCard({ route, rank, selected = false,
         />
       </div>
 
+      {/* Battery Warning Banner */}
+      {route.battery_warning && (
+        <div className="mt-3 px-3 py-2 rounded-lg bg-rose-500/10 border border-rose-500/20 flex items-center gap-2 text-xs text-rose-400">
+          <span className="text-base leading-none">⚠️</span>
+          Battery insufficient for this route — no charging stations reachable
+        </div>
+      )}
+
       {/* Charging Stops */}
       {route.charging_stops.length > 0 && (
-        <div className="mt-3 pt-3 border-t border-white/[0.05] flex items-center gap-2">
-          <Zap className="w-3.5 h-3.5 text-amber-500" />
-          <span className="text-xs text-muted">
-            {route.charging_stops.length} charging stop{route.charging_stops.length > 1 ? 's' : ''}
-            {route.charging_stop_details && route.charging_stop_details.length > 0 ? (
-              <span className="text-label"> — {route.charging_stop_details.map(s => s.name).join(', ')}</span>
-            ) : (
-              <span className="text-label"> — Nodes {route.charging_stops.join(', ')}</span>
-            )}
-          </span>
+        <div className="mt-3 pt-3 border-t border-white/[0.05]">
+          {/* Injected stops (auto-added by backend) */}
+          {route.charging_stop_details && route.charging_stop_details.filter(s => s.injected).length > 0 ? (
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-center gap-2">
+                <Zap className="w-3.5 h-3.5 text-amber-400 animate-pulse flex-shrink-0" />
+                <span className="text-xs font-semibold text-amber-400">
+                  🔋 {route.charging_stop_details.filter(s => s.injected).length} auto charging stop(s) added
+                  {route.charging_time_penalty_minutes && route.charging_time_penalty_minutes > 0
+                    ? ` — +${Math.round(route.charging_time_penalty_minutes)} min`
+                    : null}
+                </span>
+              </div>
+              {route.charging_stop_details.filter(s => s.injected).map((s, idx) => (
+                <div key={idx} className="ml-5 text-xs text-muted">
+                  ⚡ {s.name} — Arrive {s.soc_at_arrival.toFixed(0)}% → Charge to {s.charge_to_soc}% · {s.charging_time_minutes} min
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Zap className="w-3.5 h-3.5 text-amber-500" />
+              <span className="text-xs text-muted">
+                {route.charging_stops.length} charging stop{route.charging_stops.length > 1 ? 's' : ''}
+                {route.charging_stop_details && route.charging_stop_details.length > 0 ? (
+                  <span className="text-label"> — {route.charging_stop_details.map(s => s.name).join(', ')}</span>
+                ) : (
+                  <span className="text-label"> — Nodes {route.charging_stops.join(', ')}</span>
+                )}
+              </span>
+            </div>
+          )}
         </div>
       )}
 

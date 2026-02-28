@@ -72,6 +72,9 @@ export interface GeoJSONRouteProperties {
   time_minutes: number;
   battery_remaining_pct?: number;
   charging_stops?: { node_id: number; name: string; lat: number; lon: number }[];
+  charging_stop_details?: Array<{ node_id: number; lat: number; lon: number; name: string; soc_at_arrival: number; charge_to_soc: number; charging_time_minutes: number; injected: boolean }>;
+  charging_time_penalty_minutes?: number;
+  battery_warning?: boolean;
   path_node_ids: number[];
   route_type: 'q_learning' | 'dijkstra' | 'multi_stop';
   segments?: { from_node: number; to_node: number; distance_km: number; energy_kwh: number; road_type: string }[];
@@ -101,7 +104,9 @@ export interface Route {
   /** Extended fields from GeoJSON backend */
   battery_remaining_pct?: number;
   route_type?: 'q_learning' | 'dijkstra' | 'multi_stop';
-  charging_stop_details?: { node_id: number; name: string; lat: number; lon: number }[];
+  charging_stop_details?: Array<{ node_id: number; lat: number; lon: number; name: string; soc_at_arrival: number; charge_to_soc: number; charging_time_minutes: number; injected: boolean }>;
+  charging_time_penalty_minutes?: number;
+  battery_warning?: boolean;
   geojson?: GeoJSONRoute;
   elevation_profile?: { distance_km: number; elevation_m: number }[];
 }
@@ -150,12 +155,12 @@ export interface SystemStats {
 }
 
 export interface SystemHealth {
-  cpu_percent:     number | null;
-  memory_percent:  number | null;
-  memory_used_gb:  number | null;
+  cpu_percent: number | null;
+  memory_percent: number | null;
+  memory_used_gb: number | null;
   memory_total_gb: number | null;
-  python_version:  string | null;
-  uptime_seconds:  number | null;
+  python_version: string | null;
+  uptime_seconds: number | null;
 }
 
 export interface RouteMetrics {
@@ -352,7 +357,11 @@ export function geoJSONRouteToLegacy(geojson: GeoJSONRoute): Route {
     charging_stops: (props.charging_stops ?? []).map(s => s.node_id),
     battery_remaining_pct: props.battery_remaining_pct,
     route_type: props.route_type,
-    charging_stop_details: props.charging_stops,
+    charging_stop_details: props.charging_stop_details && props.charging_stop_details.length > 0
+      ? props.charging_stop_details
+      : undefined,
+    charging_time_penalty_minutes: props.charging_time_penalty_minutes,
+    battery_warning: props.battery_warning,
     geojson,
     elevation_profile: props.elevation_profile,
   };
