@@ -10,12 +10,15 @@ export interface UseEVSimulationOptions {
   startSOC: number;
   batteryCapacityKWh: number;
   speedMultiplier?: number;
+  routeMode?: 'fast' | 'eco' | 'scenic';
 }
 
 export interface SimulationState {
   isSimulating: boolean;
   isPaused: boolean;
   isCharging: boolean;
+  isBatteryLow: boolean;
+  isBatteryDepleted: boolean;
   progress: number;
   currentPosition: [number, number] | null;
   currentBearing: number;
@@ -38,6 +41,8 @@ const INITIAL_STATE: SimulationState = {
   isSimulating: false,
   isPaused: false,
   isCharging: false,
+  isBatteryLow: false,
+  isBatteryDepleted: false,
   progress: 0,
   currentPosition: null,
   currentBearing: 0,
@@ -47,6 +52,15 @@ const INITIAL_STATE: SimulationState = {
   chargingProgress: 0,
 };
 
+// Mode-based energy drain multipliers
+const MODE_DRAIN_MULTIPLIERS: Record<string, number> = {
+  fast: 1.2,    // aggressive acceleration, highway speeds
+  eco: 0.85,    // steady speed, regenerative braking
+  scenic: 1.0,  // residential, moderate speed
+};
+
+const BATTERY_LOW_THRESHOLD = 15;  // % — show warning
+
 const BASE_MS_PER_KM = 4000; // animation base duration per km — 15km route = ~60s at 1×
 const CHARGE_DURATION_MS = 2500;
 const CHARGE_AMOUNT = 30;
@@ -55,7 +69,7 @@ const CHARGING_PROXIMITY_KM = 0.05; // 50 m
 // ─── Hook ─────────────────────────────────────────────────
 
 export function useEVSimulation(options: UseEVSimulationOptions) {
-  const { route, posLookup, startSOC, batteryCapacityKWh, speedMultiplier = 1 } = options;
+  const { route, posLookup, startSOC, batteryCapacityKWh, speedMultiplier = 1, routeMode = 'fast' } = options;
 
   const [state, setState] = useState<SimulationState>({ ...INITIAL_STATE, currentSOC: startSOC });
 
@@ -180,10 +194,29 @@ export function useEVSimulation(options: UseEVSimulationOptions) {
       const aheadPoint = turf.along(rd.lineString, lookAhead, { units: 'kilometers' });
       bearing = turf.bearing(pointFeature, aheadPoint);
 
-      // SOC depletion proportional to distance traveled
-      const energyUsed = (rd.totalEnergyKwh) * progress;
+      // SOC depletion proportional to distance traveled with mode multiplier
+      const drainMultiplier = MODE_DRAIN_MULTIPLIERS[routeMode] ?? 1.0;
+      const energyUsed = (rd.totalEnergyKwh) * progress * drainMultiplier;
       const socDrain = (energyUsed / batteryCapacityKWh) * 100;
       const currentSOC = Math.max(0, startSOC - socDrain);
+      const isBatteryLow = currentSOC < BATTERY_LOW_THRESHOLD && currentSOC > 0;
+      const isBatteryDepleted = currentSOC <= 0;
+
+      // Stop simulation when battery is fully depleted
+      if (isBatteryDepleted) {
+        return {
+          ...prev,
+          isSimulating: false,
+          progress,
+          currentPosition: [lng, lat] as [number, number],
+          currentBearing: bearing,
+          currentSOC: 0,
+          isBatteryLow: false,
+          isBatteryDepleted: true,
+          currentSegmentIndex: segIdx,
+          currentNodeId,
+        };
+      }
 
       // Approximate current segment index for UI display
       const totalNodes = rd.path.length;
@@ -224,6 +257,8 @@ export function useEVSimulation(options: UseEVSimulationOptions) {
           currentPosition: lastCoord as [number, number],
           currentBearing: bearing,
           currentSOC,
+          isBatteryLow: false,
+          isBatteryDepleted: false,
           currentSegmentIndex: totalNodes - 2,
           currentNodeId: rd.path[rd.path.length - 1] ?? 0,
         };
@@ -235,6 +270,8 @@ export function useEVSimulation(options: UseEVSimulationOptions) {
         currentPosition: [lng, lat],
         currentBearing: bearing,
         currentSOC,
+        isBatteryLow,
+        isBatteryDepleted: false,
         currentSegmentIndex: segIdx,
         currentNodeId,
       };
