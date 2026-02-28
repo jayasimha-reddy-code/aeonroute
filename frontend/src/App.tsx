@@ -1,7 +1,7 @@
 import { useEffect, lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useSetActiveTab, useSetRoadNetwork, useLoading, useAddToast, useTrainingProgress, type AppTab } from './store/store';
+import { useSetActiveTab, useSetRoadNetwork, useLoading, useAddToast, type AppTab } from './store/store';
 import { trainingSSE } from './store/trainingSSEManager';
 import api from './services/api';
 import Header from './components/Header';
@@ -38,14 +38,14 @@ function App() {
 
   // ── Global SSE Training Manager ──────────────────────────
   // The singleton manages the EventSource lifecycle independently of any
-  // component. Connecting here means navigation never kills the stream.
+  // component. Connect PERMANENTLY on app mount so training events are
+  // never missed regardless of how fast training completes. The backend
+  // stream now stays open with keep-alive pings instead of closing on idle.
   useEffect(() => {
-    if (trainingProgress.is_training) {
-      trainingSSE.connect();
-    } else {
-      trainingSSE.disconnect();
-    }
-  }, [trainingProgress.is_training]);
+    trainingSSE.connect();
+    return () => trainingSSE.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const loadInitialData = async () => {

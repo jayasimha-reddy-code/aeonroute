@@ -40,13 +40,22 @@ async def stop_training(request: Request, state: AppState = Depends(get_state)):
 
 @router.get("/training/stream", summary="Stream training progress via SSE")
 async def training_stream(request: Request, state: AppState = Depends(get_state)):
-    """Server-Sent Events endpoint — streams multiplexed training events."""
+    """Server-Sent Events endpoint — streams multiplexed training events.
+    The stream stays open permanently (keeps EventSource alive without reconnect loops).
+    A keep-alive comment ping is sent every 15s to prevent proxy/browser timeout.
+    """
     async def event_generator():
         last_progress = -1
         last_loss_len = 0
         last_reward_len = 0
-        last_sse_idx = 0  # track consumed position in sse_events buffer
+        last_sse_idx = 0
+        ping_countdown = 0  # seconds until next keep-alive ping
+
         while True:
+            # ── Respect client disconnect ──────────────────────
+            if await request.is_disconnected():
+                break
+
             status = state.training_status
             progress = status["progress"]
             loss_history = status.get("loss_history", [])
@@ -62,7 +71,7 @@ async def training_stream(request: Request, state: AppState = Depends(get_state)
                 or current_reward_len != last_reward_len
             )
 
-            # Emit new multiplexed SSE events (type-discriminated)
+            # ── Emit new typed (multiplexed) SSE events ─────────
             if current_sse_len > last_sse_idx:
                 new_events = sse_events[last_sse_idx:current_sse_len]
                 last_sse_idx = current_sse_len
@@ -72,7 +81,7 @@ async def training_stream(request: Request, state: AppState = Depends(get_state)
                         "data": json.dumps(evt),
                     }
 
-            # Emit legacy progress event for backward compat (Training.tsx uses this)
+            # ── Emit legacy progress event ──────────────────────
             if has_new_data:
                 status_slim = {k: v for k, v in status.items() if k not in ("loss_history", "reward_history", "sse_events")}
                 new_loss_points = loss_history[last_loss_len:] if current_loss_len > last_loss_len else None
@@ -89,16 +98,24 @@ async def training_stream(request: Request, state: AppState = Depends(get_state)
                 last_loss_len = current_loss_len
                 last_reward_len = current_reward_len
 
+            # ── Training finished ────────────────────────────────
             if not status["is_training"] and progress >= 100:
-                yield {"event": "complete", "data": json.dumps(status_slim if has_new_data else {k: v for k, v in status.items() if k not in ("loss_history", "reward_history", "sse_events")})}
-                break
-            if not status["is_training"] and 0 < progress < 100:
-                yield {"event": "stopped", "data": json.dumps({k: v for k, v in status.items() if k not in ("loss_history", "reward_history", "sse_events")})}
-                break
-            if not status["is_training"] and progress == 0 and last_progress > -1:
-                yield {"event": "idle", "data": json.dumps({k: v for k, v in status.items() if k not in ("loss_history", "reward_history", "sse_events")})}
-                break
+                status_slim = {k: v for k, v in status.items() if k not in ("loss_history", "reward_history", "sse_events")}
+                yield {"event": "complete", "data": json.dumps(status_slim)}
+                # DO NOT break — stay open so the client sees the complete event
+                # and the stream reconnect-loop doesn't fire. Keep pinging.
+
+            elif not status["is_training"] and 0 < progress < 100:
+                status_slim = {k: v for k, v in status.items() if k not in ("loss_history", "reward_history", "sse_events")}
+                yield {"event": "stopped", "data": json.dumps(status_slim)}
+
+            # ── Keep-alive ping (every 15 s) ────────────────────
+            ping_countdown -= 1
+            if ping_countdown <= 0:
+                yield {"comment": "ping"}   # SSE comment — keeps connection open
+                ping_countdown = 30         # 30 × 0.5 s = 15 s
 
             await asyncio.sleep(0.5)
 
     return EventSourceResponse(event_generator())
+
