@@ -341,7 +341,11 @@ function Training() {
           )}
 
           {/* Real-time Logs — Terminal */}
-          <LiveTerminal logs={formattedLogs} />
+          <LiveTerminal
+            logs={formattedLogs}
+            sseConnected={sseConnected}
+            isTraining={trainingProgress.is_training}
+          />
         </div>
       </motion.div>
     </motion.div>
