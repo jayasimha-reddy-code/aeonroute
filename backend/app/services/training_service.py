@@ -230,6 +230,7 @@ class TrainingService:
             self._emit_log(f"Training complete! Q-table has {len(agent.q_table)} states, avg reward={avg_final_reward:.2f}")
             self._emit_status("complete", 1.0)
             self.state.training_status["is_training"] = False
+            self.state.training_status["completed_at"] = datetime.now(timezone.utc).isoformat()
 
             logger.info("Q-Learning training completed: %d episodes, avg reward=%.2f", episodes, avg_final_reward)
 

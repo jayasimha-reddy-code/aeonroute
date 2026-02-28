@@ -63,6 +63,7 @@ export interface RouteRequest {
   num_candidates?: number;
   route_mode?: 'fast' | 'eco' | 'scenic';
   energy_weight?: number;
+  vehicle_profile?: string;
 }
 
 export interface GeoJSONRouteProperties {
@@ -140,6 +141,10 @@ export interface SystemStats {
     gan_trained: boolean;
     agent_trained: boolean;
     gnn_gan_trained: boolean;
+    /** ISO-8601 UTC string — derived from training completion or Q-table file mtime */
+    last_trained_at?: string | null;
+    /** 0–1 success-rate or reward-normalised accuracy for Q-Learning agent */
+    q_learning_accuracy?: number | null;
   };
   training_status: TrainingStatus;
 }

@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import api, { SystemStats, RouteMetrics } from '../services/api';
 import { useSystemStore, useViewMode } from '../store/store';
@@ -11,7 +12,7 @@ import {
   BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts';
-import { Activity, TrendingUp, Zap, Timer, Route, Gauge, Network, Cpu, Calendar } from 'lucide-react';
+import { Activity, TrendingUp, Zap, Timer, Route, Gauge, Network, Cpu, Calendar, BarChart3 } from 'lucide-react';
 import { tooltipStyle, axisStyle, gridStyle, areaGradient, CHART_COLORS, CHART_PALETTE, cursorStyle } from '../lib/chartConfig';
 import SystemHealthRadar from '../components/charts/SystemHealthRadar';
 import EnergyStackedBar from '../components/charts/EnergyStackedBar';
@@ -19,6 +20,38 @@ import DemandHeatmap from '../components/charts/DemandHeatmap';
 import AIInsightsPanel from '../components/analytics/AIInsightsPanel';
 
 /* ── Metric Pill ─────────────────────────────────── */
+/* ── Empty Chart State ───────────────────────────────── */
+function EmptyChartState({
+  height, title, message, ctaLabel,
+}: {
+  height: number;
+  title: string;
+  message: string;
+  ctaLabel?: string;
+}) {
+  const navigate = useNavigate();
+  return (
+    <div
+      className="flex flex-col items-center justify-center gap-3 text-center"
+      style={{ height }}
+    >
+      <BarChart3 className="w-8 h-8 text-slate-600" />
+      <div>
+        <p className="text-sm font-medium text-slate-400">{title}</p>
+        <p className="text-xs text-muted mt-1">{message}</p>
+      </div>
+      {ctaLabel && (
+        <button
+          onClick={() => navigate('/training')}
+          className="mt-1 px-3 py-1.5 text-xs rounded-lg bg-emerald/10 text-emerald border border-emerald/20 hover:bg-emerald/20 transition-all"
+        >
+          {ctaLabel}
+        </button>
+      )}
+    </div>
+  );
+}
+
 function MetricTile({
   icon: Icon, label, value, unit, color,
 }: {
@@ -124,27 +157,14 @@ function Analytics() {
   /* ── Derive chart data from live results ──────────── */
   const trainingConvergence = trainingHistory?.loss_history?.length
     ? trainingHistory.loss_history.map((h) => ({ epoch: h.epoch, dLoss: h.d_loss_real, gLoss: h.g_loss }))
-    : [
-        { epoch: 1, dLoss: 1.4, gLoss: 2.1 },
-        { epoch: 5, dLoss: 0.9, gLoss: 1.7 },
-        { epoch: 10, dLoss: 0.7, gLoss: 1.2 },
-        { epoch: 15, dLoss: 0.5, gLoss: 0.9 },
-        { epoch: 20, dLoss: 0.4, gLoss: 0.7 },
-        { epoch: 25, dLoss: 0.35, gLoss: 0.55 },
-        { epoch: 30, dLoss: 0.32, gLoss: 0.45 },
-      ];
+    : null; // no mock fallback — show empty state
 
   const routeQuality = routeEval
     ? [
         { name: 'Feasible', value: Math.round((routeEval.avg_feasibility_rate ?? 0) * 100) },
         { name: 'Infeasible', value: Math.round((1 - (routeEval.avg_feasibility_rate ?? 0)) * 100) },
       ]
-    : [
-        { name: 'Excellent', value: 45 },
-        { name: 'Good', value: 35 },
-        { name: 'Fair', value: 15 },
-        { name: 'Poor', value: 5 },
-      ];
+    : null; // no mock fallback
 
   const ganQualityBars = ganEval
     ? [
@@ -153,12 +173,7 @@ function Analytics() {
         { label: 'Evening Peak', value: +(ganEval.evening_peak_ratio ?? 0).toFixed(2) },
         { label: 'Night Ratio', value: +(ganEval.night_ratio ?? 0).toFixed(2) },
       ]
-    : [
-        { label: '0–5', value: 35 },
-        { label: '5–15', value: 45 },
-        { label: '15–25', value: 15 },
-        { label: '25+', value: 5 },
-      ];
+    : null; // no mock fallback
 
   return (
     <motion.div
@@ -254,29 +269,12 @@ function Analytics() {
               </AreaChart>
             </ResponsiveContainer>
           ) : (
-            <ResponsiveContainer width="100%" height={280}>
-              <AreaChart data={[
-                { time: '12 AM', energy: 45, distance: 12 },
-                { time: '4 AM',  energy: 38, distance: 10 },
-                { time: '8 AM',  energy: 62, distance: 18 },
-                { time: '12 PM', energy: 78, distance: 22 },
-                { time: '4 PM',  energy: 85, distance: 24 },
-                { time: '8 PM',  energy: 72, distance: 20 },
-                { time: '11 PM', energy: 55, distance: 15 },
-              ]}>
-                <defs>
-                  {areaGradient('gEnergy', CHART_COLORS.amber, 0.5, 0)}
-                  {areaGradient('gDistance', CHART_COLORS.cyan, 0.5, 0)}
-                </defs>
-                <CartesianGrid {...gridStyle} vertical={false} />
-                <XAxis dataKey="time" tick={axisStyle} axisLine={false} tickLine={false} />
-                <YAxis tick={axisStyle} axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={tooltipStyle} cursor={cursorStyle} />
-                <Legend iconType="circle" wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
-                <Area type="monotone" dataKey="energy" stroke={CHART_COLORS.amber} strokeWidth={2.5} fill="url(#gEnergy)" name="Energy (kWh)" dot={false} activeDot={{ r: 4, fill: CHART_COLORS.amber, stroke: '#fff', strokeWidth: 2 }} />
-                <Area type="monotone" dataKey="distance" stroke={CHART_COLORS.cyan} strokeWidth={2.5} fill="url(#gDistance)" name="Distance (km)" dot={false} activeDot={{ r: 4, fill: CHART_COLORS.cyan, stroke: '#fff', strokeWidth: 2 }} />
-              </AreaChart>
-            </ResponsiveContainer>
+            <EmptyChartState
+              height={280}
+              title="No agent data yet"
+              message="Train the system to see reward history and energy patterns"
+              ctaLabel="Start Training"
+            />
           )}
         </Card>
 
@@ -289,20 +287,28 @@ function Analytics() {
             </div>
 
           </div>
-          <ResponsiveContainer width="100%" height={280}>
-            <PieChart>
-              <Pie
-                data={routeQuality} cx="50%" cy="50%"
-                innerRadius={60} outerRadius={95} paddingAngle={4}
-                dataKey="value" strokeWidth={0}
-                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                labelLine={{ stroke: '#64748b', strokeWidth: 1 }}
-              >
-                {routeQuality.map((_, idx) => <Cell key={idx} fill={CHART_PALETTE[idx % CHART_PALETTE.length]} />)}
-              </Pie>
-              <Tooltip contentStyle={tooltipStyle} />
-            </PieChart>
-          </ResponsiveContainer>
+          {routeQuality ? (
+            <ResponsiveContainer width="100%" height={280}>
+              <PieChart>
+                <Pie
+                  data={routeQuality} cx="50%" cy="50%"
+                  innerRadius={60} outerRadius={95} paddingAngle={4}
+                  dataKey="value" strokeWidth={0}
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  labelLine={{ stroke: '#64748b', strokeWidth: 1 }}
+                >
+                  {routeQuality.map((_, idx) => <Cell key={idx} fill={CHART_PALETTE[idx % CHART_PALETTE.length]} />)}
+                </Pie>
+                <Tooltip contentStyle={tooltipStyle} />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <EmptyChartState
+              height={280}
+              title="No route evaluation data"
+              message="Generate routes after training to see feasibility breakdown"
+            />
+          )}
         </Card>
       </div>
 
@@ -314,25 +320,32 @@ function Analytics() {
             <div className="flex items-center gap-2.5">
               <div className="p-1.5 rounded-lg bg-blue/10"><Route className="w-3.5 h-3.5 text-blue" /></div>
               <h3 className="text-sm font-semibold text-white uppercase tracking-wider">
-                {ganEval ? 'GAN Quality Metrics' : 'Distance Distribution'} <span className="text-label normal-case font-normal">{ganEval ? '' : '(km)'}</span>
+                GAN Quality Metrics
               </h3>
             </div>
 
           </div>
           {evalLoading ? (
             <div className="h-[260px] flex items-center justify-center text-label text-sm">Loading…</div>
-          ) : (
+          ) : ganQualityBars ? (
             <ResponsiveContainer width="100%" height={260}>
               <BarChart data={ganQualityBars}>
                 <CartesianGrid {...gridStyle} vertical={false} />
                 <XAxis dataKey="label" tick={axisStyle} axisLine={false} tickLine={false} />
                 <YAxis tick={axisStyle} axisLine={false} tickLine={false} />
                 <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'rgba(255,255,255,0.02)' }} />
-                <Bar dataKey="value" radius={[6, 6, 0, 0]} barSize={48} name={ganEval ? 'Value' : 'Routes'}>
+                <Bar dataKey="value" radius={[6, 6, 0, 0]} barSize={48} name="Value">
                   {ganQualityBars.map((_, idx) => <Cell key={idx} fill={CHART_PALETTE[idx % CHART_PALETTE.length]} fillOpacity={0.85} />)}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
+          ) : (
+            <EmptyChartState
+              height={260}
+              title="No GAN evaluation data"
+              message="Train the GAN to see traffic quality metrics"
+              ctaLabel="Start Training"
+            />
           )}
         </Card>
 
@@ -345,21 +358,30 @@ function Analytics() {
             </div>
 
           </div>
-          <ResponsiveContainer width="100%" height={260}>
-            <AreaChart data={trainingConvergence}>
-              <defs>
-                {areaGradient('gDLoss', CHART_COLORS.rose, 0.4, 0)}
-                {areaGradient('gGLoss', CHART_COLORS.cyan, 0.4, 0)}
-              </defs>
-              <CartesianGrid {...gridStyle} vertical={false} />
-              <XAxis dataKey="epoch" tick={axisStyle} axisLine={false} tickLine={false} label={{ value: 'Epoch', position: 'insideBottom', offset: -5, fill: 'rgba(255,255,255,0.3)', fontSize: 11 }} />
-              <YAxis tick={axisStyle} axisLine={false} tickLine={false} />
-              <Tooltip contentStyle={tooltipStyle} cursor={cursorStyle} />
-              <Legend iconType="circle" wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
-              <Area type="monotone" dataKey="dLoss" stroke={CHART_COLORS.rose} strokeWidth={2} fill="url(#gDLoss)" dot={false} activeDot={{ r: 4, fill: CHART_COLORS.rose, stroke: '#fff', strokeWidth: 2 }} name="Discriminator" />
-              <Area type="monotone" dataKey="gLoss" stroke={CHART_COLORS.cyan} strokeWidth={2} fill="url(#gGLoss)" dot={false} activeDot={{ r: 4, fill: CHART_COLORS.cyan, stroke: '#fff', strokeWidth: 2 }} name="Generator" />
-            </AreaChart>
-          </ResponsiveContainer>
+          {trainingConvergence ? (
+            <ResponsiveContainer width="100%" height={260}>
+              <AreaChart data={trainingConvergence}>
+                <defs>
+                  {areaGradient('gDLoss', CHART_COLORS.rose, 0.4, 0)}
+                  {areaGradient('gGLoss', CHART_COLORS.cyan, 0.4, 0)}
+                </defs>
+                <CartesianGrid {...gridStyle} vertical={false} />
+                <XAxis dataKey="epoch" tick={axisStyle} axisLine={false} tickLine={false} label={{ value: 'Epoch', position: 'insideBottom', offset: -5, fill: 'rgba(255,255,255,0.3)', fontSize: 11 }} />
+                <YAxis tick={axisStyle} axisLine={false} tickLine={false} />
+                <Tooltip contentStyle={tooltipStyle} cursor={cursorStyle} />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
+                <Area type="monotone" dataKey="dLoss" stroke={CHART_COLORS.rose} strokeWidth={2} fill="url(#gDLoss)" dot={false} activeDot={{ r: 4, fill: CHART_COLORS.rose, stroke: '#fff', strokeWidth: 2 }} name="Discriminator" />
+                <Area type="monotone" dataKey="gLoss" stroke={CHART_COLORS.cyan} strokeWidth={2} fill="url(#gGLoss)" dot={false} activeDot={{ r: 4, fill: CHART_COLORS.cyan, stroke: '#fff', strokeWidth: 2 }} name="Generator" />
+              </AreaChart>
+            </ResponsiveContainer>
+          ) : (
+            <EmptyChartState
+              height={260}
+              title="No training history"
+              message="Train the GAN to see discriminator and generator loss curves"
+              ctaLabel="Start Training"
+            />
+          )}
         </Card>
       </div>
 

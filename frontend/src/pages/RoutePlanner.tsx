@@ -2,7 +2,7 @@ import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { hyperStaggerContainer, hyperStaggerItem } from '../lib/motion';
-import { useSystemStore, useEnergyWeight, useBatteryCapacity, useVehicleProfile, useSimulationScale, useSettings } from '../store/store';
+import { useSystemStore, useEnergyWeight, useBatteryCapacity, useVehicleProfile, useSimulationScale, useSettings, useAddActivity } from '../store/store';
 import api, { geoJSONRouteToLegacy } from '../services/api';
 import NetworkMap from '../components/NetworkMap';
 import RouteCard from '../components/RouteCard';
@@ -33,6 +33,7 @@ const LANDMARKS = [
 
 function RoutePlanner() {
   const { roadNetwork, generatedRoutes, setGeneratedRoutes, selectedRoute, setSelectedRoute, currentEVState, setEVState, addToast } = useSystemStore();
+  const addActivity = useAddActivity();
   const energyWeight = useEnergyWeight();
   const settingsBattery = useBatteryCapacity();
   const vehicleProfile = useVehicleProfile();
@@ -171,6 +172,9 @@ function RoutePlanner() {
           setElevationData(simElev);
         }
         addToast({ type: 'success', title: 'Routes Generated', message: `Found ${routes.length} candidate route${routes.length > 1 ? 's' : ''} (${result.route.properties.route_type === 'q_learning' ? 'Q-Learning Optimized' : 'Dijkstra'}).` });
+        const startLabel = waypoints[0]?.label ?? 'Origin';
+        const endLabel = waypoints[waypoints.length - 1]?.label ?? 'Destination';
+        addActivity('route', `Route generated: ${startLabel} → ${endLabel} (${result.route.properties.distance_km?.toFixed(1) ?? '?'} km)`);
       }
     } catch (error: any) {
       addToast({ type: 'error', title: 'Route Generation Failed', message: error?.message });

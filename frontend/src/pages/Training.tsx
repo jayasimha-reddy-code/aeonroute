@@ -4,7 +4,7 @@ import { hyperStaggerContainer, hyperStaggerItem } from '../lib/motion';
 import api, { type SystemHealth } from '../services/api';
 import PageHeader from '../components/PageHeader';
 import { Card, Button, Badge, ProgressBar } from '../components/ui';
-import { useSystemStore, useTrainingProgress, useRewardHistory, useSSEConnected, useResetTrainingData, useSetActiveTab, useTrainingLogs, useSimulationScale } from '../store/store';
+import { useSystemStore, useTrainingProgress, useRewardHistory, useSSEConnected, useResetTrainingData, useSetActiveTab, useTrainingLogs, useSimulationScale, useAddActivity } from '../store/store';
 import { useTrainingStream } from '../hooks/useTrainingStream';
 import { RewardCurveChart } from '../components/training/RewardCurveChart';
 import { HardwareGauge } from '../components/training/HardwareGauge';
@@ -18,6 +18,7 @@ const SCALE_EPISODES: Record<string, number> = { light: 50, standard: 200, full:
 
 function Training() {
   const { addToast } = useSystemStore();
+  const addActivity = useAddActivity();
 
   const trainingProgress = useTrainingProgress();
   const rewardHistory = useRewardHistory();
@@ -121,6 +122,7 @@ function Training() {
       useSystemStore.getState().updateTrainingFromSSE({ is_training: true, current_step: 'Starting…' });
       await api.startTraining(config);
       addToast({ type: 'info', title: 'Training Started', message: 'Q-Learning pipeline kicked off.' });
+      addActivity('training', `Q-Learning training started (${config.episodes ?? SCALE_EPISODES[simulationScale] ?? 200} episodes)`);
     } catch (error: any) {
       // Rollback optimistic update on failure
       useSystemStore.getState().updateTrainingFromSSE({ is_training: false, current_step: '' });
@@ -135,6 +137,7 @@ function Training() {
     try {
       await api.stopTraining();
       addToast({ type: 'warning', title: 'Training Stopped' });
+      addActivity('training', `Training stopped at episode ${trainingProgress.rl_episode}`);
     } catch (error: any) {
       addToast({ type: 'error', title: 'Failed to Stop', message: error?.message });
     }

@@ -25,6 +25,40 @@ async def get_system_stats(request: Request, state: AppState = Depends(get_state
         return ok(cached)
 
     hg = state.hyderabad_graph
+
+    # Derive last_trained_at from training status or Q-table file mtime
+    last_trained_at = None
+    if state.training_status.get("completed_at"):
+        last_trained_at = state.training_status["completed_at"]
+    else:
+        q_path = "models/q_learning/q_table_hyderabad.pkl"
+        if os.path.exists(q_path):
+            from datetime import timezone
+            mtime = os.path.getmtime(q_path)
+            last_trained_at = datetime.fromtimestamp(mtime, tz=timezone.utc).isoformat()
+
+    # Derive q_learning_accuracy from last training metrics (success rate or reward-based)
+    q_learning_accuracy: float | None = None
+    ts_metrics = state.training_status.get("metrics", {})
+    if ts_metrics:
+        final_reward = ts_metrics.get("final_avg_reward")
+        if final_reward is not None:
+            # Normalise: reward ≈ 0 → 100 %, reward ≤ -10 → 0 %
+            q_learning_accuracy = round(max(0.0, min(1.0, 1.0 + final_reward / 10.0)), 4)
+    # Fallback: try evaluation results on disk
+    if q_learning_accuracy is None:
+        _eval_path = "results/metrics/evaluation_results.json"
+        if os.path.exists(_eval_path):
+            try:
+                import json as _json
+                with open(_eval_path) as _f:
+                    _eval = _json.load(_f)
+                _sr = (_eval.get("agent") or {}).get("success_rate")
+                if _sr is not None:
+                    q_learning_accuracy = round(float(_sr), 4)
+            except Exception:
+                pass
+
     result = {
         "road_network": {
             "nodes": hg.num_nodes if hg else 0,
@@ -40,6 +74,9 @@ async def get_system_stats(request: Request, state: AppState = Depends(get_state
             "gan_trained": os.path.exists("models/sg_gan/traffic_gan_generator.keras"),
             "agent_trained": state.q_table is not None or os.path.exists("models/q_learning/q_table_hyderabad.pkl"),
             "gnn_gan_trained": os.path.exists("models/gnn_gan"),
+            # NEW: real accuracy + training timestamp
+            "last_trained_at": last_trained_at,
+            "q_learning_accuracy": q_learning_accuracy,
         },
         "training_status": state.training_status,
     }

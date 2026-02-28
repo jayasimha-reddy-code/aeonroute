@@ -4,6 +4,7 @@ import {
   useUpdateTrainingFromSSE,
   useSetSSEConnected,
   useAddToast,
+  useAddActivity,
 } from '../store/store';
 import type { SSETrainingEvent } from '../services/types';
 
@@ -24,6 +25,7 @@ export function useTrainingStream(enabled: boolean) {
   const updateTraining = useUpdateTrainingFromSSE();
   const setSSEConnected = useSetSSEConnected();
   const addToast = useAddToast();
+  const addActivity = useAddActivity();
 
   const handleEvent = useCallback(
     (event: MessageEvent) => {
@@ -81,6 +83,7 @@ export function useTrainingStream(enabled: boolean) {
       complete: (event) => {
         handleEvent(event);
         addToast({ type: 'success', title: 'Training Complete', message: 'All models trained successfully.' });
+        addActivity('training', 'Q-Learning training complete');
       },
       stopped: (event) => {
         handleEvent(event);
@@ -88,7 +91,7 @@ export function useTrainingStream(enabled: boolean) {
       },
       idle: handleEvent,
     }),
-    [handleEvent, handleTypedEvent, addToast],
+    [handleEvent, handleTypedEvent, addToast, addActivity],
   );
 
   const onOpen = useCallback(() => setSSEConnected(true), [setSSEConnected]);

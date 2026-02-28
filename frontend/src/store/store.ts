@@ -28,6 +28,17 @@ export interface TrainingProgress {
   rl_total_episodes: number;
 }
 
+// ─── Activity Log Types ──────────────────────────────────
+
+export type ActivityType = 'route' | 'training' | 'system';
+
+export interface ActivityEntry {
+  id: number;
+  type: ActivityType;
+  text: string;
+  timestamp: number; // epoch ms for reliable serialization
+}
+
 // ─── Toast Types ──────────────────────────────────────────
 
 export interface Toast {
@@ -97,6 +108,10 @@ interface SystemState {
   setSimulationScale: (scale: SimulationScale) => void;
   setVehicleProfile: (profile: string) => void;
   setBatteryCapacity: (capacity: number) => void;
+
+  // ── Activity Log ──
+  activityLog: ActivityEntry[];
+  addActivity: (type: ActivityType, text: string) => void;
 
   // ── Loading / Error ──
   isLoading: boolean;
@@ -179,6 +194,15 @@ export const useSystemStore = create<SystemState>()(
       setSimulationScale: (simulationScale) => set((s) => ({ settings: { ...s.settings, simulationScale } })),
       setVehicleProfile: (vehicleProfile) => set((s) => ({ settings: { ...s.settings, vehicleProfile } })),
       setBatteryCapacity: (batteryCapacity) => set((s) => ({ settings: { ...s.settings, batteryCapacity } })),
+
+      // Activity Log
+      activityLog: [],
+      addActivity: (type, text) =>
+        set((s) => {
+          const entry: ActivityEntry = { id: Date.now(), type, text, timestamp: Date.now() };
+          const updated = [entry, ...s.activityLog];
+          return { activityLog: updated.slice(0, 20) }; // keep max 20 entries (FIFO)
+        }),
 
       // Loading / Error
       isLoading: false,
@@ -292,6 +316,7 @@ export const useSystemStore = create<SystemState>()(
         activeTab: state.activeTab,
         sidebarCollapsed: state.sidebarCollapsed,
         settings: state.settings,
+        activityLog: state.activityLog,
       }),
       // Deep-merge persisted settings with current defaults so any newly-added
       // fields (energyWeight, simulationScale, vehicleProfile, batteryCapacity)
@@ -369,4 +394,8 @@ export const useSSEConnected = () => useSystemStore((s) => s.sseConnected);
 export const useUpdateTrainingFromSSE = () => useSystemStore((s) => s.updateTrainingFromSSE);
 export const useSetSSEConnected = () => useSystemStore((s) => s.setSSEConnected);
 export const useResetTrainingData = () => useSystemStore((s) => s.resetTrainingData);
+
+// ─── Activity Log Selectors ───────────────────────────────
+export const useActivityLog = () => useSystemStore((s) => s.activityLog);
+export const useAddActivity = () => useSystemStore((s) => s.addActivity);
 

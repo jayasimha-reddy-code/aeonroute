@@ -1,4 +1,5 @@
 import { memo, useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Marker, Popup } from 'react-map-gl/maplibre';
 import api, { type StationData } from '../../services/api';
 import { useStations, useSetStations, useSettings } from '../../store/store';
@@ -21,6 +22,7 @@ export const StationMarkers = memo(function StationMarkers({
   const storeStations = useStations();
   const setStoreStations = useSetStations();
   const settings = useSettings();
+  const navigate = useNavigate();
   const units = settings.units;
   const [selected, setSelected] = useState<StationData | null>(null);
 
@@ -142,6 +144,17 @@ export const StationMarkers = memo(function StationMarkers({
                 <p className="text-muted">Distance: {stationDistance(selected)}</p>
               )}
             </div>
+            <button
+              onClick={() => {
+                navigate(
+                  `/routing?destLat=${selected.lat}&destLon=${selected.lon}&destLabel=${encodeURIComponent(selected.name)}`
+                );
+                setSelected(null);
+              }}
+              className="mt-2 w-full px-3 py-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 text-xs font-medium rounded-lg border border-emerald-500/30 transition-all text-center"
+            >
+              Route Here →
+            </button>
           </div>
         </Popup>
       )}

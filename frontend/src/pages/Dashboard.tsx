@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { useRoadNetwork, useAddToast, useViewMode, useSystemStore } from '../store/store';
+import { useRoadNetwork, useAddToast, useViewMode, useSystemStore, useActivityLog } from '../store/store';
 import api, { SystemStats, RouteMetrics } from '../services/api';
 import NetworkMap from '../components/NetworkMap';
 import StatCard from '../components/StatCard';
@@ -11,14 +11,24 @@ import { StatCardSkeleton } from '../components/ui/Skeleton';
 import { ProgressRing } from '../components/ui';
 import { BarChart3, Activity, Navigation, Zap, Cpu, Clock, RefreshCw } from 'lucide-react';
 import { hyperStaggerContainer, hyperStaggerItem } from '../lib/motion';
-import { AreaChart, Area, ResponsiveContainer } from 'recharts';
-import { areaGradient, CHART_COLORS } from '../lib/chartConfig';
 import WeatherWidget from '../components/map/WeatherWidget';
+
+/** Format a UTC ISO string (or epoch ms) as a human-readable relative time. */
+function formatTimeAgo(isoString: string | null | undefined): string {
+  if (!isoString) return 'Never';
+  const ms = Date.now() - new Date(isoString).getTime();
+  if (isNaN(ms) || ms < 0) return 'Just now';
+  if (ms < 60_000) return 'Just now';
+  if (ms < 3_600_000) return `${Math.floor(ms / 60_000)}m ago`;
+  if (ms < 86_400_000) return `${Math.floor(ms / 3_600_000)}h ago`;
+  return `${Math.floor(ms / 86_400_000)}d ago`;
+}
 
 function Dashboard() {
   const roadNetwork = useRoadNetwork();
   const addToast = useAddToast();
   const viewMode = useViewMode();
+  const activityLog = useActivityLog();
   const [stats, setStats] = useState<SystemStats | null>(null);
   const [metrics, setMetrics] = useState<RouteMetrics | null>(null);
   const [loading, setLoading] = useState(true);
@@ -151,11 +161,27 @@ function Dashboard() {
               </div>
             </div>
             <div className="space-y-3">
-              <ModelStatusRow label="SG-GAN" value={stats?.models?.gan_trained ? 78 : 0} color="emerald" />
-              <ModelStatusRow label="Q-Learning" value={stats?.models?.agent_trained ? 86 : 0} color="cyan" />
-              <ModelStatusRow label="GNN" value={stats?.models?.gnn_gan_trained ? 66 : 0} color="amber" />
+              <ModelStatusRow
+                label="SG-GAN"
+                value={stats?.models?.gan_trained ? 100 : 0}
+                displayText={stats?.models?.gan_trained ? 'Trained' : 'Not Trained'}
+                color="emerald"
+              />
+              <ModelStatusRow
+                label="Q-Learning"
+                value={stats?.models?.agent_trained ? Math.round((stats.models.q_learning_accuracy ?? 0) * 100) : 0}
+                color="cyan"
+              />
+              <ModelStatusRow
+                label="GNN"
+                value={stats?.models?.gnn_gan_trained ? 100 : 0}
+                displayText={stats?.models?.gnn_gan_trained ? 'Trained' : 'Not Trained'}
+                color="amber"
+              />
             </div>
-            <p className="text-xs text-slate-400 mt-4">Last Trained: 2h ago</p>
+            <p className="text-xs text-slate-400 mt-4">
+              Last Trained: {formatTimeAgo(stats?.models?.last_trained_at)}
+            </p>
           </Card>
 
           {/* Recent Activity */}
@@ -163,23 +189,25 @@ function Dashboard() {
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-semibold text-white">Recent Activity</h3>
             </div>
-            <div className="space-y-1">
-              {[
-                { id: 1, dot: 'bg-emerald', text: 'Route #452 generated', time: '2m ago' },
-                { id: 2, dot: 'bg-emerald', text: 'SG-GAN training complete', time: '1h ago' },
-                { id: 3, dot: 'bg-amber', text: 'Battery warning at node 24', time: '3h ago' },
-                { id: 4, dot: 'bg-emerald', text: 'Network updated (437 nodes)', time: '5h ago' },
-              ].map((item) => (
-                <div
-                  key={item.id}
-                  className="flex items-center gap-2 text-xs px-3 py-2.5 rounded-lg"
-                >
-                  <span className={`w-1.5 h-1.5 rounded-full ${item.dot} shrink-0`} />
-                  <span className="text-slate-300 flex-1">{item.text}</span>
-                  <span className="text-slate-500">{item.time}</span>
-                </div>
-              ))}
-            </div>
+            {activityLog.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-6 gap-2 text-center">
+                <Activity className="w-6 h-6 text-slate-600" />
+                <p className="text-xs text-muted">No recent activity</p>
+                <p className="text-[11px] text-slate-600">Generate a route or start training to see events</p>
+              </div>
+            ) : (
+              <div className="space-y-1">
+                {activityLog.slice(0, 5).map((item) => (
+                  <div key={item.id} className="flex items-center gap-2 text-xs px-3 py-2.5 rounded-lg">
+                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                      item.type === 'route' ? 'bg-emerald' : item.type === 'training' ? 'bg-cyan' : 'bg-amber'
+                    }`} />
+                    <span className="text-slate-300 flex-1">{item.text}</span>
+                    <span className="text-slate-500">{formatTimeAgo(new Date(item.timestamp).toISOString())}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </Card>
         </div>
       </motion.div>
@@ -207,38 +235,25 @@ function Dashboard() {
   );
 }
 
-/* Helper: Model status row with progress bar + sparkline */
-const sparklineCache: Record<string, { v: number }[]> = {};
-function getSparkline(key: string) {
-  if (!sparklineCache[key]) {
-    sparklineCache[key] = Array.from({ length: 20 }, (_, i) => ({
-      v: 60 + Math.sin(i * 0.5 + key.charCodeAt(0)) * 20 + i * 0.8,
-    }));
-  }
-  return sparklineCache[key];
-}
-
-function ModelStatusRow({ label, value, color }: { label: string; value: number; color: 'emerald' | 'cyan' | 'amber' }) {
-  const colorHex = { emerald: CHART_COLORS.emerald, cyan: CHART_COLORS.cyan, amber: CHART_COLORS.amber }[color];
-  const gradId = `spark-${color}`;
+/* Helper: Model status row with progress bar (no sparkline — static data) */
+function ModelStatusRow({
+  label, value, color, displayText,
+}: {
+  label: string;
+  value: number;
+  color: 'emerald' | 'cyan' | 'amber';
+  displayText?: string;
+}) {
   return (
     <div className="flex items-center justify-between">
       <span className="text-sm text-slate-300">{label}</span>
       <div className="flex items-center gap-3">
-        {value > 0 && (
-          <div className="h-7 w-16">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={getSparkline(label)}>
-                <defs>{areaGradient(gradId, colorHex, 0.4, 0)}</defs>
-                <Area type="monotone" dataKey="v" stroke={colorHex} strokeWidth={1.5} fill={`url(#${gradId})`} dot={false} isAnimationActive={false} />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        )}
         <div className="w-32">
           <ProgressBar value={value} variant={color} size="sm" />
         </div>
-        <span className="text-sm font-medium text-white tabular-nums w-10 text-right">{value}%</span>
+        <span className="text-sm font-medium text-white tabular-nums w-16 text-right">
+          {displayText ?? `${value}%`}
+        </span>
       </div>
     </div>
   );
