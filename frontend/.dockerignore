@@ -1,0 +1,9 @@
+node_modules
+dist
+.vite
+*.tsbuildinfo
+e2e
+playwright-report
+test-results
+stats.html
+coverage

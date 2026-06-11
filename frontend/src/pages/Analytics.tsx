@@ -1,10 +1,11 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import api, { SystemStats, RouteMetrics } from '../services/api';
 import { useSystemStore, useViewMode } from '../store/store';
-import PageHeader from '../components/PageHeader';
-import { Card, Badge } from '../components/ui';
+import { useSystemStats } from '../hooks/useSystemStats';
+import { useEvaluationData } from '../hooks/useEvaluationData';
+import PageHeader from '../components/layout/PageHeader';
+import { Card, Badge, CardHeader } from '../components/ui';
 import { StatCardSkeleton } from '../components/ui/Skeleton';
 import { cn } from '../lib/utils';
 import { hyperStaggerContainer, hyperStaggerItem } from '../lib/motion';
@@ -14,10 +15,10 @@ import {
 } from 'recharts';
 import { Activity, TrendingUp, Zap, Timer, Route, Gauge, Network, Cpu, Calendar, BarChart3 } from 'lucide-react';
 import { tooltipStyle, axisStyle, gridStyle, areaGradient, CHART_COLORS, CHART_PALETTE, cursorStyle } from '../lib/chartConfig';
-import SystemHealthRadar from '../components/charts/SystemHealthRadar';
-import EnergyStackedBar from '../components/charts/EnergyStackedBar';
-import DemandHeatmap from '../components/charts/DemandHeatmap';
-import AIInsightsPanel from '../components/analytics/AIInsightsPanel';
+import SystemHealthRadar from '../components/domain/charts/SystemHealthRadar';
+import EnergyStackedBar from '../components/domain/charts/EnergyStackedBar';
+import DemandHeatmap from '../components/domain/charts/DemandHeatmap';
+import SystemInsightsPanel from '../components/domain/analytics/SystemInsightsPanel';
 
 /* ── Metric Pill ─────────────────────────────────── */
 /* ── Empty Chart State ───────────────────────────────── */
@@ -76,83 +77,18 @@ function MetricTile({
 function Analytics() {
   const { addToast } = useSystemStore();
   const viewMode = useViewMode();
-  const [metrics, setMetrics] = useState<RouteMetrics | null>(null);
-  const [systemStats, setSystemStats] = useState<SystemStats | null>(null);
-  const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState('7d');
   const [dateDropdownOpen, setDateDropdownOpen] = useState(false);
   const dateRef = useRef<HTMLDivElement>(null);
 
-  // Outside click handler for date dropdown
-  useEffect(() => {
-    if (!dateDropdownOpen) return;
-    const handleClick = (e: MouseEvent) => {
-      if (dateRef.current && !dateRef.current.contains(e.target as Node)) {
-        setDateDropdownOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
-  }, [dateDropdownOpen]);
-
-  /* ── Live evaluation state ───────────────────────── */
-  const [ganEval, setGanEval] = useState<Record<string, any> | null>(null);
-  const [agentPerf, setAgentPerf] = useState<Record<string, any> | null>(null);
-  const [routeEval, setRouteEval] = useState<Record<string, any> | null>(null);
-  const [trainingHistory, setTrainingHistory] = useState<{
-    loss_history: { epoch: number; g_loss: number; d_loss_real: number }[];
-    reward_history: { episode: number; reward: number }[];
-    metrics: Record<string, any>;
-  } | null>(null);
-  const [evalLoading, setEvalLoading] = useState(true);
-  const [modelsReady, setModelsReady] = useState(true);
+  const { stats: systemStats, metrics, loading: statsLoading, error: statsError } = useSystemStats();
+  const { ganEval, agentPerf, routeEval, trainingHistory, loading: evalLoading, error: evalError, modelsReady } = useEvaluationData();
+  const loading = statsLoading || evalLoading;
 
   useEffect(() => {
-    let mounted = true;
-    const load = async () => {
-      try {
-        const [stats, routeMetrics] = await Promise.all([api.getSystemStats(), api.getRouteMetrics(20)]);
-        if (mounted) { setSystemStats(stats); setMetrics(routeMetrics); }
-      } catch (err: any) {
-        if (mounted) addToast({ type: 'error', title: 'Analytics failed', message: err?.message });
-      } finally { if (mounted) setLoading(false); }
-    };
-    load();
-    return () => { mounted = false; };
-  }, [addToast]);
-
-  /* Fetch evaluation data from the 4 new endpoints */
-  useEffect(() => {
-    let mounted = true;
-    const loadEval = async () => {
-      const results = await Promise.allSettled([
-        api.getGanEvaluation(),
-        api.getAgentPerformance(),
-        api.getRouteEvaluation(),
-        api.getTrainingHistory(),
-      ]);
-      if (!mounted) return;
-
-      const [ganRes, agentRes, routeRes, historyRes] = results;
-
-      // Check if models are "not_trained" by inspecting response status fields
-      const notTrained = [ganRes, agentRes, routeRes].every((r) => {
-        if (r.status === 'rejected') return true;
-        if (r.status === 'fulfilled' && r.value?.status === 'not_trained') return true;
-        return false;
-      });
-      if (notTrained) setModelsReady(false);
-
-      if (ganRes.status === 'fulfilled') setGanEval(ganRes.value);
-      if (agentRes.status === 'fulfilled') setAgentPerf(agentRes.value);
-      if (routeRes.status === 'fulfilled') setRouteEval(routeRes.value);
-      if (historyRes.status === 'fulfilled') setTrainingHistory(historyRes.value);
-
-      setEvalLoading(false);
-    };
-    loadEval();
-    return () => { mounted = false; };
-  }, []);
+    if (statsError) addToast({ type: 'error', title: 'Analytics failed', message: statsError.message });
+    if (evalError) addToast({ type: 'error', title: 'Evaluation failed', message: evalError.message });
+  }, [statsError, evalError, addToast]);
 
   /* ── Derive chart data from live results ──────────── */
   const trainingConvergence = trainingHistory?.loss_history?.length
@@ -243,15 +179,7 @@ function Analytics() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 mb-5">
         {/* Agent Reward / Energy Timeline (wider) */}
         <Card className="col-span-12 lg:col-span-7 group">
-          <div className="flex items-center justify-between mb-5">
-            <div className="flex items-center gap-2.5">
-              <div className="p-1.5 rounded-lg bg-amber/10"><Zap className="w-3.5 h-3.5 text-amber" /></div>
-              <h3 className="text-sm font-semibold text-white uppercase tracking-wider">
-                {trainingHistory?.reward_history?.length ? 'Agent Reward History' : 'Energy & Distance'}
-              </h3>
-            </div>
-
-          </div>
+          <CardHeader icon={Zap} title={trainingHistory?.reward_history?.length ? 'Agent Reward History' : 'Energy & Distance'} accent="amber" />
           {evalLoading ? (
             <div className="h-[280px] flex items-center justify-center text-label text-sm">Loading…</div>
           ) : trainingHistory?.reward_history?.length ? (
@@ -280,13 +208,7 @@ function Analytics() {
 
         {/* Route Quality Donut (narrower) */}
         <Card className="col-span-12 lg:col-span-5 group">
-          <div className="flex items-center justify-between mb-5">
-            <div className="flex items-center gap-2.5">
-              <div className="p-1.5 rounded-lg bg-emerald/10"><TrendingUp className="w-3.5 h-3.5 text-emerald" /></div>
-              <h3 className="text-sm font-semibold text-white uppercase tracking-wider">Route Quality</h3>
-            </div>
-
-          </div>
+          <CardHeader icon={TrendingUp} title="Route Quality" accent="emerald" />
           {routeQuality ? (
             <ResponsiveContainer width="100%" height={280}>
               <PieChart>
@@ -316,15 +238,7 @@ function Analytics() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
         {/* GAN Quality / Distance Distribution */}
         <Card className="group">
-          <div className="flex items-center justify-between mb-5">
-            <div className="flex items-center gap-2.5">
-              <div className="p-1.5 rounded-lg bg-blue/10"><Route className="w-3.5 h-3.5 text-blue" /></div>
-              <h3 className="text-sm font-semibold text-white uppercase tracking-wider">
-                GAN Quality Metrics
-              </h3>
-            </div>
-
-          </div>
+          <CardHeader icon={Route} title="GAN Quality Metrics" accent="blue" />
           {evalLoading ? (
             <div className="h-[260px] flex items-center justify-center text-label text-sm">Loading…</div>
           ) : ganQualityBars ? (
@@ -351,13 +265,7 @@ function Analytics() {
 
         {/* GAN Training Convergence */}
         <Card className="group">
-          <div className="flex items-center justify-between mb-5">
-            <div className="flex items-center gap-2.5">
-              <div className="p-1.5 rounded-lg bg-amber/10"><Cpu className="w-3.5 h-3.5 text-amber" /></div>
-              <h3 className="text-sm font-semibold text-white uppercase tracking-wider">GAN Training Loss</h3>
-            </div>
-
-          </div>
+          <CardHeader icon={Cpu} title="GAN Training Loss" accent="amber" />
           {trainingConvergence ? (
             <ResponsiveContainer width="100%" height={260}>
               <AreaChart data={trainingConvergence}>
@@ -398,18 +306,15 @@ function Analytics() {
         </div>
       </div>
 
-      {/* ── AI Insights Panel ──────────────────────── */}
+      {/* ── System Insights Panel ──────────────────────── */}
       <div className="mb-5">
-        <AIInsightsPanel />
+        <SystemInsightsPanel />
       </div>
 
       {/* ── System Info Footer ────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <Card>
-          <div className="flex items-center gap-2.5 mb-4">
-            <Cpu className="w-4 h-4 text-emerald" />
-            <h3 className="text-sm font-semibold text-white uppercase tracking-wider">AI Models</h3>
-          </div>
+          <CardHeader icon={Cpu} title="System Models" accent="emerald" />
           <div className="space-y-2">
             {[
               { label: 'SG-GAN Traffic',  ready: systemStats?.models?.gan_trained },
@@ -425,10 +330,7 @@ function Analytics() {
         </Card>
 
         <Card>
-          <div className="flex items-center gap-2.5 mb-4">
-            <Network className="w-4 h-4 text-emerald" />
-            <h3 className="text-sm font-semibold text-white uppercase tracking-wider">Network</h3>
-          </div>
+          <CardHeader icon={Network} title="Network" accent="emerald" />
           <div className="space-y-2">
             {[
               { label: 'Total Nodes', val: systemStats?.road_network?.nodes ?? 0 },
@@ -443,10 +345,7 @@ function Analytics() {
         </Card>
 
         <Card>
-          <div className="flex items-center gap-2.5 mb-4">
-            <Activity className="w-4 h-4 text-emerald" />
-            <h3 className="text-sm font-semibold text-white uppercase tracking-wider">Performance</h3>
-          </div>
+          <CardHeader icon={Activity} title="Performance" accent="emerald" />
           <div className="space-y-2">
             {[
               { label: 'Agent Success Rate', val: agentPerf ? `${(agentPerf.success_rate * 100).toFixed(0)}` : '—', unit: '%' },

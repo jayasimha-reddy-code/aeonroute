@@ -50,7 +50,7 @@ export interface StartSimulationOpts {
     startSOC: number;
     batteryCapacityKWh: number;
     speedMultiplier?: number;
-    routeMode?: 'fast' | 'eco' | 'scenic';
+    routeMode?: 'fast' | 'eco' | 'scenic' | 'dijkstra' | 'astar' | 'q_learning' | 'dqn' | 'gnn' | 'hybrid';
 }
 
 // ── Constants ─────────────────────────────────────────

@@ -5,18 +5,20 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { useSystemStore } from '../store/store';
+import { useUIStore, useDomainStore } from '../store/store';
 
 // Reset store state before each test
 beforeEach(() => {
-    useSystemStore.setState({
+    useUIStore.setState({
         activeTab: 'dashboard',
         toasts: [],
+        isLoading: false,
+        globalError: null,
+    });
+    useDomainStore.setState({
         roadNetwork: null,
         generatedRoutes: [],
         selectedRoute: null,
-        isLoading: false,
-        globalError: null,
         currentEVState: {
             battery_soc: 80,
             current_node: 0,
@@ -27,24 +29,20 @@ beforeEach(() => {
 
 describe('Navigation', () => {
     it('should set active tab', () => {
-        const store = useSystemStore.getState();
-        store.setActiveTab('training');
-
-        const state = useSystemStore.getState();
-        expect(state.activeTab).toBe('training');
+        useUIStore.getState().setActiveTab('training');
+        expect(useUIStore.getState().activeTab).toBe('training');
     });
 
     it('should default to dashboard tab', () => {
-        expect(useSystemStore.getState().activeTab).toBe('dashboard');
+        expect(useUIStore.getState().activeTab).toBe('dashboard');
     });
 });
 
 describe('Toasts', () => {
     it('should add a toast with generated id', () => {
-        const store = useSystemStore.getState();
-        store.addToast({ type: 'success', title: 'Test Toast' });
+        useUIStore.getState().addToast({ type: 'success', title: 'Test Toast' });
 
-        const toasts = useSystemStore.getState().toasts;
+        const toasts = useUIStore.getState().toasts;
         expect(toasts).toHaveLength(1);
         expect(toasts[0].type).toBe('success');
         expect(toasts[0].title).toBe('Test Toast');
@@ -52,34 +50,31 @@ describe('Toasts', () => {
     });
 
     it('should remove a toast by id', () => {
-        const store = useSystemStore.getState();
-        store.addToast({ type: 'info', title: 'Removable' });
+        useUIStore.getState().addToast({ type: 'info', title: 'Removable' });
 
-        const toastId = useSystemStore.getState().toasts[0].id;
-        store.removeToast(toastId);
+        const toastId = useUIStore.getState().toasts[0].id;
+        useUIStore.getState().removeToast(toastId);
 
-        expect(useSystemStore.getState().toasts).toHaveLength(0);
+        expect(useUIStore.getState().toasts).toHaveLength(0);
     });
 
     it('should add multiple toasts', () => {
-        const store = useSystemStore.getState();
-        store.addToast({ type: 'success', title: 'First' });
-        store.addToast({ type: 'error', title: 'Second' });
+        useUIStore.getState().addToast({ type: 'success', title: 'First' });
+        useUIStore.getState().addToast({ type: 'error', title: 'Second' });
 
-        expect(useSystemStore.getState().toasts).toHaveLength(2);
+        expect(useUIStore.getState().toasts).toHaveLength(2);
     });
 });
 
 describe('EV State', () => {
     it('should update EV state', () => {
-        const store = useSystemStore.getState();
-        store.setEVState({
+        useDomainStore.getState().setEVState({
             battery_soc: 50,
             current_node: 5,
             battery_capacity_kwh: 75,
         });
 
-        const state = useSystemStore.getState().currentEVState;
+        const state = useDomainStore.getState().currentEVState;
         expect(state.battery_soc).toBe(50);
         expect(state.current_node).toBe(5);
         expect(state.battery_capacity_kwh).toBe(75);
@@ -88,12 +83,11 @@ describe('EV State', () => {
 
 describe('Loading', () => {
     it('should set loading state', () => {
-        const store = useSystemStore.getState();
-        store.setIsLoading(true);
-        expect(useSystemStore.getState().isLoading).toBe(true);
+        useUIStore.getState().setIsLoading(true);
+        expect(useUIStore.getState().isLoading).toBe(true);
 
-        store.setIsLoading(false);
-        expect(useSystemStore.getState().isLoading).toBe(false);
+        useUIStore.getState().setIsLoading(false);
+        expect(useUIStore.getState().isLoading).toBe(false);
     });
 });
 
@@ -110,9 +104,8 @@ describe('Routes', () => {
             },
         ];
 
-        const store = useSystemStore.getState();
-        store.setGeneratedRoutes(mockRoutes);
-        expect(useSystemStore.getState().generatedRoutes).toEqual(mockRoutes);
+        useDomainStore.getState().setGeneratedRoutes(mockRoutes);
+        expect(useDomainStore.getState().generatedRoutes).toEqual(mockRoutes);
     });
 
     it('should set selected route', () => {
@@ -125,11 +118,10 @@ describe('Routes', () => {
             charging_stops: [],
         };
 
-        const store = useSystemStore.getState();
-        store.setSelectedRoute(mockRoute);
-        expect(useSystemStore.getState().selectedRoute).toEqual(mockRoute);
+        useDomainStore.getState().setSelectedRoute(mockRoute);
+        expect(useDomainStore.getState().selectedRoute).toEqual(mockRoute);
 
-        store.setSelectedRoute(null);
-        expect(useSystemStore.getState().selectedRoute).toBeNull();
+        useDomainStore.getState().setSelectedRoute(null);
+        expect(useDomainStore.getState().selectedRoute).toBeNull();
     });
 });

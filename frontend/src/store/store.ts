@@ -1,401 +1,98 @@
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import { RoadNetworkData, Route, StationData } from '../services/api';
+import { useUIStore } from './uiStore';
+import { useSettingsStore } from './settingsStore';
+import { useDomainStore } from './domainStore';
+import { useTrainingStore } from './trainingStore';
 
-// ─── Training Stream Types ────────────────────────────────
+// Export types from the separate stores
+export * from './uiStore';
+export * from './settingsStore';
+export * from './domainStore';
+export * from './trainingStore';
 
-export interface LossPoint {
-  epoch: number;
-  g_loss: number;
-  d_loss_real: number;
-  d_loss_fake: number;
-}
+// Polyfill for legacy component usages to prevent massive refactoring of imports
+export const useSystemStore = Object.assign(
+  (selector?: (state: any) => any) => {
+    const ui = useUIStore();
+    const settings = useSettingsStore();
+    const domain = useDomainStore();
+    const training = useTrainingStore();
 
-export interface RewardPoint {
-  episode: number;
-  reward: number;
-  length: number;
-}
-
-export interface TrainingProgress {
-  is_training: boolean;
-  progress: number;
-  current_step: string;
-  metrics: Record<string, any>;
-  gan_epoch: number;
-  gan_total_epochs: number;
-  rl_episode: number;
-  rl_total_episodes: number;
-}
-
-// ─── Activity Log Types ──────────────────────────────────
-
-export type ActivityType = 'route' | 'training' | 'system';
-
-export interface ActivityEntry {
-  id: number;
-  type: ActivityType;
-  text: string;
-  timestamp: number; // epoch ms for reliable serialization
-}
-
-// ─── Toast Types ──────────────────────────────────────────
-
-export interface Toast {
-  id: string;
-  type: 'success' | 'error' | 'warning' | 'info';
-  title: string;
-  message?: string;
-  duration?: number;
-}
-
-// ─── Tab Type ─────────────────────────────────────────────
-
-export type AppTab = 'dashboard' | 'routing' | 'training' | 'analytics' | 'stations' | 'settings';
-
-// ─── Settings Types ───────────────────────────────────────
-
-export type UnitSystem = 'metric' | 'imperial';
-export type ViewMode = 'grid' | 'list';
-export type SimulationScale = 'light' | 'standard' | 'full';
-
-export interface UserSettings {
-  units: UnitSystem;
-  avoidTolls: boolean;
-  optimizeBattery: boolean;
-  notifications: boolean;
-  viewMode: ViewMode;
-  energyWeight: number;       // kWh/km — 0.10 to 0.30
-  simulationScale: SimulationScale;
-  vehicleProfile: string;
-  batteryCapacity: number;    // kWh
-}
-
-// ─── Store Interface ──────────────────────────────────────
-
-interface SystemState {
-  // ── Road Network ──
-  roadNetwork: RoadNetworkData | null;
-  setRoadNetwork: (network: RoadNetworkData) => void;
-
-  // ── Stations ──
-  stations: StationData[];
-  setStations: (stations: StationData[]) => void;
-
-  // ── Routes ──
-  generatedRoutes: Route[];
-  setGeneratedRoutes: (routes: Route[]) => void;
-  selectedRoute: Route | null;
-  setSelectedRoute: (route: Route | null) => void;
-
-  // ── Navigation ──
-  activeTab: AppTab;
-  setActiveTab: (tab: AppTab) => void;
-
-  // ── Sidebar ──
-  sidebarCollapsed: boolean;
-  toggleSidebar: () => void;
-  setSidebarCollapsed: (collapsed: boolean) => void;
-
-  // ── User Settings (global, persisted) ──
-  settings: UserSettings;
-  setUnits: (units: UnitSystem) => void;
-  setAvoidTolls: (avoid: boolean) => void;
-  setOptimizeBattery: (optimize: boolean) => void;
-  setNotifications: (enabled: boolean) => void;
-  setViewMode: (mode: ViewMode) => void;
-  setEnergyWeight: (weight: number) => void;
-  setSimulationScale: (scale: SimulationScale) => void;
-  setVehicleProfile: (profile: string) => void;
-  setBatteryCapacity: (capacity: number) => void;
-
-  // ── Activity Log ──
-  activityLog: ActivityEntry[];
-  addActivity: (type: ActivityType, text: string) => void;
-
-  // ── Loading / Error ──
-  isLoading: boolean;
-  setIsLoading: (loading: boolean) => void;
-  globalError: string | null;
-  setGlobalError: (error: string | null) => void;
-
-  // ── EV State ──
-  currentEVState: {
-    battery_soc: number;
-    current_node: number;
-    battery_capacity_kwh: number;
-  };
-  setEVState: (state: { battery_soc: number; current_node: number; battery_capacity_kwh: number }) => void;
-
-  // ── Toast Notifications ──
-  toasts: Toast[];
-  addToast: (toast: Omit<Toast, 'id'>) => void;
-  removeToast: (id: string) => void;
-
-  // ── Training Stream (SSE) ──
-  sseConnected: boolean;
-  setSSEConnected: (connected: boolean) => void;
-  trainingProgress: TrainingProgress;
-  lossHistory: LossPoint[];
-  rewardHistory: RewardPoint[];
-  trainingLogs: Array<{ timestamp: string; message: string }>;
-  updateTrainingFromSSE: (data: any) => void;
-  resetTrainingData: () => void;
-}
-
-// ─── Store Implementation ─────────────────────────────────
-
-let toastCounter = 0;
-
-export const useSystemStore = create<SystemState>()(
-  persist(
-    (set) => ({
-      // Road Network
-      roadNetwork: null,
-      setRoadNetwork: (network) => set({ roadNetwork: network }),
-
-      // Stations
-      stations: [],
-      setStations: (stations) => set({ stations }),
-
-      // Routes
-      generatedRoutes: [],
-      setGeneratedRoutes: (routes) => set({ generatedRoutes: routes }),
-      selectedRoute: null,
-      setSelectedRoute: (route) => set({ selectedRoute: route }),
-
-      // Navigation
-      activeTab: 'dashboard',
-      setActiveTab: (tab) => set({ activeTab: tab }),
-
-      // Sidebar
-      sidebarCollapsed: false,
-      toggleSidebar: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
-      setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
-
-      // User Settings (global)
-      settings: {
-        units: 'metric',
-        avoidTolls: false,
-        optimizeBattery: true,
-        notifications: true,
-        viewMode: 'grid',
-        energyWeight: 0.18,
-        simulationScale: 'standard',
-        vehicleProfile: 'tesla_model_3_lr',
-        batteryCapacity: 82,
-      },
-      setUnits: (units) => set((s) => ({ settings: { ...s.settings, units } })),
-      setAvoidTolls: (avoidTolls) => set((s) => ({ settings: { ...s.settings, avoidTolls } })),
-      setOptimizeBattery: (optimizeBattery) => set((s) => ({ settings: { ...s.settings, optimizeBattery } })),
-      setNotifications: (notifications) => set((s) => ({ settings: { ...s.settings, notifications } })),
-      setViewMode: (viewMode) => set((s) => ({ settings: { ...s.settings, viewMode } })),
-      setEnergyWeight: (energyWeight) => set((s) => ({ settings: { ...s.settings, energyWeight } })),
-      setSimulationScale: (simulationScale) => set((s) => ({ settings: { ...s.settings, simulationScale } })),
-      setVehicleProfile: (vehicleProfile) => set((s) => ({ settings: { ...s.settings, vehicleProfile } })),
-      setBatteryCapacity: (batteryCapacity) => set((s) => ({ settings: { ...s.settings, batteryCapacity } })),
-
-      // Activity Log
-      activityLog: [],
-      addActivity: (type, text) =>
-        set((s) => {
-          const entry: ActivityEntry = { id: Date.now(), type, text, timestamp: Date.now() };
-          const updated = [entry, ...s.activityLog];
-          return { activityLog: updated.slice(0, 20) }; // keep max 20 entries (FIFO)
-        }),
-
-      // Loading / Error
-      isLoading: false,
-      setIsLoading: (loading) => set({ isLoading: loading }),
-      globalError: null,
-      setGlobalError: (error) => set({ globalError: error }),
-
-      // EV State
-      currentEVState: {
-        battery_soc: 80,
-        current_node: 0,
-        battery_capacity_kwh: 60,
-      },
-      setEVState: (state) => set({ currentEVState: state }),
-
-      // Toasts
-      toasts: [],
-      addToast: (toast) => {
-        const id = `toast-${++toastCounter}`;
-        set((s) => ({ toasts: [...s.toasts, { ...toast, id }] }));
-
-        // Auto-remove after duration
-        const duration = toast.duration ?? 4000;
-        setTimeout(() => {
-          set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) }));
-        }, duration);
-      },
-      removeToast: (id) => set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),
-
-      // Training Stream (SSE)
-      sseConnected: false,
-      setSSEConnected: (connected) => set({ sseConnected: connected }),
-
-      trainingProgress: {
-        is_training: false,
-        progress: 0,
-        current_step: '',
-        metrics: {},
-        gan_epoch: 0,
-        gan_total_epochs: 0,
-        rl_episode: 0,
-        rl_total_episodes: 0,
-      },
-
-      lossHistory: [],
-      rewardHistory: [],
-      trainingLogs: [],
-
-      updateTrainingFromSSE: (data: any) =>
-        set((s) => {
-          const newProgress: TrainingProgress = {
-            ...s.trainingProgress,
-            is_training: data.is_training ?? s.trainingProgress.is_training,
-            progress: data.progress ?? s.trainingProgress.progress,
-            current_step: data.current_step ?? s.trainingProgress.current_step,
-            metrics: data.metrics ?? s.trainingProgress.metrics,
-            gan_epoch: data.gan_epoch ?? s.trainingProgress.gan_epoch,
-            gan_total_epochs: data.gan_total_epochs ?? s.trainingProgress.gan_total_epochs,
-            rl_episode: data.rl_episode ?? s.trainingProgress.rl_episode,
-            rl_total_episodes: data.rl_total_episodes ?? s.trainingProgress.rl_total_episodes,
-          };
-
-          let newLoss = s.lossHistory;
-          if (Array.isArray(data.new_loss_points) && data.new_loss_points.length > 0) {
-            newLoss = [...s.lossHistory, ...data.new_loss_points];
-            if (newLoss.length > 1000) newLoss = newLoss.slice(newLoss.length - 1000);
-          }
-
-          let newReward = s.rewardHistory;
-          if (Array.isArray(data.new_reward_points) && data.new_reward_points.length > 0) {
-            newReward = [...s.rewardHistory, ...data.new_reward_points];
-            if (newReward.length > 2000) newReward = newReward.slice(newReward.length - 2000);
-          }
-
-          // Handle multiplexed log events (Override #3)
-          let newLogs = s.trainingLogs;
-          if (data._log_event) {
-            newLogs = [...s.trainingLogs, data._log_event];
-            if (newLogs.length > 500) newLogs = newLogs.slice(newLogs.length - 500);
-          }
-
-          return {
-            trainingProgress: newProgress,
-            lossHistory: newLoss,
-            rewardHistory: newReward,
-            trainingLogs: newLogs,
-          };
-        }),
-
-      resetTrainingData: () =>
-        set({
-          lossHistory: [],
-          rewardHistory: [],
-          trainingLogs: [],
-          trainingProgress: {
-            is_training: false,
-            progress: 0,
-            current_step: '',
-            metrics: {},
-            gan_epoch: 0,
-            gan_total_epochs: 0,
-            rl_episode: 0,
-            rl_total_episodes: 0,
-          },
-        }),
+    const combined = { ...ui, ...settings, ...domain, ...training };
+    return selector ? selector(combined) : combined;
+  },
+  {
+    getState: () => ({
+      ...useUIStore.getState(),
+      ...useSettingsStore.getState(),
+      ...useDomainStore.getState(),
+      ...useTrainingStore.getState(),
     }),
-    {
-      name: 'ev-routing-preferences',
-      // Only persist user preferences — not runtime data
-      partialize: (state) => ({
-        activeTab: state.activeTab,
-        sidebarCollapsed: state.sidebarCollapsed,
-        settings: state.settings,
-        activityLog: state.activityLog,
-      }),
-      // Deep-merge persisted settings with current defaults so any newly-added
-      // fields (energyWeight, simulationScale, vehicleProfile, batteryCapacity)
-      // always exist even when restoring a stale localStorage snapshot.
-      merge: (persisted, current) => {
-        const merged = { ...current, ...(persisted as any) };
-        merged.settings = { ...current.settings, ...((persisted as any)?.settings ?? {}) };
-        return merged;
-      },
+    setState: (partial: any) => {
+      useUIStore.setState(partial);
+      useSettingsStore.setState(partial);
+      useDomainStore.setState(partial);
+      useTrainingStore.setState(partial);
     }
-  )
+  }
 );
 
-// ─── Selector Hooks ───────────────────────────────────────
-// Granular selectors prevent unnecessary re-renders.
-// Components subscribe to ONLY the slice of state they need.
+// ─── Legacy Selector Hooks ───────────────────────────────────────
+export const useRoadNetwork = () => useDomainStore((s) => s.roadNetwork);
+export const useSetRoadNetwork = () => useDomainStore((s) => s.setRoadNetwork);
 
-export const useRoadNetwork = () => useSystemStore((s) => s.roadNetwork);
-export const useSetRoadNetwork = () => useSystemStore((s) => s.setRoadNetwork);
+export const useStations = () => useDomainStore((s) => s.stations);
+export const useSetStations = () => useDomainStore((s) => s.setStations);
 
-export const useStations = () => useSystemStore((s) => s.stations);
-export const useSetStations = () => useSystemStore((s) => s.setStations);
+export const useActiveTab = () => useUIStore((s) => s.activeTab);
+export const useSetActiveTab = () => useUIStore((s) => s.setActiveTab);
 
-export const useActiveTab = () => useSystemStore((s) => s.activeTab);
-export const useSetActiveTab = () => useSystemStore((s) => s.setActiveTab);
+export const useSidebarCollapsed = () => useUIStore((s) => s.sidebarCollapsed);
+export const useToggleSidebar = () => useUIStore((s) => s.toggleSidebar);
 
-export const useSidebarCollapsed = () => useSystemStore((s) => s.sidebarCollapsed);
-export const useToggleSidebar = () => useSystemStore((s) => s.toggleSidebar);
+export const useToasts = () => useUIStore((s) => ({ toasts: s.toasts, addToast: s.addToast, removeToast: s.removeToast }));
+export const useAddToast = () => useUIStore((s) => s.addToast);
 
-export const useToasts = () => useSystemStore((s) => ({ toasts: s.toasts, addToast: s.addToast, removeToast: s.removeToast }));
-export const useAddToast = () => useSystemStore((s) => s.addToast);
+export const useSettings = () => useSettingsStore((s) => s.settings);
+export const useSetUnits = () => useSettingsStore((s) => s.setUnits);
+export const useSetAvoidTolls = () => useSettingsStore((s) => s.setAvoidTolls);
+export const useSetOptimizeBattery = () => useSettingsStore((s) => s.setOptimizeBattery);
+export const useSetNotifications = () => useSettingsStore((s) => s.setNotifications);
+export const useViewMode = () => useSettingsStore((s) => s.settings.viewMode);
+export const useSetViewMode = () => useSettingsStore((s) => s.setViewMode);
+export const useEnergyWeight = () => useSettingsStore((s) => s.settings.energyWeight);
+export const useSimulationScale = () => useSettingsStore((s) => s.settings.simulationScale);
+export const useVehicleProfile = () => useSettingsStore((s) => s.settings.vehicleProfile);
+export const useBatteryCapacity = () => useSettingsStore((s) => s.settings.batteryCapacity);
+export const useSetEnergyWeight = () => useSettingsStore((s) => s.setEnergyWeight);
+export const useSetSimulationScale = () => useSettingsStore((s) => s.setSimulationScale);
+export const useSetVehicleProfile = () => useSettingsStore((s) => s.setVehicleProfile);
+export const useSetBatteryCapacity = () => useSettingsStore((s) => s.setBatteryCapacity);
 
-export const useSettings = () => useSystemStore((s) => s.settings);
-export const useSetUnits = () => useSystemStore((s) => s.setUnits);
-export const useSetAvoidTolls = () => useSystemStore((s) => s.setAvoidTolls);
-export const useSetOptimizeBattery = () => useSystemStore((s) => s.setOptimizeBattery);
-export const useSetNotifications = () => useSystemStore((s) => s.setNotifications);
-export const useViewMode = () => useSystemStore((s) => s.settings.viewMode);
-export const useSetViewMode = () => useSystemStore((s) => s.setViewMode);
-export const useEnergyWeight = () => useSystemStore((s) => s.settings.energyWeight);
-export const useSimulationScale = () => useSystemStore((s) => s.settings.simulationScale);
-export const useVehicleProfile = () => useSystemStore((s) => s.settings.vehicleProfile);
-export const useBatteryCapacity = () => useSystemStore((s) => s.settings.batteryCapacity);
-export const useSetEnergyWeight = () => useSystemStore((s) => s.setEnergyWeight);
-export const useSetSimulationScale = () => useSystemStore((s) => s.setSimulationScale);
-export const useSetVehicleProfile = () => useSystemStore((s) => s.setVehicleProfile);
-export const useSetBatteryCapacity = () => useSystemStore((s) => s.setBatteryCapacity);
-
-export const useRoutes = () => useSystemStore((s) => ({
+export const useRoutes = () => useDomainStore((s) => ({
   generatedRoutes: s.generatedRoutes,
   setGeneratedRoutes: s.setGeneratedRoutes,
   selectedRoute: s.selectedRoute,
   setSelectedRoute: s.setSelectedRoute,
 }));
 
-export const useEVState = () => useSystemStore((s) => ({
+export const useEVState = () => useDomainStore((s) => ({
   currentEVState: s.currentEVState,
   setEVState: s.setEVState,
 }));
 
-export const useLoading = () => useSystemStore((s) => ({
+export const useLoading = () => useUIStore((s) => ({
   isLoading: s.isLoading,
   setIsLoading: s.setIsLoading,
 }));
 
+export const useTrainingProgress = () => useTrainingStore((s) => s.trainingProgress);
+export const useLossHistory = () => useTrainingStore((s) => s.lossHistory);
+export const useRewardHistory = () => useTrainingStore((s) => s.rewardHistory);
+export const useTrainingLogs = () => useTrainingStore((s) => s.trainingLogs);
+export const useSSEConnected = () => useTrainingStore((s) => s.sseConnected);
+export const useUpdateTrainingFromSSE = () => useTrainingStore((s) => s.updateTrainingFromSSE);
+export const useSetSSEConnected = () => useTrainingStore((s) => s.setSSEConnected);
+export const useResetTrainingData = () => useTrainingStore((s) => s.resetTrainingData);
 
-
-// ─── Training Stream Selectors ────────────────────────────
-
-export const useTrainingProgress = () => useSystemStore((s) => s.trainingProgress);
-export const useLossHistory = () => useSystemStore((s) => s.lossHistory);
-export const useRewardHistory = () => useSystemStore((s) => s.rewardHistory);
-export const useTrainingLogs = () => useSystemStore((s) => s.trainingLogs);
-export const useSSEConnected = () => useSystemStore((s) => s.sseConnected);
-export const useUpdateTrainingFromSSE = () => useSystemStore((s) => s.updateTrainingFromSSE);
-export const useSetSSEConnected = () => useSystemStore((s) => s.setSSEConnected);
-export const useResetTrainingData = () => useSystemStore((s) => s.resetTrainingData);
-
-// ─── Activity Log Selectors ───────────────────────────────
-export const useActivityLog = () => useSystemStore((s) => s.activityLog);
-export const useAddActivity = () => useSystemStore((s) => s.addActivity);
-
+export const useActivityLog = () => useUIStore((s) => s.activityLog);
+export const useAddActivity = () => useUIStore((s) => s.addActivity);

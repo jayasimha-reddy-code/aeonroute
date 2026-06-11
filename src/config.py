@@ -60,8 +60,13 @@ class EVRoutingSettings(BaseSettings):
     #  API config 
     cors_origins: List[str] = [
         "http://localhost:5173",
+        "http://localhost:5174",
         "http://localhost:4173",
         "http://localhost:3000",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:5174",
+        "http://127.0.0.1:4173",
+        "http://127.0.0.1:3000",
     ]
     log_format: str = "json"
     max_body_size: int = 10 * 1024 * 1024  # 10 MB

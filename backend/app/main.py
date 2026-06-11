@@ -1,4 +1,4 @@
-﻿"""FastAPI application factory for the EV Routing System."""
+"""FastAPI application factory for the EV Routing System."""
 
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
@@ -12,6 +12,7 @@ import logging
 from backend.app.state import get_state
 from backend.app.middleware import register_middleware
 from backend.app.routers import health, routing, training, analytics
+from backend.app.routers import evaluation
 from src.config import get_settings
 
 logger = logging.getLogger("ev_routing")
@@ -37,11 +38,31 @@ async def lifespan(app: FastAPI):
             "Hyderabad graph loaded: %d nodes, %d edges, %d stations",
             hgraph.num_nodes, hgraph.num_edges, len(stations),
         )
+
+        # Initialize spatial index for O(log n) nearest-station lookup
+        try:
+            from backend.app.services.spatial_index import StationSpatialIndex
+            state.spatial_index = StationSpatialIndex(stations)
+            logger.info("Spatial index built for %d charging stations", len(stations))
+        except Exception as e:
+            logger.warning("Spatial index init failed: %s", e)
+
+        # Initialize GNN routing service (non-fatal if model not trained)
+        try:
+            from backend.app.services.gnn_routing_service import GNNRoutingService
+            gnn_svc = GNNRoutingService()
+            gnn_svc.load_model(graph=hgraph)
+            state.gnn_service = gnn_svc
+            logger.info("GNN service initialized (model loaded: %s)", gnn_svc.is_loaded)
+        except Exception as e:
+            logger.warning("GNN service init failed: %s. GNN/Hybrid modes will use heuristics.", e)
+
     except Exception as e:
         logger.error("Failed to initialise Hyderabad graph: %s", e)
         logger.warning("Server starting without graph — endpoints will return errors")
     yield
     logger.info("Shutting down EV Routing System")
+
 
 
 tags_metadata = [
@@ -58,7 +79,7 @@ def create_app() -> FastAPI:
 
     app = FastAPI(
         title="EV Routing System API",
-        description="AI-Powered Electric Vehicle Route Optimization API.",
+        description="Electric Vehicle Route Optimization API.",
         version="2.0.0",
         lifespan=lifespan,
         openapi_tags=tags_metadata,
@@ -74,6 +95,7 @@ def create_app() -> FastAPI:
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,
+        allow_origin_regex=r"https?://(localhost|127\.0\.0\.1)(:\d+)?$",
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -87,6 +109,7 @@ def create_app() -> FastAPI:
     app.include_router(routing.router)
     app.include_router(training.router)
     app.include_router(analytics.router)
+    app.include_router(evaluation.router)
 
     # Static files (must be last -- catches all unmatched routes)
     frontend_path = settings.frontend_dist_path

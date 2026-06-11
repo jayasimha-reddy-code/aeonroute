@@ -7,6 +7,8 @@ __pycache__/
 *.egg-info/
 dist/
 build/
+node_modules/
+.vite/
 
 # Virtual environments
 venv/
@@ -15,24 +17,48 @@ env/
 ENV/
 .env
 
-# IDE
+# Sensitive information
+*.key
+*.pem
+.env.*
+!.env.example
+
+# IDE & OS
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
 .DS_Store
+Thumbs.db
 
-# Testing
+# Testing & Logs
 .pytest_cache/
 .coverage
 .coverage.*
 htmlcov/
 .tox/
+*.log
+test_output.txt
+tsc_errors.txt
+tsc-errors-*.txt
+final-tsc*.txt
 
-# Models & Data
-# Pre-trained checkpoints (.keras, .pkl) are intentionally tracked for instant demo
-models/**/*.h5
+# Automated workflow artifacts and documentation
+.agent/
+.claude/
+.gemini/
+.gsd/
+GEMINI.md
+MEMORY.md
+UI_IMPLEMENTATION_SUMMARY.md
+LEARNING_BOOK.md
+LEARNING_BOOK.pdf
+UI_GUIDE.md
+
+# Models & Data (Adjust as needed)
+# Keeping models tracked for demo if they are small enough, 
+# but ignoring large generated data.
 data/training_data/*.npy
 data/generated_traffic/*.npy
 results/plots/*.png
@@ -40,19 +66,17 @@ results/plots/*.pdf
 *.npy
 *.npz
 
-# TensorFlow
+# TypeScript/Frontend build junk
+frontend/dist/
+frontend/node_modules/
+frontend/stats.html
+frontend/tsc_errors.txt
+frontend/tsc-errors-*.txt
+frontend/final-tsc*.txt
+
+# TensorFlow / ML logs
 .tf/
 logs/
 tensorboard/
-
-# Notebooks
 .ipynb_checkpoints/
 *.ipynb
-
-# OS
-.DS_Store
-Thumbs.db
-
-# GSD
-.github/
-.gsd/

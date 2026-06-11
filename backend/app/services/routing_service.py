@@ -5,7 +5,7 @@ import math
 import os
 import pickle
 import random
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Tuple
 
 import networkx as nx
 
@@ -15,6 +15,7 @@ from backend.app.models.responses import fail
 logger = logging.getLogger("ev_routing")
 
 _Q_TABLE_PATH = "models/q_learning/q_table_hyderabad.pkl"
+_DQN_MODEL_PATH = "models/dqn/dqn_agent"
 
 
 def _extract_edge_geometry(graph: "nx.DiGraph", osm_u: int, osm_v: int, u_pos: Dict[str, float], v_pos: Dict[str, float]) -> List[List[float]]:
@@ -214,6 +215,108 @@ def _dijkstra_route(hg, source: int, dest: int) -> Optional[List[int]]:
         return None
 
 
+def _astar_route(hg, source: int, dest: int) -> Optional[List[int]]:
+    """A* route using haversine heuristic on OSMnx lat/lon positions."""
+    src_osm = hg.idx_to_osm(source)
+    dst_osm = hg.idx_to_osm(dest)
+    if src_osm == -1 or dst_osm == -1:
+        return None
+    dst_pos = hg.get_node_pos(dest)
+    dst_lat, dst_lon = dst_pos["y"], dst_pos["x"]
+
+    def heuristic(u_osm: int, _: int) -> float:
+        u_idx = hg.osm_to_idx(u_osm)
+        if u_idx == -1:
+            return 0.0
+        pos = hg.get_node_pos(u_idx)
+        dlat = math.radians(pos["y"] - dst_lat)
+        dlon = math.radians(pos["x"] - dst_lon)
+        a = math.sin(dlat / 2) ** 2 + math.cos(math.radians(pos["y"])) * math.cos(math.radians(dst_lat)) * math.sin(dlon / 2) ** 2
+        return 6_371_000.0 * 2 * math.asin(math.sqrt(max(a, 0.0)))
+
+    try:
+        osm_path = nx.astar_path(hg.graph, src_osm, dst_osm, heuristic=heuristic, weight="length")
+        return [hg.osm_to_idx(n) for n in osm_path]
+    except (nx.NetworkXNoPath, nx.NodeNotFound):
+        return None
+
+
+def _dqn_route(hg, source: int, dest: int, state: AppState) -> Optional[List[int]]:
+    """Generate route using the DQN agent (greedy exploitation).
+
+    DQN justification vs Q-table: With ~1000+ nodes the state space
+    (node × battery × time) explodes to millions of states. DQN's neural
+    network generalises across similar states, enabling scalable routing.
+    """
+    try:
+        import numpy as np
+        from src.q_learning_agent import HAS_TF  # noqa: F401
+
+        if not HAS_TF:
+            logger.warning("[DQN] TensorFlow not available — falling back to Dijkstra")
+            return None
+
+        # Try to load DQN from disk if not already in state
+        dqn_agent = state.dqn_model
+        if dqn_agent is None:
+            if not os.path.exists(f"{_DQN_MODEL_PATH}_model.keras"):
+                logger.warning("[DQN] No trained model at %s — falling back to Dijkstra", _DQN_MODEL_PATH)
+                return None
+            from src.q_learning_agent import DQNAgent
+            dqn_agent = DQNAgent(state_dim=8, action_space=min(hg.num_nodes, 10))
+            dqn_agent.load_model(_DQN_MODEL_PATH)
+            state.dqn_model = dqn_agent
+
+        # Greedy DQN policy traversal
+        path = [source]
+        current = source
+        visited = {source}
+        max_steps = min(hg.num_nodes, 500)
+        dst_pos = hg.get_node_pos(dest)
+
+        for _ in range(max_steps):
+            if current == dest:
+                return path
+            neighbors = hg.get_neighbors(current)
+            if not neighbors:
+                break
+
+            # Build state vector: [node_norm, dest_norm, dist_norm, battery_stub × 5]
+            cur_pos = hg.get_node_pos(current)
+            node_norm = current / max(hg.num_nodes, 1)
+            dest_norm = dest / max(hg.num_nodes, 1)
+            dx = (cur_pos["x"] - dst_pos["x"]) * 111.32
+            dy = (cur_pos["y"] - dst_pos["y"]) * 110.57
+            dist_norm = min(math.sqrt(dx ** 2 + dy ** 2) / 50.0, 1.0)
+            state_vec = np.array([node_norm, dest_norm, dist_norm, 0.8, 0.6, 0.5, 0.0, 0.0], dtype=np.float32)
+
+            action = dqn_agent.choose_action(state_vec, training=False)
+            action = action % len(neighbors)
+            nxt = neighbors[action]
+
+            if nxt not in visited or nxt == dest:
+                current = nxt
+                path.append(current)
+                visited.add(current)
+            else:
+                # Try next-best neighbor
+                moved = False
+                for nb in neighbors:
+                    if nb not in visited or nb == dest:
+                        current = nb
+                        path.append(current)
+                        visited.add(current)
+                        moved = True
+                        break
+                if not moved:
+                    break
+
+        return path if current == dest else None
+    except Exception as exc:
+        logger.warning("[DQN] Route generation failed: %s — falling back to Dijkstra", exc)
+        return None
+
+
 # ── Weighted Dijkstra weight functions ──────────────────
 
 _SCENIC_ROAD_WEIGHTS: Dict[str, float] = {
@@ -267,6 +370,49 @@ _MODE_DRAIN_MULTIPLIER: Dict[str, float] = {
 }
 
 
+def _find_nearest_station_kdtree(
+    state: AppState,
+    hg,
+    from_idx: int,
+    charging_station_set: set,
+    station_meta: Dict[int, Dict],
+) -> Tuple[Optional[int], float]:
+    """Use KDTree (if available) to find nearest charging station.
+
+    Falls back to O(n) graph-distance scan if spatial index is unavailable.
+    Returns (station_node_idx, best_dist_m).
+    """
+    from_pos = hg.get_node_pos(from_idx)
+    from_lat, from_lon = from_pos["y"], from_pos["x"]
+
+    # O(log n) KDTree lookup
+    if state.spatial_index is not None and state.charging_stations:
+        nearest = state.spatial_index.nearest(from_lat, from_lon, k=5)
+        for s in nearest:
+            nid = s.get("graph_node_id")
+            if nid is not None and nid in charging_station_set:
+                return nid, s.get("distance_m", 0.0)
+
+    # O(n) fallback — original graph-distance approach
+    current_osm = hg.idx_to_osm(from_idx)
+    best_station_idx: Optional[int] = None
+    best_dist: float = float("inf")
+    for station_node_idx in charging_station_set:
+        if station_node_idx == from_idx:
+            return station_node_idx, 0.0
+        station_osm = hg.idx_to_osm(station_node_idx)
+        if station_osm == -1:
+            continue
+        try:
+            d = nx.shortest_path_length(hg.graph, current_osm, station_osm, weight="length")
+            if d < best_dist:
+                best_dist = d
+                best_station_idx = station_node_idx
+        except (nx.NetworkXNoPath, nx.NodeNotFound):
+            continue
+    return best_station_idx, best_dist
+
+
 def _inject_charging_stops(
     hg,
     state: AppState,
@@ -277,6 +423,8 @@ def _inject_charging_stops(
     route_mode: str = "fast",
 ) -> Dict[str, Any]:
     """Walk path edge-by-edge; inject charging detours when SOC < RECHARGE_THRESHOLD.
+
+    Uses KDTree spatial index for O(log n) nearest-station lookup when available.
 
     Returns a dict with:
       - path: (possibly modified) list of node indices
@@ -313,26 +461,10 @@ def _inject_charging_stops(
         new_path.append(to_idx)
 
         if remaining_soc < RECHARGE_THRESHOLD and charging_station_set:
-            # Find nearest charging station by graph distance from current node
-            current_osm = hg.idx_to_osm(from_idx)
-            best_station_idx: Optional[int] = None
-            best_dist: float = float("inf")
-
-            for station_node_idx in charging_station_set:
-                if station_node_idx == from_idx:
-                    best_station_idx = station_node_idx
-                    best_dist = 0.0
-                    break
-                station_osm = hg.idx_to_osm(station_node_idx)
-                if station_osm == -1:
-                    continue
-                try:
-                    d = nx.shortest_path_length(hg.graph, current_osm, station_osm, weight="length")
-                    if d < best_dist:
-                        best_dist = d
-                        best_station_idx = station_node_idx
-                except (nx.NetworkXNoPath, nx.NodeNotFound):
-                    continue
+            # Find nearest charging station — O(log n) via KDTree
+            best_station_idx, _ = _find_nearest_station_kdtree(
+                state, hg, from_idx, charging_station_set, station_meta
+            )
 
             if best_station_idx is not None:
                 # Build detour path: current → station → original dest
@@ -405,30 +537,130 @@ def generate_route(
     route_mode: str = "fast",
     energy_weight: float = 0.18,
 ) -> Dict[str, Any]:
-    """Generate a route over Hyderabad streets. Supports fast/eco/scenic modes.
+    """Generate a route over Hyderabad streets.
 
-    - fast   → Q-Learning (if trained) with Dijkstra fallback
-    - eco    → Dijkstra weighted by energy consumption (distance × 0.18 kWh/km)
-    - scenic → Dijkstra weighted to prefer residential/secondary over motorways
+    Supports all 9 routing modes:
+      Classic: fast, eco, scenic, dijkstra, astar, q_learning
+      AI:      dqn, gnn, hybrid
     """
     hg = require_graph(state)
     route_type = "dijkstra"
     path = None
+    ai_metrics: Dict[str, Any] = {}
 
-    if route_mode == "eco":
+    # ── Hybrid mode (multi-candidate + GNN ranking) ─────────────────────────
+    if route_mode == "hybrid":
+        from backend.app.services.hybrid_routing_engine import HybridRoutingEngine
+        engine = HybridRoutingEngine(state)
+        ranked = engine.run(hg, source, dest, battery_soc, battery_capacity_kwh)
+        if not ranked:
+            fail("Hybrid engine could not generate any routes", 404)
+
+        # Build primary route from best candidate
+        best = ranked[0]
+        path = best["path"]
+        route_type = f"hybrid_{best['algorithm']}"
+        ai_metrics = {
+            "gnn_score": best["gnn_score"],
+            "composite_score": best["composite_score"],
+            "ai_confidence": best["ai_confidence"],
+            "algorithm": best["algorithm"],
+            "used_gnn": best["used_gnn"],
+            "scoring_breakdown": best["scoring_breakdown"],
+        }
+
+        injection = _inject_charging_stops(hg, state, path, battery_soc, battery_capacity_kwh, energy_weight, route_mode)
+        path = injection["path"]
+        primary_feature = _build_route_feature(
+            hg, state, path, route_type, battery_soc, battery_capacity_kwh,
+            energy_weight=energy_weight, route_mode=route_mode,
+            injected_stop_details=injection["charging_stop_details"],
+            charging_time_penalty_minutes=injection["charging_time_penalty_minutes"],
+            battery_warning=injection["battery_warning"],
+            ai_metrics=ai_metrics,
+        )
+
+        # Build alternatives from remaining ranked candidates
+        alternatives = []
+        for alt in ranked[1:3]:  # up to 2 alternatives
+            alt_inj = _inject_charging_stops(hg, state, alt["path"], battery_soc, battery_capacity_kwh, energy_weight, route_mode)
+            alt_ai = {
+                "gnn_score": alt["gnn_score"],
+                "ai_confidence": alt["ai_confidence"],
+                "algorithm": alt["algorithm"],
+                "used_gnn": alt["used_gnn"],
+            }
+            alt_feat = _build_route_feature(
+                hg, state, alt_inj["path"], f"hybrid_{alt['algorithm']}",
+                battery_soc, battery_capacity_kwh,
+                energy_weight=energy_weight, route_mode=route_mode,
+                injected_stop_details=alt_inj["charging_stop_details"],
+                charging_time_penalty_minutes=alt_inj["charging_time_penalty_minutes"],
+                battery_warning=alt_inj["battery_warning"],
+                ai_metrics=alt_ai,
+            )
+            alternatives.append(alt_feat)
+
+        return {"route": primary_feature, "alternatives": alternatives}
+
+    # ── GNN mode ─────────────────────────────────────────────────────────────
+    if route_mode == "gnn":
+        from backend.app.services.hybrid_routing_engine import gnn_route
+        path, ai_metrics = gnn_route(state, hg, source, dest, battery_soc, battery_capacity_kwh)
+        if path:
+            route_type = "gnn"
+        else:
+            path = _dijkstra_route(hg, source, dest)
+            route_type = "dijkstra"
+
+    # ── DQN mode ─────────────────────────────────────────────────────────────
+    elif route_mode == "dqn":
+        path = _dqn_route(hg, source, dest, state)
+        if path:
+            route_type = "dqn"
+        else:
+            logger.info("[DQN] Falling back to Dijkstra")
+            path = _dijkstra_route(hg, source, dest)
+            route_type = "dijkstra"
+
+    # ── A* mode ──────────────────────────────────────────────────────────────
+    elif route_mode == "astar":
+        path = _astar_route(hg, source, dest)
+        route_type = "astar"
+
+    # ── Dijkstra (explicit) ──────────────────────────────────────────────────
+    elif route_mode == "dijkstra":
+        path = _dijkstra_route(hg, source, dest)
+        route_type = "dijkstra"
+
+    # ── Q-Learning (forced, no fallback) ─────────────────────────────────────
+    elif route_mode == "q_learning":
+        q_table = state.q_table or _load_q_table()
+        if q_table:
+            path = _q_learning_route(hg, source, dest, q_table)
+            route_type = "q_learning"
+        if path is None:
+            fail("Q-Learning model not trained or no path found", 404)
+
+    # ── Eco mode ─────────────────────────────────────────────────────────────
+    elif route_mode == "eco":
         path = _dijkstra_route_weighted(hg, source, dest, _eco_weight)
         route_type = "eco"
+
+    # ── Scenic mode ──────────────────────────────────────────────────────────
     elif route_mode == "scenic":
         path = _dijkstra_route_weighted(hg, source, dest, _scenic_weight)
         route_type = "scenic"
-    else:  # "fast" — try Q-Learning first
+
+    # ── Fast mode (default) — Q-Learning with Dijkstra fallback ──────────────
+    else:  # "fast"
         q_table = state.q_table or _load_q_table()
         if q_table:
             path = _q_learning_route(hg, source, dest, q_table)
             if path:
                 route_type = "q_learning"
 
-    # Fallback to standard Dijkstra if primary strategy produced no path
+    # Final Dijkstra fallback if primary strategy produced no path
     if path is None:
         path = _dijkstra_route(hg, source, dest)
         route_type = "dijkstra"
@@ -450,18 +682,17 @@ def generate_route(
         injected_stop_details=injected_stop_details,
         charging_time_penalty_minutes=charging_time_penalty,
         battery_warning=battery_warning_flag,
+        ai_metrics=ai_metrics if ai_metrics else None,
     )
 
     # Generate an alternative route for comparison
     alternatives = []
-    if route_mode == "fast" and route_type == "q_learning":
-        # Offer Dijkstra as a spatial alternative to Q-Learning
+    if route_mode in ("fast", "q_learning") and route_type == "q_learning":
         alt_path = _dijkstra_route(hg, source, dest)
         if alt_path and alt_path != path:
             alt_feature = _build_route_feature(hg, state, alt_path, "dijkstra", battery_soc, battery_capacity_kwh, route_mode=route_mode)
             alternatives.append(alt_feature)
-    elif route_mode in ("eco", "scenic"):
-        # Offer fast Dijkstra as baseline comparison
+    elif route_mode in ("eco", "scenic", "astar", "dqn", "gnn"):
         alt_path = _dijkstra_route(hg, source, dest)
         if alt_path and alt_path != path:
             alt_feature = _build_route_feature(hg, state, alt_path, "dijkstra", battery_soc, battery_capacity_kwh, route_mode=route_mode)
@@ -630,6 +861,7 @@ def _build_route_feature(
     injected_stop_details: Optional[List[Dict[str, Any]]] = None,
     charging_time_penalty_minutes: float = 0.0,
     battery_warning: bool = False,
+    ai_metrics: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Build a GeoJSON Feature for a computed path with full street geometry."""
     coordinates: List[List[float]] = []
@@ -700,25 +932,35 @@ def _build_route_feature(
     # Simulated elevation profile
     elevation_profile = _generate_elevation_profile(total_distance_km, seed=hash((path[0], path[-1])) % 2**31)
 
+    props: Dict[str, Any] = {
+        "distance_km": round(total_distance_km, 2),
+        "energy_kwh": round(energy_kwh, 2),
+        "time_minutes": round(time_minutes, 1),
+        "battery_remaining_pct": round(max(battery_remaining, 0), 1),
+        "charging_stops": charging_stops,
+        "charging_stop_details": injected_stop_details or [],
+        "charging_time_penalty_minutes": charging_time_penalty_minutes,
+        "battery_warning": battery_warning,
+        "path_node_ids": path,
+        "route_type": route_type,
+        "route_mode": route_mode,
+        "energy_weight": energy_weight,
+        "mode_multiplier": mode_multiplier,
+        "segment_boundaries_km": segment_boundaries_km,
+        "segments": segments,
+        "elevation_profile": elevation_profile,
+    }
+
+    # Attach AI metrics if present (GNN/Hybrid/DQN modes)
+    if ai_metrics:
+        props["ai_confidence"] = ai_metrics.get("ai_confidence")
+        props["gnn_score"] = ai_metrics.get("gnn_score")
+        props["scoring_breakdown"] = ai_metrics.get("scoring_breakdown")
+        props["used_gnn"] = ai_metrics.get("used_gnn", False)
+        props["ai_algorithm"] = ai_metrics.get("algorithm")
+
     return {
         "type": "Feature",
         "geometry": {"type": "LineString", "coordinates": coordinates},
-        "properties": {
-            "distance_km": round(total_distance_km, 2),
-            "energy_kwh": round(energy_kwh, 2),
-            "time_minutes": round(time_minutes, 1),
-            "battery_remaining_pct": round(max(battery_remaining, 0), 1),
-            "charging_stops": charging_stops,
-            "charging_stop_details": injected_stop_details or [],
-            "charging_time_penalty_minutes": charging_time_penalty_minutes,
-            "battery_warning": battery_warning,
-            "path_node_ids": path,
-            "route_type": route_type,
-            "route_mode": route_mode,
-            "energy_weight": energy_weight,
-            "mode_multiplier": mode_multiplier,
-            "segment_boundaries_km": segment_boundaries_km,
-            "segments": segments,
-            "elevation_profile": elevation_profile,
-        },
+        "properties": props,
     }

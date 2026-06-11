@@ -1,0 +1,152 @@
+[
+  {
+    "id": 90000,
+    "name": "Ather Grid - HITEC City",
+    "lat": 17.45465414387663,
+    "lon": 78.33920086041782,
+    "power_kw": 50,
+    "num_ports": 2,
+    "operator": "Ather Grid",
+    "address": ""
+  },
+  {
+    "id": 90001,
+    "name": "Tata Power - Jubilee Hills",
+    "lat": 17.421356859051905,
+    "lon": 78.39611769713312,
+    "power_kw": 22,
+    "num_ports": 4,
+    "operator": "Tata Power",
+    "address": ""
+  },
+  {
+    "id": 90002,
+    "name": "Fortum Charge - Gachibowli",
+    "lat": 17.406042614358544,
+    "lon": 78.34469561918893,
+    "power_kw": 30,
+    "num_ports": 1,
+    "operator": "Fortum Charge",
+    "address": ""
+  },
+  {
+    "id": 90003,
+    "name": "ChargeZone - Madhapur",
+    "lat": 17.44839960503509,
+    "lon": 78.3944815690338,
+    "power_kw": 60,
+    "num_ports": 2,
+    "operator": "ChargeZone",
+    "address": ""
+  },
+  {
+    "id": 90004,
+    "name": "Exicom - Banjara Hills",
+    "lat": 17.43943672370271,
+    "lon": 78.35945525665845,
+    "power_kw": 22,
+    "num_ports": 2,
+    "operator": "Exicom",
+    "address": ""
+  },
+  {
+    "id": 90005,
+    "name": "EESL - Kukatpally",
+    "lat": 17.45935115159906,
+    "lon": 78.36442004132144,
+    "power_kw": 30,
+    "num_ports": 2,
+    "operator": "EESL",
+    "address": ""
+  },
+  {
+    "id": 90006,
+    "name": "Magenta Power - Kondapur",
+    "lat": 17.480077045776543,
+    "lon": 78.36412756360902,
+    "power_kw": 22,
+    "num_ports": 4,
+    "operator": "Magenta Power",
+    "address": ""
+  },
+  {
+    "id": 90007,
+    "name": "Statiq - Financial District",
+    "lat": 17.411237310146678,
+    "lon": 78.4049995493078,
+    "power_kw": 50,
+    "num_ports": 1,
+    "operator": "Statiq",
+    "address": ""
+  },
+  {
+    "id": 90008,
+    "name": "Glida - Miyapur",
+    "lat": 17.461878542935505,
+    "lon": 78.38009824731638,
+    "power_kw": 60,
+    "num_ports": 1,
+    "operator": "Glida",
+    "address": ""
+  },
+  {
+    "id": 90009,
+    "name": "Kazam EV - Begumpet",
+    "lat": 17.447663250501858,
+    "lon": 78.40355237314024,
+    "power_kw": 50,
+    "num_ports": 2,
+    "operator": "Kazam EV",
+    "address": ""
+  },
+  {
+    "id": 90010,
+    "name": "ElectricPe - Hitech City",
+    "lat": 17.459865746897194,
+    "lon": 78.34086595069246,
+    "power_kw": 30,
+    "num_ports": 3,
+    "operator": "ElectricPe",
+    "address": ""
+  },
+  {
+    "id": 90011,
+    "name": "Volttic - Nampally",
+    "lat": 17.482317721652862,
+    "lon": 78.40562541768121,
+    "power_kw": 22,
+    "num_ports": 4,
+    "operator": "Volttic",
+    "address": ""
+  },
+  {
+    "id": 90012,
+    "name": "Charge+Zone - Uppal",
+    "lat": 17.425737888248808,
+    "lon": 78.38805475554115,
+    "power_kw": 50,
+    "num_ports": 2,
+    "operator": "Charge+Zone",
+    "address": ""
+  },
+  {
+    "id": 90013,
+    "name": "Tata Power - Secunderabad",
+    "lat": 17.43311447736935,
+    "lon": 78.35396056246172,
+    "power_kw": 50,
+    "num_ports": 1,
+    "operator": "Tata Power",
+    "address": ""
+  },
+  {
+    "id": 90014,
+    "name": "Ather Grid - Manikonda",
+    "lat": 17.45223048045336,
+    "lon": 78.35089109185584,
+    "power_kw": 30,
+    "num_ports": 2,
+    "operator": "Ather Grid",
+    "address": ""
+  }
+]

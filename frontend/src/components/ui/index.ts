@@ -1,9 +1,11 @@
 // Core
 export { Card } from './Card';
+export { default as CardHeader } from './CardHeader';
 export { default as GlassCard } from './GlassCard';
 export { default as Button, Button as GlassButton } from './Button';
 export { default as Input, Input as GlassInput } from './Input';
 export { default as Badge } from './Badge';
+
 
 // Feedback
 export { default as ProgressBar } from './ProgressBar';

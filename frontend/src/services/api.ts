@@ -61,7 +61,7 @@ export interface RouteRequest {
   battery_capacity_kwh?: number;
   ev_state?: EVState;
   num_candidates?: number;
-  route_mode?: 'fast' | 'eco' | 'scenic';
+  route_mode?: 'fast' | 'eco' | 'scenic' | 'dijkstra' | 'astar' | 'q_learning' | 'dqn' | 'gnn' | 'hybrid';
   energy_weight?: number;
   vehicle_profile?: string;
 }
@@ -76,7 +76,7 @@ export interface GeoJSONRouteProperties {
   charging_time_penalty_minutes?: number;
   battery_warning?: boolean;
   path_node_ids: number[];
-  route_type: 'q_learning' | 'dijkstra' | 'multi_stop';
+  route_type: 'q_learning' | 'dijkstra' | 'multi_stop' | 'eco' | 'scenic' | 'astar' | 'dqn' | 'gnn' | string;
   segments?: { from_node: number; to_node: number; distance_km: number; cumulative_distance_km?: number; energy_kwh: number; mode_energy_kwh?: number; cumulative_energy_kwh?: number; road_type: string }[];
   legs?: { from: number; to: number; distance_km: number; energy_kwh: number; time_minutes: number; route_type: string }[];
   elevation_profile?: { distance_km: number; elevation_m: number }[];
@@ -84,6 +84,12 @@ export interface GeoJSONRouteProperties {
   energy_weight?: number;
   mode_multiplier?: number;
   route_mode?: string;
+  // AI metrics (present for gnn / hybrid / dqn modes)
+  ai_confidence?: number;    // 0-100%
+  gnn_score?: number;        // 0-1
+  scoring_breakdown?: Record<string, any>;
+  used_gnn?: boolean;
+  ai_algorithm?: string;
 }
 
 export interface GeoJSONRoute {
@@ -97,7 +103,6 @@ export interface RouteResponse {
   alternatives: GeoJSONRoute[];
 }
 
-/** Legacy Route type for backward compat */
 export interface Route {
   path: number[];
   distance_km: number;
@@ -107,12 +112,18 @@ export interface Route {
   charging_stops: number[];
   /** Extended fields from GeoJSON backend */
   battery_remaining_pct?: number;
-  route_type?: 'q_learning' | 'dijkstra' | 'multi_stop';
+  route_type?: 'q_learning' | 'dijkstra' | 'multi_stop' | 'eco' | 'scenic' | 'astar' | 'dqn' | 'gnn' | string;
   charging_stop_details?: Array<{ node_id: number; lat: number; lon: number; name: string; soc_at_arrival: number; charge_to_soc: number; charging_time_minutes: number; injected: boolean }>;
   charging_time_penalty_minutes?: number;
   battery_warning?: boolean;
   geojson?: GeoJSONRoute;
   elevation_profile?: { distance_km: number; elevation_m: number }[];
+  // AI metrics
+  ai_confidence?: number;
+  gnn_score?: number;
+  scoring_breakdown?: Record<string, any>;
+  used_gnn?: boolean;
+  ai_algorithm?: string;
 }
 
 export interface TrainingConfig {
@@ -198,6 +209,8 @@ export interface TemporalTrafficData {
 // Empty string → uses Vite proxy in dev (/api/* → localhost:8000)
 // Set VITE_API_URL to override (e.g. production backend)
 const BASE_URL = import.meta.env.VITE_API_URL || '';
+const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === 'true';
+import * as mockData from './mockData';
 
 class APIClient {
   private client: AxiosInstance;
@@ -255,6 +268,7 @@ class APIClient {
   // ─── Health ───────────────────────────────────────────
 
   async healthCheck(): Promise<HealthCheck> {
+    if (USE_MOCKS) return { status: 'healthy', system_initialized: true, timestamp: new Date().toISOString() };
     return (await this.client.get('/health')).data;
   }
 
@@ -267,16 +281,19 @@ class APIClient {
   // ─── Stations ─────────────────────────────────────────
 
   async getStations(): Promise<{ stations: StationData[]; count: number }> {
+    if (USE_MOCKS) return mockData.mockStations;
     return (await this.client.get('/api/stations')).data;
   }
 
   // ─── Routes ───────────────────────────────────────────
 
   async generateRoute(request: RouteRequest): Promise<RouteResponse> {
+    if (USE_MOCKS) return mockData.mockRouteResponse;
     return (await this.client.post('/api/generate-route', request)).data;
   }
 
   async saveRoute(request: RouteRequest): Promise<{ status: string }> {
+    if (USE_MOCKS) return { status: 'saved' };
     return (await this.client.post('/api/save-route', request)).data;
   }
 
@@ -293,53 +310,94 @@ class APIClient {
   // ─── Training ─────────────────────────────────────────
 
   async getTrainingStatus(): Promise<TrainingStatus> {
+    if (USE_MOCKS) return mockData.mockSystemStats.training_status;
     return (await this.client.get('/api/training-status')).data;
   }
 
   async startTraining(config: TrainingConfig): Promise<{ status: string }> {
+    if (USE_MOCKS) return { status: 'training_started' };
     return (await this.client.post('/api/start-training', config)).data;
   }
 
   async stopTraining(): Promise<{ status: string }> {
+    if (USE_MOCKS) return { status: 'training_stopped' };
     return (await this.client.post('/api/stop-training')).data;
   }
 
   // ─── Metrics / Stats ─────────────────────────────────
 
   async getRouteMetrics(numSamples = 10): Promise<RouteMetrics> {
+    if (USE_MOCKS) return mockData.mockRouteMetrics;
     return (await this.client.get('/api/route-metrics', { params: { num_samples: numSamples } })).data;
   }
 
   async getSystemStats(): Promise<SystemStats> {
+    if (USE_MOCKS) return mockData.mockSystemStats;
     return (await this.client.get('/api/system-stats')).data;
   }
 
   async getSystemHealth(): Promise<SystemHealth> {
+    if (USE_MOCKS) return mockData.mockSystemHealth;
     return (await this.client.get('/api/system-health')).data;
   }
 
   // ─── Analytics Evaluation ─────────────────────────────
 
   async getGanEvaluation() {
+    if (USE_MOCKS) return mockData.mockGanEvaluation;
     return (await this.client.get('/api/analytics/gan-evaluation')).data;
   }
 
   async getAgentPerformance() {
+    if (USE_MOCKS) return mockData.mockAgentPerformance;
     return (await this.client.get('/api/analytics/agent-performance')).data;
   }
 
   async getRouteEvaluation() {
+    if (USE_MOCKS) return mockData.mockRouteEvaluation;
     return (await this.client.get('/api/analytics/route-evaluation')).data;
   }
 
   async getTrainingHistory() {
+    if (USE_MOCKS) return mockData.mockTrainingHistory;
     return (await this.client.get('/api/analytics/training-history')).data;
   }
 
   // ─── System Config ────────────────────────────────────
 
   async getSystemConfig(): Promise<SystemConfig> {
+    if (USE_MOCKS) return mockData.mockSystemConfig;
     return (await this.client.get('/api/system/config')).data;
+  }
+
+  // ─── Routing Modes ────────────────────────────────────
+
+  async getRoutingModes(): Promise<{ modes: any[]; count: number }> {
+    return (await this.client.get('/api/routing/modes')).data;
+  }
+
+  // ─── Model Status ─────────────────────────────────────
+
+  async getModelStatus(): Promise<any> {
+    return (await this.client.get('/api/model/status')).data;
+  }
+
+  // ─── Evaluation ───────────────────────────────────────
+
+  async runEvaluation(req: { algorithms?: string[]; num_samples?: number }): Promise<any> {
+    return (await this.client.post('/api/evaluate', req)).data;
+  }
+
+  async startBenchmark(req: { num_routes?: number; algorithms?: string[] }): Promise<any> {
+    return (await this.client.post('/api/benchmark', req)).data;
+  }
+
+  async getBenchmarkStatus(): Promise<any> {
+    return (await this.client.get('/api/benchmark/status')).data;
+  }
+
+  async getBenchmarkResults(): Promise<any> {
+    return (await this.client.get('/api/benchmark/results')).data;
   }
 }
 
@@ -368,6 +426,12 @@ export function geoJSONRouteToLegacy(geojson: GeoJSONRoute): Route {
     battery_warning: props.battery_warning,
     geojson,
     elevation_profile: props.elevation_profile,
+    // AI metrics passthrough
+    ai_confidence: props.ai_confidence,
+    gnn_score: props.gnn_score,
+    scoring_breakdown: props.scoring_breakdown,
+    used_gnn: props.used_gnn,
+    ai_algorithm: props.ai_algorithm,
   };
 }
 

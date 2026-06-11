@@ -14,15 +14,15 @@ The agent learns to:
 
 import numpy as np
 import pickle
-from typing import Dict, List, Tuple, Optional, Any
-from collections import defaultdict
+from typing import Tuple, List, Dict, Optional, Any, Union
+from collections import defaultdict, deque
 import os
 
-# Try to import TensorFlow for DQN
+# ── TensorFlow availability flag ─────────────────────────────────────────────
 try:
     import tensorflow as tf
     from tensorflow import keras
-    from keras import layers
+    from tensorflow.keras import layers
     HAS_TF = True
 except ImportError:
     HAS_TF = False
@@ -325,8 +325,8 @@ if HAS_TF:
             self.target_model = self._build_network()
             self.target_model.set_weights(self.model.get_weights())
             
-            # Experience replay buffer
-            self.replay_buffer = []
+            # Experience replay buffer — use deque for O(1) popleft (not O(n) list.pop(0))
+            self.replay_buffer: deque = deque(maxlen=replay_buffer_size)
             self.replay_buffer_size = replay_buffer_size
             
             # Training counter
@@ -358,13 +358,8 @@ if HAS_TF:
         
         def store_experience(self, state, action: int, reward: float, 
                            next_state, done: bool):
-            """Store experience in replay buffer."""
-            experience = (state, action, reward, next_state, done)
-            
-            if len(self.replay_buffer) >= self.replay_buffer_size:
-                self.replay_buffer.pop(0)
-            
-            self.replay_buffer.append(experience)
+            """Store experience in replay buffer (O(1) with deque maxlen)."""
+            self.replay_buffer.append((state, action, reward, next_state, done))
         
         def learn(self, state=None, action=None, reward=None, 
                  next_state=None, done=None):

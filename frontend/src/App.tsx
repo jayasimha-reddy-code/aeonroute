@@ -4,9 +4,9 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useSetActiveTab, useSetRoadNetwork, useLoading, useAddToast, type AppTab } from './store/store';
 import { trainingSSE } from './store/trainingSSEManager';
 import api from './services/api';
-import Header from './components/Header';
-import Sidebar from './components/Sidebar';
-import ToastContainer from './components/ToastContainer';
+import Header from './components/layout/Header';
+import Sidebar from './components/layout/Sidebar';
+import ToastContainer from './components/ui/ToastContainer';
 import PageLoader from './components/ui/PageLoader';
 import { pageVariants, pageTransition } from './lib/motion';
 
@@ -25,7 +25,8 @@ function App() {
   const setRoadNetwork = useSetRoadNetwork();
   const { setIsLoading } = useLoading();
   const addToast = useAddToast();
-  const trainingProgress = useTrainingProgress();
+
+
 
   // Keep Zustand activeTab in sync with URL for backward compat
   useEffect(() => {
@@ -90,9 +91,9 @@ function App() {
           <div className="absolute -bottom-[10%] -right-[10%] w-[50%] h-[50%] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(239,68,68,0.05)_0%,transparent_60%)]" />
         </div>
         <Sidebar />
-        <div className="flex-1 flex flex-col min-w-0 relative z-10">
+        <div className="flex-1 flex flex-col min-w-0 relative z-10 w-full">
           <Header />
-          <main id="main" className="flex-1 overflow-y-auto overflow-x-hidden p-4 lg:p-6">
+          <main id="main" className="flex-1 overflow-y-auto overflow-x-hidden relative scroll-smooth">
             <AnimatePresence mode="wait">
               <motion.div
                 key={location.pathname}

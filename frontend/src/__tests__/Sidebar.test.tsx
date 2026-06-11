@@ -6,8 +6,10 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen, act } from '@testing-library/react';
-import Sidebar from '../components/Sidebar';
+import Sidebar from '../components/layout/Sidebar';
 import { useSystemStore } from '../store/store';
+
+import { MemoryRouter } from 'react-router-dom';
 
 beforeEach(() => {
     useSystemStore.setState({
@@ -18,14 +20,22 @@ beforeEach(() => {
 describe('Sidebar', () => {
     it('renders without crashing', async () => {
         await act(async () => {
-            render(<Sidebar />);
+            render(
+                <MemoryRouter initialEntries={['/dashboard']}>
+                    <Sidebar />
+                </MemoryRouter>
+            );
         });
         expect(document.querySelector('nav')).toBeTruthy();
     });
 
     it('renders navigation with aria-label', async () => {
         await act(async () => {
-            render(<Sidebar />);
+            render(
+                <MemoryRouter initialEntries={['/dashboard']}>
+                    <Sidebar />
+                </MemoryRouter>
+            );
         });
         const nav = screen.getByRole('navigation', { name: /main/i });
         expect(nav).toBeTruthy();
@@ -33,7 +43,11 @@ describe('Sidebar', () => {
 
     it('renders primary nav items', async () => {
         await act(async () => {
-            render(<Sidebar />);
+            render(
+                <MemoryRouter initialEntries={['/dashboard']}>
+                    <Sidebar />
+                </MemoryRouter>
+            );
         });
         expect(screen.getByText('Dashboard')).toBeTruthy();
         expect(screen.getByText('Map')).toBeTruthy();
@@ -43,17 +57,24 @@ describe('Sidebar', () => {
     });
 
     it('active tab has aria-current="page"', async () => {
-        useSystemStore.setState({ activeTab: 'dashboard' });
         await act(async () => {
-            render(<Sidebar />);
+            render(
+                <MemoryRouter initialEntries={['/dashboard']}>
+                    <Sidebar />
+                </MemoryRouter>
+            );
         });
-        const dashboardButton = screen.getByText('Dashboard').closest('button');
+        const dashboardButton = screen.getByRole('link', { name: /dashboard/i });
         expect(dashboardButton?.getAttribute('aria-current')).toBe('page');
     });
 
     it('renders EV Routing System branding', async () => {
         await act(async () => {
-            render(<Sidebar />);
+            render(
+                <MemoryRouter initialEntries={['/dashboard']}>
+                    <Sidebar />
+                </MemoryRouter>
+            );
         });
         expect(screen.getByText('EV Routing System')).toBeTruthy();
     });

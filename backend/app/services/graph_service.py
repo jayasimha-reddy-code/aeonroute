@@ -17,9 +17,6 @@ logger = logging.getLogger("ev_routing")
 _CACHE_DIR = Path("data/hyderabad")
 _CACHE_FILE = _CACHE_DIR / "hyderabad_drive.graphml"
 
-# Module-level graph singleton
-_graph_instance: Optional["HyderabadGraph"] = None
-
 
 class HyderabadGraph:
     """Wrapper around an OSMnx-downloaded Hyderabad road network."""
@@ -178,9 +175,8 @@ def get_hyderabad_graph(force_download: bool = False) -> HyderabadGraph:
 
     First call downloads from Overpass API; subsequent calls use disk cache.
     """
-    global _graph_instance
-    if _graph_instance is not None and not force_download:
-        return _graph_instance
+    if hasattr(HyderabadGraph, "_instance") and HyderabadGraph._instance is not None and not force_download:
+        return HyderabadGraph._instance
 
     from backend.app.config import settings
 
@@ -196,11 +192,12 @@ def get_hyderabad_graph(force_download: bool = False) -> HyderabadGraph:
         _save_graph(G, _CACHE_FILE)
 
     G = _largest_scc(G)
-    _graph_instance = HyderabadGraph(G)
+    instance = HyderabadGraph(G)
     logger.info(
         "Hyderabad graph ready: %d nodes, %d edges, bounds=%s",
-        _graph_instance.num_nodes,
-        _graph_instance.num_edges,
-        _graph_instance.bounds,
+        instance.num_nodes,
+        instance.num_edges,
+        instance.bounds,
     )
-    return _graph_instance
+    HyderabadGraph._instance = instance
+    return instance

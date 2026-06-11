@@ -1,7 +1,8 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Car, Gauge, Palette, Globe, Save, MapPin, Cpu, Zap } from 'lucide-react';
-import { Card, ToggleSwitch } from '../components/ui';
+import { Car, Gauge, Palette, Globe, Save, MapPin, Cpu, Zap, Settings2 } from 'lucide-react';
+import { Card, ToggleSwitch, CardHeader } from '../components/ui';
+import PageHeader from '../components/layout/PageHeader';
 import { hyperStaggerContainer, hyperStaggerItem } from '../lib/motion';
 import {
   useSettings,
@@ -10,7 +11,7 @@ import {
   useBatteryCapacity, useSimulationScale, useEnergyWeight,
   type SimulationScale,
 } from '../store/store';
-import api, { SystemConfig } from '../services/api';
+import { useSystemConfig } from '../hooks/useSystemConfig';
 import { getHardwareProfile } from '../lib/hardware';
 
 const VEHICLE_PROFILES: Record<string, { label: string; capacity: number; range: string }> = {
@@ -35,7 +36,7 @@ const SIM_SCALE_INFO: Record<SimulationScale, { episodes: number; time: string; 
 };
 
 export default function Settings() {
-  const [sysConfig, setSysConfig] = useState<SystemConfig | null>(null);
+  const { config: sysConfig } = useSystemConfig();
   const settings = useSettings();
   const setUnits = useSetUnits();
   const setAvoidTolls = useSetAvoidTolls();
@@ -49,11 +50,6 @@ export default function Settings() {
   const batteryCapacity = useBatteryCapacity();
   const simulationScale = useSimulationScale();
   const energyWeight = useEnergyWeight();
-
-  // Fetch system config on mount
-  useEffect(() => {
-    api.getSystemConfig().then(setSysConfig).catch(() => {});
-  }, []);
 
   const handleVehicleChange = (profileKey: string) => {
     const profile = VEHICLE_PROFILES[profileKey];
@@ -71,23 +67,24 @@ export default function Settings() {
 
   return (
     <motion.div
-      className="grid grid-cols-12 gap-4 lg:gap-6"
+      className="p-4 sm:p-6 lg:p-8 xl:p-10 max-w-[1600px] mx-auto"
       variants={hyperStaggerContainer}
       initial="hidden"
       animate="show"
     >
+      <motion.div variants={hyperStaggerItem}>
+        <PageHeader
+          title="Settings"
+          subtitle="Configure your EV, routing preferences, and simulation options"
+          icon={Settings2}
+        />
+      </motion.div>
+
+      <motion.div className="grid grid-cols-12 gap-4 lg:gap-6" variants={hyperStaggerItem}>
       {/* ── Vehicle Profile ── */}
       <motion.div className="col-span-12 lg:col-span-6" variants={hyperStaggerItem}>
         <Card>
-          <div className="flex items-center gap-3 mb-5">
-            <div className="w-10 h-10 rounded-xl bg-emerald/10 flex items-center justify-center">
-              <Car className="w-5 h-5 text-emerald" />
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-white">Vehicle Profile</h3>
-              <p className="text-xs text-muted">Configure your EV specifications</p>
-            </div>
-          </div>
+          <CardHeader icon={Car} title="Vehicle Profile" subtitle="Configure your EV specifications" accent="emerald" />
           <div className="space-y-4">
             <div>
               <label className="text-xs text-label mb-1.5 block">Vehicle Model</label>
@@ -118,15 +115,7 @@ export default function Settings() {
       {/* ── Energy Weight ── */}
       <motion.div className="col-span-12 lg:col-span-6" variants={hyperStaggerItem}>
         <Card>
-          <div className="flex items-center gap-3 mb-5">
-            <div className="w-10 h-10 rounded-xl bg-amber/10 flex items-center justify-center">
-              <Zap className="w-5 h-5 text-amber" />
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-white">Energy Consumption</h3>
-              <p className="text-xs text-muted">Affects route energy calculations</p>
-            </div>
-          </div>
+          <CardHeader icon={Zap} title="Energy Consumption" subtitle="Affects route energy calculations" accent="amber" />
           <div className="space-y-4">
             <div>
               <div className="flex items-center justify-between mb-1.5">
@@ -155,15 +144,7 @@ export default function Settings() {
       {/* ── Simulation Scale ── */}
       <motion.div className="col-span-12 lg:col-span-6" variants={hyperStaggerItem}>
         <Card>
-          <div className="flex items-center gap-3 mb-5">
-            <div className="w-10 h-10 rounded-xl bg-cyan/10 flex items-center justify-center">
-              <Cpu className="w-5 h-5 text-cyan" />
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-white">Simulation Scale</h3>
-              <p className="text-xs text-muted">Training episode budget for the next run</p>
-            </div>
-          </div>
+          <CardHeader icon={Cpu} title="Simulation Scale" subtitle="Training episode budget for the next run" accent="cyan" />
           <div className="space-y-4">
             {/* Recommended scale badge */}
             <div className="flex items-center justify-between">
@@ -235,15 +216,7 @@ export default function Settings() {
       {/* ── Route Preferences ── */}
       <motion.div className="col-span-12 lg:col-span-6" variants={hyperStaggerItem}>
         <Card>
-          <div className="flex items-center gap-3 mb-5">
-            <div className="w-10 h-10 rounded-xl bg-cyan/10 flex items-center justify-center">
-              <Gauge className="w-5 h-5 text-cyan" />
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-white">Route Preferences</h3>
-              <p className="text-xs text-muted">Customize routing behavior</p>
-            </div>
-          </div>
+          <CardHeader icon={Gauge} title="Route Preferences" subtitle="Customize routing behavior" accent="cyan" />
           <div className="space-y-4">
             <div className="flex items-center justify-between p-3 rounded-xl bg-[#0a0f16]/30">
               <div>
@@ -273,15 +246,7 @@ export default function Settings() {
       {/* ── Display Settings ── */}
       <motion.div className="col-span-12 lg:col-span-6" variants={hyperStaggerItem}>
         <Card>
-          <div className="flex items-center gap-3 mb-5">
-            <div className="w-10 h-10 rounded-xl bg-amber/10 flex items-center justify-center">
-              <Palette className="w-5 h-5 text-amber" />
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-white">Display</h3>
-              <p className="text-xs text-muted">Interface preferences</p>
-            </div>
-          </div>
+          <CardHeader icon={Palette} title="Display" subtitle="Interface preferences" accent="amber" />
           <div className="space-y-4">
             <div>
               <label className="text-xs text-label mb-1.5 block">Units</label>
@@ -308,15 +273,7 @@ export default function Settings() {
       {/* ── API & System ── */}
       <motion.div className="col-span-12 lg:col-span-6" variants={hyperStaggerItem}>
         <Card>
-          <div className="flex items-center gap-3 mb-5">
-            <div className="w-10 h-10 rounded-xl bg-rose/10 flex items-center justify-center">
-              <Globe className="w-5 h-5 text-rose" />
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-white">API & System</h3>
-              <p className="text-xs text-muted">Backend connection settings</p>
-            </div>
-          </div>
+          <CardHeader icon={Globe} title="API & System" subtitle="Backend connection settings" accent="rose" />
           <div className="space-y-3">
             <div className="p-3 rounded-xl bg-[#0a0f16]/30">
               <p className="text-[10px] text-muted uppercase tracking-wider">API Endpoint</p>
@@ -337,15 +294,7 @@ export default function Settings() {
       {sysConfig && (
         <motion.div className="col-span-12 lg:col-span-6" variants={hyperStaggerItem}>
           <Card>
-            <div className="flex items-center gap-3 mb-5">
-              <div className="w-10 h-10 rounded-xl bg-cyan/10 flex items-center justify-center">
-                <Cpu className="w-5 h-5 text-cyan" />
-              </div>
-              <div>
-                <h3 className="text-sm font-semibold text-white">Active Hardware Config</h3>
-                <p className="text-xs text-muted">Loaded from <code className="text-emerald">.env</code></p>
-              </div>
-            </div>
+            <CardHeader icon={Cpu} title="Active Hardware Config" subtitle="Loaded from .env" accent="cyan" />
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div className="p-3 rounded-xl bg-[#0a0f16]/30">
@@ -387,6 +336,7 @@ export default function Settings() {
           <Save className="w-4 h-4" />
           Save Preferences
         </button>
+      </motion.div>
       </motion.div>
     </motion.div>
   );

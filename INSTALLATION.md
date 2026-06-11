@@ -1,6 +1,6 @@
 # EV Routing System — Installation & Implementation Guide
 
-> **AI-Powered Electric Vehicle Route Optimization** using SG-GAN traffic generation,
+> **Electric Vehicle Route Optimization** using SG-GAN traffic generation,
 > GNN route planning, and Q-Learning reinforcement learning — with a full-stack
 > React + FastAPI dashboard.
 

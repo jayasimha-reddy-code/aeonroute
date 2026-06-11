@@ -1,17 +1,18 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useRoadNetwork, useAddToast, useViewMode, useSystemStore, useActivityLog } from '../store/store';
-import api, { SystemStats, RouteMetrics } from '../services/api';
-import NetworkMap from '../components/NetworkMap';
-import StatCard from '../components/StatCard';
-import PageHeader from '../components/PageHeader';
-import TrafficSlider from '../components/dashboard/TrafficSlider';
-import { Card, Spinner, ProgressBar } from '../components/ui';
+import api from '../services/api';
+import { useSystemStats } from '../hooks/useSystemStats';
+import NetworkMap from '../components/domain/NetworkMap';
+import StatCard from '../components/domain/StatCard';
+import PageHeader from '../components/layout/PageHeader';
+import TrafficSlider from '../components/domain/dashboard/TrafficSlider';
+import { Card, Spinner, ProgressBar, CardHeader } from '../components/ui';
 import { StatCardSkeleton } from '../components/ui/Skeleton';
 import { ProgressRing } from '../components/ui';
 import { BarChart3, Activity, Navigation, Zap, Cpu, Clock, RefreshCw } from 'lucide-react';
 import { hyperStaggerContainer, hyperStaggerItem } from '../lib/motion';
-import WeatherWidget from '../components/map/WeatherWidget';
+import WeatherWidget from '../components/domain/map/WeatherWidget';
 
 /** Format a UTC ISO string (or epoch ms) as a human-readable relative time. */
 function formatTimeAgo(isoString: string | null | undefined): string {
@@ -29,69 +30,24 @@ function Dashboard() {
   const addToast = useAddToast();
   const viewMode = useViewMode();
   const activityLog = useActivityLog();
-  const [stats, setStats] = useState<SystemStats | null>(null);
-  const [metrics, setMetrics] = useState<RouteMetrics | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  
+  const { stats, metrics, loading, isRefreshing, error, lastRefresh } = useSystemStats(30000);
 
-  const loadData = useCallback(async (isInitial = false) => {
-    if (!isInitial) setIsRefreshing(true);
-    try {
-      const [systemStats, routeMetrics] = await Promise.all([
-        api.getSystemStats(),
-        api.getRouteMetrics(),
-      ]);
-      setStats(systemStats);
-      setMetrics(routeMetrics);
-      setLastRefresh(new Date());
-
-      // Load stations on first fetch
-      if (isInitial) {
-        try {
-          const stationData = await api.getStations();
-          useSystemStore.getState().setStations(stationData.stations);
-        } catch { /* stations optional */ }
-      }
-    } catch (error: any) {
-      if (isInitial) addToast({ type: 'error', title: 'Failed to load dashboard', message: error?.message });
-    } finally {
-      if (isInitial) setLoading(false);
-      setIsRefreshing(false);
+  useEffect(() => {
+    if (error) {
+      addToast({ type: 'error', title: 'Failed to load dashboard', message: error.message });
     }
-  }, [addToast]);
+  }, [error, addToast]);
 
-  // Initial load
   useEffect(() => {
-    loadData(true);
-  }, [loadData]);
-
-  // 30-second auto-refresh (pauses when tab is hidden)
-  useEffect(() => {
-    const startPolling = () => {
-      intervalRef.current = setInterval(() => {
-        if (!document.hidden) loadData();
-      }, 30000);
+    const loadStations = async () => {
+      try {
+        const stationData = await api.getStations();
+        useSystemStore.getState().setStations(stationData.stations);
+      } catch { /* stations optional */ }
     };
-
-    const handleVisibility = () => {
-      if (document.hidden) {
-        if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
-      } else {
-        loadData(); // refresh immediately on return
-        startPolling();
-      }
-    };
-
-    startPolling();
-    document.addEventListener('visibilitychange', handleVisibility);
-
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-      document.removeEventListener('visibilitychange', handleVisibility);
-    };
-  }, [loadData]);
+    loadStations();
+  }, []);
 
   return (
     <motion.div
@@ -154,12 +110,7 @@ function Dashboard() {
         <div className="col-span-12 lg:col-span-4 flex flex-col gap-4">
           {/* AI Model Status */}
           <Card padding="lg" className="flex-1">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2.5">
-                <Cpu className="w-4 h-4 text-emerald" />
-                <h3 className="text-sm font-semibold text-white">AI Model Status</h3>
-              </div>
-            </div>
+            <CardHeader icon={Cpu} title="AI Model Status" accent="emerald" />
             <div className="space-y-3">
               <ModelStatusRow
                 label="SG-GAN"
@@ -186,9 +137,7 @@ function Dashboard() {
 
           {/* Recent Activity */}
           <Card padding="lg" className="flex-1">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-semibold text-white">Recent Activity</h3>
-            </div>
+            <CardHeader icon={Activity} title="Recent Activity" accent="emerald" />
             {activityLog.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-6 gap-2 text-center">
                 <Activity className="w-6 h-6 text-slate-600" />
@@ -216,17 +165,7 @@ function Dashboard() {
       {stats && (
         <motion.div variants={hyperStaggerItem}>
           <Card>
-          <div className="flex items-center gap-3 mb-5">
-            <div className="p-2 rounded-lg bg-emerald/10">
-              <Clock className="w-4 h-4 text-emerald" />
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-white uppercase tracking-wider">
-                Time-of-Day Traffic Patterns
-              </h3>
-              <p className="text-[11px] text-muted">SG-GAN learned temporal traffic variation</p>
-            </div>
-          </div>
+          <CardHeader icon={Clock} title="Time-of-Day Traffic Patterns" subtitle="SG-GAN learned temporal traffic variation" accent="emerald" />
           <TrafficSlider />
           </Card>
         </motion.div>

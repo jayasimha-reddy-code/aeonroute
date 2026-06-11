@@ -10,7 +10,7 @@ export interface UseEVSimulationOptions {
   startSOC: number;
   batteryCapacityKWh: number;
   speedMultiplier?: number;
-  routeMode?: 'fast' | 'eco' | 'scenic';
+  routeMode?: 'fast' | 'eco' | 'scenic' | 'dijkstra' | 'astar' | 'q_learning' | 'dqn' | 'gnn' | 'hybrid';
 }
 
 export interface SimulationState {
@@ -202,6 +202,11 @@ export function useEVSimulation(options: UseEVSimulationOptions) {
       const isBatteryLow = currentSOC < BATTERY_LOW_THRESHOLD && currentSOC > 0;
       const isBatteryDepleted = currentSOC <= 0;
 
+      // Approximate current segment index for UI display
+      const totalNodes = rd.path.length;
+      const segIdx = Math.min(Math.floor(progress * (totalNodes - 1)), totalNodes - 2);
+      const currentNodeId = rd.path[segIdx] ?? 0;
+
       // Stop simulation when battery is fully depleted
       if (isBatteryDepleted) {
         return {
@@ -217,11 +222,6 @@ export function useEVSimulation(options: UseEVSimulationOptions) {
           currentNodeId,
         };
       }
-
-      // Approximate current segment index for UI display
-      const totalNodes = rd.path.length;
-      const segIdx = Math.min(Math.floor(progress * (totalNodes - 1)), totalNodes - 2);
-      const currentNodeId = rd.path[segIdx] ?? 0;
 
       // Check proximity to charging stations (within 50m)
       for (const station of rd.chargingStopCoords) {

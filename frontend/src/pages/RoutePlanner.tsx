@@ -1,28 +1,27 @@
-import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { hyperStaggerContainer, hyperStaggerItem } from '../lib/motion';
-import { useSystemStore, useEnergyWeight, useBatteryCapacity, useVehicleProfile, useSimulationScale, useSettings, useAddActivity } from '../store/store';
-import api, { geoJSONRouteToLegacy } from '../services/api';
-import NetworkMap from '../components/NetworkMap';
-import RouteCard from '../components/RouteCard';
-import PageHeader from '../components/PageHeader';
-import { Card, Button, EmptyState, Spinner } from '../components/ui';
+import { useSystemStore, useBatteryCapacity, useEVState, useRoutes } from '../store/store';
+import { useSimulationStore } from '../store/simulationStore';
+import { useRouteGeneration } from '../hooks/useRouteGeneration';
+
+import NetworkMap from '../components/domain/NetworkMap';
+import RouteCard from '../components/domain/RouteCard';
+import PageHeader from '../components/layout/PageHeader';
+import { Card, Button, EmptyState, Spinner, CardHeader } from '../components/ui';
 import { ViewToggle } from '../components/ui/ViewToggle';
-import { Map, MapPin, Navigation, Sparkles, Zap, Play, Pause, RotateCcw, Leaf, Mountain } from 'lucide-react';
+import { Map, MapPin, Navigation, Sparkles, Zap, Leaf, Mountain } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { RouteCardSkeleton } from '../components/ui/Skeleton';
-import { buildPosLookup } from '../lib/geo';
-// useEVSimulation import removed — replaced by global simulationStore (Wave 1)
-import { useSimulationStore } from '../store/simulationStore';
 
-import { RouteTimeline } from '../components/map/RouteTimeline';
-import { WaypointList, type Waypoint } from '../components/route/WaypointList';
-import { ElevationProfile, type ElevationPoint } from '../components/route/ElevationProfile';
-import { CarbonSavedCard } from '../components/route/CarbonSavedCard';
-import { SegmentList } from '../components/route/SegmentList';
+import { RouteTimeline } from '../components/domain/map/RouteTimeline';
+import { WaypointList } from '../components/domain/route/WaypointList';
+import { ElevationProfile } from '../components/domain/route/ElevationProfile';
+import { CarbonSavedCard } from '../components/domain/route/CarbonSavedCard';
+import { SegmentList } from '../components/domain/route/SegmentList';
+import { SimulationController } from '../components/domain/route/SimulationController';
 
-/** Hyderabad landmark presets */
 const LANDMARKS = [
   { label: 'Charminar', lat: 17.3616, lon: 78.4747 },
   { label: 'HITEC City', lat: 17.4435, lon: 78.3772 },
@@ -33,26 +32,21 @@ const LANDMARKS = [
 ];
 
 function RoutePlanner() {
-  const { roadNetwork, generatedRoutes, setGeneratedRoutes, selectedRoute, setSelectedRoute, currentEVState, setEVState, addToast } = useSystemStore();
-  const addActivity = useAddActivity();
-  const energyWeight = useEnergyWeight();
+  const { roadNetwork } = useSystemStore();
   const settingsBattery = useBatteryCapacity();
-  const vehicleProfile = useVehicleProfile();
-  const simulationScale = useSimulationScale();
-  const settings = useSettings();
-  const units = settings.units;
-  const KM_TO_MI = 0.621371;
-  const toDistDisplay = (km: number) =>
-    units === 'imperial' ? `${(km * KM_TO_MI).toFixed(1)} mi` : `${km.toFixed(1)} km`;
+  const { currentEVState, setEVState } = useEVState();
+  const { generatedRoutes, selectedRoute, setSelectedRoute } = useRoutes();
   const [searchParams] = useSearchParams();
-  const [sourceLat, setSourceLat] = useState(17.3616);
-  const [sourceLon, setSourceLon] = useState(78.4747);
-  const [destLat, setDestLat] = useState(17.4435);
-  const [destLon, setDestLon] = useState(78.3772);
-  const [sourceLabel, setSourceLabel] = useState('Charminar');
-  const [destLabel, setDestLabel] = useState('HITEC City');
 
-  // Pre-fill destination from URL params (set by Stations "Route Here" button)
+  const {
+    loading, highlightIdx, setHighlightIdx,
+    routeType, setRouteType, elevationData,
+    waypoints, setWaypoints,
+    setDestLat, setDestLon, setDestLabel,
+    handleGenerateRoutes, posLookup,
+    setSourceLat, setSourceLon, setSourceLabel
+  } = useRouteGeneration();
+
   useEffect(() => {
     const pLat = parseFloat(searchParams.get('destLat') ?? '');
     const pLon = parseFloat(searchParams.get('destLon') ?? '');
@@ -65,56 +59,22 @@ function RoutePlanner() {
         i === prev.length - 1 ? { ...wp, lat: pLat, lon: pLon, label: pLabel || wp.label } : wp
       ));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [searchParams, setDestLat, setDestLon, setDestLabel, setWaypoints]);
 
-  // Sync EV battery capacity from settings
   useEffect(() => {
-    setEVState({ ...currentEVState, battery_capacity_kwh: settingsBattery });
+    if (currentEVState.battery_capacity_kwh !== settingsBattery) {
+      setEVState({ ...currentEVState, battery_capacity_kwh: settingsBattery });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settingsBattery]);
 
-  const [loading, setLoading] = useState(false);
-  const [highlightIdx, setHighlightIdx] = useState<number | undefined>(undefined);
-  const [routeType, setRouteType] = useState<'fast' | 'eco' | 'scenic'>('fast');
   const [speedMultiplier, setSpeedMultiplierLocal] = useState<1 | 2 | 4>(1);
+  const simState = useSimulationStore();
   const setSpeedMultiplier = (s: 1 | 2 | 4) => {
     setSpeedMultiplierLocal(s);
-    simState.setSpeedMultiplier(s); // sync to global engine
+    simState.setSpeedMultiplier(s);
   };
-  const [elevationData, setElevationData] = useState<ElevationPoint[]>([]);
-  const [waypoints, setWaypoints] = useState<Waypoint[]>([
-    { id: 'wp-start', label: 'Charminar', type: 'start', lat: 17.3616, lon: 78.4747 },
-    { id: 'wp-end', label: 'HITEC City', type: 'end', lat: 17.4435, lon: 78.3772 },
-  ]);
 
-  // Auto-regenerate route when route type changes (300ms debounce)
-  const autoRegenTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => {
-    if (!roadNetwork) return;
-    const startWp = waypoints[0];
-    const endWp = waypoints[waypoints.length - 1];
-    const sLat = startWp.lat ?? sourceLat;
-    const sLon = startWp.lon ?? sourceLon;
-    const dLat = endWp.lat ?? destLat;
-    const dLon = endWp.lon ?? destLon;
-    // Only auto-regen if source and destination are defined and different
-    if (sLat === dLat && sLon === dLon) return;
-    if (autoRegenTimer.current) clearTimeout(autoRegenTimer.current);
-    autoRegenTimer.current = setTimeout(() => {
-      handleGenerateRoutes();
-    }, 300);
-    return () => {
-      if (autoRegenTimer.current) clearTimeout(autoRegenTimer.current);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [routeType]);
-
-  const posLookup = useMemo(() => roadNetwork ? buildPosLookup(roadNetwork) : null, [roadNetwork]);
-
-  // ── Global Simulation Store (replaces useEVSimulation hook) ──────────
-  // The SimulationEngine singleton owns the rAF loop — it survives navigation.
-  const simState = useSimulationStore();
   const startSim = () => simState.startSimulation({
     route: selectedRoute!,
     posLookup,
@@ -123,90 +83,11 @@ function RoutePlanner() {
     speedMultiplier,
     routeMode: routeType,
   });
-  const pauseSim = () => simState.pauseSimulation();
-  const resumeSim = () => simState.resumeSimulation();
-  const resetSim = () => simState.resetSimulation();
 
-  const handleGenerateRoutes = async () => {
-    if (!roadNetwork) {
-      addToast({ type: 'warning', title: 'No Network', message: 'Road network must be loaded first.' });
-      return;
-    }
-    // Use first and last waypoint for source/dest
-    const startWp = waypoints[0];
-    const endWp = waypoints[waypoints.length - 1];
-    const sLat = startWp.lat ?? sourceLat;
-    const sLon = startWp.lon ?? sourceLon;
-    const dLat = endWp.lat ?? destLat;
-    const dLon = endWp.lon ?? destLon;
-    if (sLat === dLat && sLon === dLon) {
-      addToast({ type: 'warning', title: 'Invalid Input', message: 'Source and destination must be different.' });
-      return;
-    }
-    setLoading(true);
-    setGeneratedRoutes([]);
-    setElevationData([]);
-    try {
-      const result = await api.generateRoute({
-        source_lat: sLat,
-        source_lon: sLon,
-        dest_lat: dLat,
-        dest_lon: dLon,
-        battery_soc: currentEVState.battery_soc,
-        battery_capacity_kwh: currentEVState.battery_capacity_kwh,
-        route_mode: routeType,
-        energy_weight: energyWeight,
-        vehicle_profile: vehicleProfile,
-      });
-      // Convert GeoJSON routes to legacy Route format
-      const routes = [geoJSONRouteToLegacy(result.route), ...result.alternatives.map(geoJSONRouteToLegacy)];
-      setGeneratedRoutes(routes);
-      if (routes.length > 0) {
-        setSelectedRoute(routes[0]);
-        setHighlightIdx(0);
-        // Extract elevation profile from response if available
-        if (result.route?.properties?.elevation_profile) {
-          setElevationData(result.route.properties.elevation_profile.map((pt: any) => ({
-            distance_km: pt.distance_km,
-            elevation: pt.elevation_m ?? pt.elevation ?? 500,
-          })));
-        } else {
-          // Generate simulated elevation profile
-          const numPoints = 30;
-          const totalDist = result.route?.properties?.distance_km ?? 10;
-          const simElev: ElevationPoint[] = Array.from({ length: numPoints }, (_, i) => {
-            const d = (i / (numPoints - 1)) * totalDist;
-            const e = 500 + Math.sin(i * 0.4) * 40 + Math.sin(i * 0.15) * 80 + Math.random() * 15;
-            return { distance_km: +d.toFixed(2), elevation: +e.toFixed(1) };
-          });
-          setElevationData(simElev);
-        }
-        addToast({ type: 'success', title: 'Routes Generated', message: `Found ${routes.length} candidate route${routes.length > 1 ? 's' : ''} (${result.route.properties.route_type === 'q_learning' ? 'Q-Learning Optimized' : 'Dijkstra'}).` });
-        const startLabel = waypoints[0]?.label ?? 'Origin';
-        const endLabel = waypoints[waypoints.length - 1]?.label ?? 'Destination';
-        addActivity('route', `Route generated: ${startLabel} → ${endLabel} (${result.route.properties.distance_km?.toFixed(1) ?? '?'} km)`);
-        // Log auto-injected charging stops
-        const injectedDetails = result.route.properties.charging_stop_details ?? [];
-        const injectedStops = injectedDetails.filter((s: any) => s.injected);
-        if (injectedStops.length > 0) {
-          for (const stop of injectedStops) {
-            addActivity('route', `Charging stop auto-injected at ${stop.name}`);
-          }
-        }
-      }
-    } catch (error: any) {
-      addToast({ type: 'error', title: 'Route Generation Failed', message: error?.message });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleNodeClick = useCallback((nodeId: number) => {
-    // Look up lat/lon from posLookup when clicking map nodes
+  const handleNodeClick = (nodeId: number) => {
     if (posLookup) {
       const coord = posLookup[nodeId.toString()];
       if (coord) {
-        // coord is [lng, lat]
         if (!selectedRoute) {
           setSourceLat(coord[1]);
           setSourceLon(coord[0]);
@@ -218,7 +99,7 @@ function RoutePlanner() {
         }
       }
     }
-  }, [posLookup, selectedRoute]);
+  };
 
   const batteryColor = currentEVState.battery_soc > 50 ? 'bg-emerald' : currentEVState.battery_soc > 20 ? 'bg-amber' : 'bg-rose';
 
@@ -237,21 +118,17 @@ function RoutePlanner() {
         {/* ── Control Panel ───────────────────────────── */}
         <div className="lg:col-span-3">
           <Card className="sticky top-20">
-            <div className="flex items-center gap-2.5 mb-5">
-              <div className="p-1.5 rounded-lg bg-emerald/10"><Navigation className="w-3.5 h-3.5 text-emerald" /></div>
-              <h3 className="text-sm font-semibold text-white uppercase tracking-wider">Route Parameters</h3>
-            </div>
+            <CardHeader icon={Navigation} title="Route Parameters" accent="emerald" />
 
             {/* Multi-Stop Waypoint List */}
             <WaypointList
               waypoints={waypoints}
               onChange={(updated) => {
                 setWaypoints(updated);
-                // Sync source/dest for backward compat
                 const start = updated[0];
                 const end = updated[updated.length - 1];
-                if (start.lat && start.lon) { setSourceLat(start.lat); setSourceLon(start.lon); setSourceLabel(start.label); }
-                if (end.lat && end.lon) { setDestLat(end.lat); setDestLon(end.lon); setDestLabel(end.label); }
+                if (start.lat && start.lon) { setSourceLat(start.lat); setSourceLon(start.lon); setSourceLabel(start.label || ''); }
+                if (end.lat && end.lon) { setDestLat(end.lat); setDestLon(end.lon); setDestLabel(end.label || ''); }
               }}
               landmarks={LANDMARKS}
             />
@@ -318,132 +195,12 @@ function RoutePlanner() {
 
           {/* ── Simulation Controller ─────────────────── */}
           {selectedRoute && (
-            <div className="bg-white/[0.03] backdrop-blur-xl border border-white/[0.06] rounded-xl px-5 py-4">
-              {simState.isBatteryDepleted ? (
-                /* Battery Depleted State */
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
-                    <span className="text-sm font-semibold text-rose-400">Battery Depleted</span>
-                    <span className="text-xs text-muted ml-2">0% SOC reached</span>
-                  </div>
-                  <Button variant="ghost" icon={RotateCcw} onClick={resetSim}>Reset</Button>
-                </div>
-              ) : !simState.isSimulating && simState.progress >= 1 ? (
-                /* Route Complete State */
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-emerald" />
-                    <span className="text-sm font-semibold text-emerald-400">Route Complete</span>
-                    {selectedRoute?.energy_kwh && (
-                      <span className="text-xs text-muted ml-2">
-                        {selectedRoute.energy_kwh.toFixed(1)} kWh used
-                      </span>
-                    )}
-                  </div>
-                  <Button variant="ghost" icon={RotateCcw} onClick={resetSim}>Restart</Button>
-                </div>
-              ) : (
-                /* Active Simulation Controls */
-                <div className="flex items-center gap-4 flex-wrap">
-                  {/* Play/Pause + Reset */}
-                  <div className="flex items-center gap-2">
-                    {!simState.isSimulating ? (
-                      <Button variant="primary" icon={Play} onClick={startSim}>Simulate</Button>
-                    ) : simState.isPaused ? (
-                      <Button variant="primary" icon={Play} onClick={resumeSim}>Resume</Button>
-                    ) : (
-                      <Button variant="secondary" icon={Pause} onClick={pauseSim}>Pause</Button>
-                    )}
-                    {(simState.isSimulating || simState.progress > 0) && (
-                      <Button variant="ghost" icon={RotateCcw} onClick={resetSim} />
-                    )}
-                  </div>
-
-                  {/* Speed pills */}
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs text-muted mr-0.5">Speed</span>
-                    {([1, 2, 4] as const).map((s) => (
-                      <button
-                        key={s}
-                        onClick={() => setSpeedMultiplier(s)}
-                        className={cn(
-                          'text-xs font-semibold px-2.5 py-1 rounded-lg border transition-colors',
-                          speedMultiplier === s
-                            ? 'bg-emerald/20 border-emerald text-emerald'
-                            : 'bg-white/[0.04] border-white/10 text-muted hover:text-white hover:border-white/20',
-                        )}
-                      >
-                        {s}×
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* Battery gauge — compact inline */}
-                  {simulationScale !== 'light' && (
-                    <div className="flex items-center gap-2 flex-1 min-w-[120px]">
-                      <Zap className={cn('w-3.5 h-3.5 flex-shrink-0', simState.isBatteryLow ? 'text-amber-400 animate-pulse' : 'text-muted')} />
-                      <div className="flex-1 h-2 rounded-full bg-white/[0.06] overflow-hidden">
-                        <div
-                          className={cn(
-                            'h-full rounded-full transition-all duration-500',
-                            simState.isBatteryLow ? 'bg-amber-400' : 'bg-emerald',
-                            simulationScale === 'full' ? 'shadow-[0_0_8px_rgba(16,185,129,0.7)]' : '',
-                          )}
-                          style={{ width: `${Math.max(0, simState.currentSOC)}%` }}
-                        />
-                      </div>
-                      <span className={cn('text-xs font-mono w-9 text-right', simState.isBatteryLow ? 'text-amber-400' : 'text-white')}>
-                        {simState.currentSOC.toFixed(0)}%
-                      </span>
-                      {simulationScale === 'full' && (
-                        <span className="text-[10px] text-slate-500 font-mono">
-                          {(simState.currentSOC / 100 * currentEVState.battery_capacity_kwh).toFixed(1)} kWh
-                        </span>
-                      )}
-                      {simState.isBatteryLow && (
-                        <span className="text-xs text-amber-400 animate-pulse">Low</span>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Distance progress */}
-                  {simState.isSimulating && selectedRoute?.distance_km && (
-                    <div className="flex items-center gap-1.5 text-xs text-muted">
-                      <span className="text-white font-mono">
-                        {toDistDisplay(simState.progress * selectedRoute.distance_km)}
-                      </span>
-                      <span>/</span>
-                      <span>{toDistDisplay(selectedRoute.distance_km)}</span>
-                    </div>
-                  )}
-
-                  {/* Particle trail indicator for full mode */}
-                  {simulationScale === 'full' && simState.isSimulating && !simState.isPaused && (
-                    <div className="flex items-center gap-1 text-[10px] text-emerald/60">
-                      <span className="animate-ping inline-block w-1 h-1 rounded-full bg-emerald/40" />
-                      <span className="animate-ping inline-block w-1 h-1 rounded-full bg-emerald/30 delay-75" />
-                      <span className="animate-ping inline-block w-1 h-1 rounded-full bg-emerald/20 delay-150" />
-                    </div>
-                  )}
-
-                  {/* ETA */}
-                  {simState.isSimulating && selectedRoute?.time_minutes && !simState.isCharging && (
-                    <div className="text-xs text-muted">
-                      ~{Math.max(0, Math.round(selectedRoute.time_minutes * (1 - simState.progress)))} min remaining
-                    </div>
-                  )}
-
-                  {/* Charging indicator */}
-                  {simState.isCharging && (
-                    <div className="flex items-center gap-1.5 text-xs text-amber-400">
-                      <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
-                      Charging…
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+            <SimulationController 
+              selectedRoute={selectedRoute} 
+              onStartSim={startSim}
+              speedMultiplier={speedMultiplier}
+              setSpeedMultiplier={setSpeedMultiplier}
+            />
           )}
 
           {/* Route Cards */}
@@ -458,26 +215,21 @@ function RoutePlanner() {
                   { value: 'fast' as const, label: 'Fastest', icon: Zap },
                   { value: 'eco' as const, label: 'Eco', icon: Leaf },
                   { value: 'scenic' as const, label: 'Scenic', icon: Mountain },
+                  { value: 'dijkstra' as const, label: 'Dijkstra', icon: Navigation },
+                  { value: 'astar' as const, label: 'A*', icon: Navigation },
+                  { value: 'gnn' as const, label: 'GNN', icon: Sparkles },
+                  { value: 'hybrid' as const, label: 'Hybrid AI', icon: Sparkles },
                 ]}
                 value={routeType}
                 onChange={setRouteType}
                 size="sm"
               />
             </div>
-            {/* Route color legend */}
+            
             <div className="flex items-center gap-4 mb-3 text-xs text-muted">
-              <span className="flex items-center gap-1.5">
-                <span className="w-3 h-1.5 rounded-full inline-block" style={{ background: '#3b82f6' }} />
-                Fast
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-3 h-1.5 rounded-full inline-block" style={{ background: '#10b981' }} />
-                Eco
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-3 h-1.5 rounded-full inline-block" style={{ background: '#a855f7' }} />
-                Scenic
-              </span>
+              <span className="flex items-center gap-1.5"><span className="w-3 h-1.5 rounded-full inline-block" style={{ background: '#3b82f6' }} />Fast</span>
+              <span className="flex items-center gap-1.5"><span className="w-3 h-1.5 rounded-full inline-block" style={{ background: '#10b981' }} />Eco</span>
+              <span className="flex items-center gap-1.5"><span className="w-3 h-1.5 rounded-full inline-block" style={{ background: '#a855f7' }} />Scenic</span>
             </div>
 
             {loading ? (

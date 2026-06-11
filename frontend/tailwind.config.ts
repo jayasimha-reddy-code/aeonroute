@@ -27,19 +27,23 @@ const config: Config = {
         },
         amber: {
           DEFAULT: '#F59E0B',
-          dim: 'rgba(245, 158, 11, 0.10)',
+          dim: 'rgba(245, 158, 11, 0.12)',
+          glow: 'rgba(245, 158, 11, 0.25)',
         },
         cyan: {
           DEFAULT: '#14B8A6',
-          dim: 'rgba(20, 184, 166, 0.10)',
+          dim: 'rgba(20, 184, 166, 0.12)',
+          glow: 'rgba(20, 184, 166, 0.25)',
         },
         rose: {
           DEFAULT: '#EF4444',
-          dim: 'rgba(239, 68, 68, 0.10)',
+          dim: 'rgba(239, 68, 68, 0.12)',
+          glow: 'rgba(239, 68, 68, 0.25)',
         },
         blue: {
           DEFAULT: '#3B82F6',
-          dim: 'rgba(59, 130, 246, 0.10)',
+          dim: 'rgba(59, 130, 246, 0.12)',
+          glow: 'rgba(59, 130, 246, 0.25)',
         },
         // ── Text hierarchy ──
         label: 'rgba(148, 163, 184, 1)',       // slate-400

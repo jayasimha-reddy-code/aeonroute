@@ -1,15 +1,16 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { hyperStaggerContainer, hyperStaggerItem } from '../lib/motion';
-import api, { type SystemHealth } from '../services/api';
-import PageHeader from '../components/PageHeader';
-import { Card, Button, Badge, ProgressBar } from '../components/ui';
+import api from '../services/api';
+import { useSystemHealth } from '../hooks/useSystemHealth';
+import PageHeader from '../components/layout/PageHeader';
+import { Card, Button, Badge, ProgressBar, CardHeader } from '../components/ui';
 import { useSystemStore, useTrainingProgress, useRewardHistory, useSSEConnected, useResetTrainingData, useSetActiveTab, useTrainingLogs, useSimulationScale, useAddActivity } from '../store/store';
 // useTrainingStream import removed — SSE now managed globally in App.tsx via TrainingSSEManager
-import { RewardCurveChart } from '../components/training/RewardCurveChart';
-import { HardwareGauge } from '../components/training/HardwareGauge';
-import { LiveTerminal } from '../components/training/LiveTerminal';
-import { PipelineFlowchart } from '../components/training/PipelineFlowchart';
+import { RewardCurveChart } from '../components/domain/training/RewardCurveChart';
+import { HardwareGauge } from '../components/domain/training/HardwareGauge';
+import { LiveTerminal } from '../components/domain/training/LiveTerminal';
+import { PipelineFlowchart } from '../components/domain/training/PipelineFlowchart';
 import { NeonSlider } from '../components/ui/NeonSlider';
 import { Brain, Play, Square, CheckCircle, Circle, Loader2, Settings2, Workflow, BarChart3, TrendingUp, Navigation, Cpu } from 'lucide-react';
 import { cn } from '../lib/utils';
@@ -42,23 +43,7 @@ function Training() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [simulationScale]);
   const [hardwareType, setHardwareType] = useState<'GPU' | 'TPU'>('GPU');
-
-  // Real system metrics (CPU / memory) from /api/system-health
-  const [sysHealth, setSysHealth] = useState<SystemHealth | null>(null);
-  useEffect(() => {
-    let cancelled = false;
-    const fetchHealth = async () => {
-      try {
-        const health = await api.getSystemHealth();
-        if (!cancelled) setSysHealth(health);
-      } catch { /* backend may not have psutil — gauges show 0 */ }
-    };
-    fetchHealth();
-    // Poll every 5 s while training is active, every 30 s otherwise
-    const interval = setInterval(fetchHealth, trainingProgress.is_training ? 5000 : 30000);
-    return () => { cancelled = true; clearInterval(interval); };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [trainingProgress.is_training]);
+  const { health: sysHealth } = useSystemHealth(trainingProgress.is_training ? 5000 : 30000);
 
   // ETA tracking
   const epochStartRef = useRef<number | null>(null);
@@ -166,10 +151,7 @@ function Training() {
         <div className="col-span-12 lg:col-span-3 space-y-5">
           {/* Configuration Card — Neon Sliders */}
           <Card className="sticky top-20">
-            <div className="flex items-center gap-2.5 mb-5">
-              <div className="p-1.5 rounded-lg bg-emerald-dim"><Settings2 className="w-3.5 h-3.5 text-emerald" /></div>
-              <h3 className="text-sm font-semibold text-white uppercase tracking-wider">Configuration</h3>
-            </div>
+            <CardHeader icon={Settings2} title="Configuration" accent="emerald" />
 
             <div className="space-y-4">
               <NeonSlider
@@ -320,10 +302,7 @@ function Training() {
 
           {/* Training Pipeline — Node-Based Flowchart */}
           <Card>
-            <div className="flex items-center gap-2.5 mb-5">
-              <div className="p-1.5 rounded-lg bg-amber-dim"><Workflow className="w-3.5 h-3.5 text-amber" /></div>
-              <h3 className="text-sm font-semibold text-white uppercase tracking-wider">Training Pipeline</h3>
-            </div>
+            <CardHeader icon={Workflow} title="Training Pipeline" accent="amber" />
             <PipelineFlowchart
               progress={trainingProgress.progress}
               isTraining={trainingProgress.is_training}
@@ -334,10 +313,7 @@ function Training() {
           {/* Q-Learning Reward */}
           {(rewardHistory.length > 0 || trainingProgress.current_step.toLowerCase().includes('agent') || trainingProgress.current_step.toLowerCase().includes('training') || trainingProgress.current_step.toLowerCase().includes('q-learning')) && (
             <Card>
-              <div className="flex items-center gap-2.5 mb-4">
-                <div className="p-1.5 rounded-lg bg-emerald-dim"><TrendingUp className="w-3.5 h-3.5 text-emerald" /></div>
-                <h3 className="text-sm font-semibold text-white uppercase tracking-wider">Q-Learning Reward</h3>
-              </div>
+              <CardHeader icon={TrendingUp} title="Q-Learning Reward" accent="emerald" />
               <RewardCurveChart data={rewardHistory} rlEpisode={trainingProgress.rl_episode} rlTotalEpisodes={trainingProgress.rl_total_episodes} />
             </Card>
           )}
@@ -345,10 +321,7 @@ function Training() {
           {/* Results */}
           {trainingProgress.metrics && Object.keys(trainingProgress.metrics).length > 0 && (
             <Card>
-              <div className="flex items-center gap-2.5 mb-4">
-                <div className="p-1.5 rounded-lg bg-amber-500/10"><BarChart3 className="w-3.5 h-3.5 text-amber-500" /></div>
-                <h3 className="text-sm font-semibold text-white uppercase tracking-wider">Training Results</h3>
-              </div>
+              <CardHeader icon={BarChart3} title="Training Results" accent="amber" />
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {Object.entries(trainingProgress.metrics).map(([key, value]) => (
                   <div key={key} className="p-3 rounded-xl bg-[#0a0f16]/30 border border-white/[0.05]">

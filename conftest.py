@@ -65,29 +65,40 @@ def mock_app_state() -> AppState:
 
     mock_system = MagicMock()
 
-    # Road-graph mock — returns realistic structures so fetch_road_network() works
-    mock_graph = MagicMock()
-    mock_graph.nodes.return_value = [
-        (i, {"x": float(i % 5), "y": float(i // 5)}) for i in range(25)
-    ]
-    mock_graph.number_of_nodes.return_value = 25
-    mock_graph.number_of_edges.return_value = 40
-    mock_graph.edges.return_value = [
-        (i, i + 1, {
-            "distance_km": 1.0,
-            "base_energy_kwh_per_km": 0.15,
-            "base_time_minutes": 2.0,
-            "road_type": "local",
-        })
-        for i in range(0, 40)
-    ]
-
+    import networkx as nx
+    real_graph = nx.DiGraph()
+    for i in range(25):
+        real_graph.add_node(i, x=float(i % 5), y=float(i // 5))
+    for i in range(24):
+        real_graph.add_edge(i, i + 1, 
+                            distance_km=1.0, 
+                            base_energy_kwh_per_km=0.15, 
+                            base_time_minutes=2.0, 
+                            road_type="local")
+                            
     mock_road_graph = MagicMock()
-    mock_road_graph.graph = mock_graph
+    mock_road_graph.graph = real_graph
     mock_road_graph.num_nodes = 25
+    mock_road_graph.num_edges = 24
     mock_road_graph.charging_stations = [3, 7, 12]
+    mock_road_graph.bounds = {"north": 1.0, "south": 0.0, "east": 1.0, "west": 0.0}
+    
+    def mock_get_node_pos(idx):
+        return {"x": float(idx % 5), "y": float(idx // 5)}
+    mock_road_graph.get_node_pos = mock_get_node_pos
+    
+    def mock_osm_to_idx(osm):
+        return osm
+    mock_road_graph.osm_to_idx = mock_osm_to_idx
+    
+    def mock_idx_to_osm(idx):
+        return idx
+    mock_road_graph.idx_to_osm = mock_idx_to_osm
 
     mock_system.road_graph = mock_road_graph
+    # Set the new required field
+    state.hyderabad_graph = mock_road_graph
+    
     # Models not trained
     mock_system.gan = None
     mock_system.agent = None

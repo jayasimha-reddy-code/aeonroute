@@ -93,7 +93,8 @@ export function useSSE(options: SSEOptions): { close: () => void } {
     };
 
     // Named event listeners matching backend event names
-    const eventNames = ['progress', 'complete', 'stopped', 'idle'];
+    // Include 'typed' for multiplexed SSE events (metric/log/status)
+    const eventNames = ['progress', 'complete', 'stopped', 'idle', 'typed'];
     eventNames.forEach((name) => {
       es.addEventListener(name, ((event: MessageEvent) => {
         onEventRef.current?.[name]?.(event);

@@ -39,8 +39,10 @@
 @layer components {
   /* Glass surface — luminous translucent card foundation */
   .glass {
-    @apply bg-[#0a0f16]/40 backdrop-blur-2xl border border-white/10 rounded-2xl ring-1 ring-inset ring-white/[0.05];
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    @apply bg-[#060910]/40 backdrop-blur-2xl rounded-2xl ring-1 ring-inset ring-white/[0.04];
+    box-shadow: 
+      0 1px 0 0 rgba(255, 255, 255, 0.06) inset,
+      0 8px 32px -4px rgba(0, 0, 0, 0.6);
   }
 
   .glass-hover {
@@ -48,13 +50,26 @@
   }
   .glass-hover:hover {
     @apply -translate-y-0.5;
-    background-color: rgba(10, 15, 22, 0.5);
-    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.6);
+    background-color: rgba(6, 9, 16, 0.6);
+    box-shadow: 
+      0 1px 0 0 rgba(255, 255, 255, 0.08) inset,
+      0 12px 48px -4px rgba(0, 0, 0, 0.8);
+    border-color: rgba(255, 255, 255, 0.1);
   }
 
   /* Skeleton shimmer */
   .skeleton {
     @apply bg-[#0a0f16]/30 rounded-xl animate-pulse;
+  }
+
+  /* Form label — used as className="input-label" on <label> elements */
+  .input-label {
+    @apply block text-xs font-medium text-label uppercase tracking-wider mb-1.5;
+  }
+
+  /* Thin horizontal rule divider — used as className="divider" */
+  .divider {
+    @apply h-px w-full bg-white/[0.06];
   }
 }
 

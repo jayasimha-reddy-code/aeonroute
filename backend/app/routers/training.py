@@ -49,7 +49,9 @@ async def training_stream(request: Request, state: AppState = Depends(get_state)
         last_loss_len = 0
         last_reward_len = 0
         last_sse_idx = 0
-        ping_countdown = 0  # seconds until next keep-alive ping
+        ping_countdown = 0
+        complete_emitted = False   # one-shot: only emit 'complete' once per session
+        stopped_emitted = False    # one-shot: only emit 'stopped' once per session
 
         while True:
             # ── Respect client disconnect ──────────────────────
@@ -58,12 +60,18 @@ async def training_stream(request: Request, state: AppState = Depends(get_state)
 
             status = state.training_status
             progress = status["progress"]
+            is_training = status["is_training"]
             loss_history = status.get("loss_history", [])
             reward_history = status.get("reward_history", [])
             sse_events = status.get("sse_events", [])
             current_loss_len = len(loss_history)
             current_reward_len = len(reward_history)
             current_sse_len = len(sse_events)
+
+            # Reset one-shot flags when a new training run starts
+            if is_training:
+                complete_emitted = False
+                stopped_emitted = False
 
             has_new_data = (
                 progress != last_progress
@@ -98,24 +106,25 @@ async def training_stream(request: Request, state: AppState = Depends(get_state)
                 last_loss_len = current_loss_len
                 last_reward_len = current_reward_len
 
-            # ── Training finished ────────────────────────────────
-            if not status["is_training"] and progress >= 100:
+            # ── Training finished: emit once ─────────────────────
+            if not is_training and progress >= 100 and not complete_emitted:
                 status_slim = {k: v for k, v in status.items() if k not in ("loss_history", "reward_history", "sse_events")}
                 yield {"event": "complete", "data": json.dumps(status_slim)}
-                # DO NOT break — stay open so the client sees the complete event
-                # and the stream reconnect-loop doesn't fire. Keep pinging.
+                complete_emitted = True
 
-            elif not status["is_training"] and 0 < progress < 100:
+            elif not is_training and 0 < progress < 100 and not stopped_emitted:
                 status_slim = {k: v for k, v in status.items() if k not in ("loss_history", "reward_history", "sse_events")}
                 yield {"event": "stopped", "data": json.dumps(status_slim)}
+                stopped_emitted = True
 
             # ── Keep-alive ping (every 15 s) ────────────────────
             ping_countdown -= 1
             if ping_countdown <= 0:
-                yield {"comment": "ping"}   # SSE comment — keeps connection open
+                yield {"comment": "ping"}
                 ping_countdown = 30         # 30 × 0.5 s = 15 s
 
             await asyncio.sleep(0.5)
 
     return EventSourceResponse(event_generator())
+
 

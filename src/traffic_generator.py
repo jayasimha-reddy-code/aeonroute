@@ -709,20 +709,75 @@ class SGGANTrafficGenerator:
         print(f"✅ SG-GAN saved to {filepath}")
     
     def load(self, filepath: str):
-        """Load GAN models (.keras format only)."""
-        try:
-            self.generator = keras.models.load_model(
-                f"{filepath}_generator.keras",
-                custom_objects={'SGGANGenerator': SGGANGenerator}
-            )
-            self.discriminator = keras.models.load_model(
-                f"{filepath}_discriminator.keras",
-                custom_objects={'SGGANDiscriminator': SGGANDiscriminator}
-            )
+        """Load GAN models using weights-only strategy.
+
+        Keras full-model loading (load_model) fails for subclassed Models that
+        use SpectralNormalization as instance attributes, because the config JSON
+        reconstruction cannot re-map the u/v singular vectors.
+
+        Solution: build fresh model instances via the constructor (which already
+        runs a dummy forward pass to build all weights), then load weights by name
+        from the saved file. The architecture is always rebuilt from code, never
+        from the serialized config.
+        """
+        import zipfile, tempfile, pathlib
+
+        gen_path = f"{filepath}_generator.keras"
+        disc_path = f"{filepath}_discriminator.keras"
+
+        def _load_weights_from_keras_archive(model, keras_path: str, label: str) -> bool:
+            """Extract weights.h5 from a .keras ZIP and load by name."""
+            keras_path = pathlib.Path(keras_path)
+            if not keras_path.exists():
+                print(f"⚠️  {label}: file not found at {keras_path}")
+                return False
+            try:
+                # Strategy 1: Try direct full-model load first (works if no SpectralNorm issue)
+                loaded = keras.models.load_model(
+                    str(keras_path),
+                    custom_objects={
+                        'SGGANGenerator': SGGANGenerator,
+                        'SGGANDiscriminator': SGGANDiscriminator,
+                    },
+                    compile=False,
+                )
+                # Copy weights into our fresh instance
+                model.set_weights(loaded.get_weights())
+                del loaded
+                print(f"✅ {label}: full-model load succeeded")
+                return True
+            except Exception as full_load_err:
+                print(f"⚠️  {label}: full-model load failed ({full_load_err}), trying weights-only...")
+
+            try:
+                # Strategy 2: Unzip .keras archive and load model.weights.h5 directly
+                with tempfile.TemporaryDirectory() as tmpdir:
+                    with zipfile.ZipFile(str(keras_path), 'r') as zf:
+                        zf.extractall(tmpdir)
+                    # Keras 3 stores weights at model.weights.h5 inside the zip
+                    w_path = pathlib.Path(tmpdir) / "model.weights.h5"
+                    if not w_path.exists():
+                        # Try alternative names
+                        candidates = list(pathlib.Path(tmpdir).glob("*.h5")) + list(pathlib.Path(tmpdir).glob("*.weights.h5"))
+                        if not candidates:
+                            raise FileNotFoundError(f"No .h5 file found inside {keras_path}")
+                        w_path = candidates[0]
+                    model.load_weights(str(w_path))
+                print(f"✅ {label}: weights-only load succeeded from {keras_path}")
+                return True
+            except Exception as weights_err:
+                print(f"❌ {label}: weights-only load also failed: {weights_err}")
+                return False
+
+        gen_ok = _load_weights_from_keras_archive(self.generator, gen_path, "SG-GAN Generator")
+        disc_ok = _load_weights_from_keras_archive(self.discriminator, disc_path, "SG-GAN Discriminator")
+
+        if gen_ok and disc_ok:
             print(f"✅ SG-GAN loaded from {filepath}")
-        except Exception as e:
-            print(f"❌ Failed to load SG-GAN: {e}")
-            raise
+        elif gen_ok or disc_ok:
+            print(f"⚠️  SG-GAN partially loaded from {filepath} (gen={gen_ok}, disc={disc_ok})")
+        else:
+            raise RuntimeError(f"SG-GAN load failed for both generator and discriminator at {filepath}")
 
 
 # ============================================================================
