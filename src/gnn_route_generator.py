@@ -657,7 +657,7 @@ class GNNRouteGAN:
         self.ev_state_dim = ev_state_dim
         self.node_feature_dim = node_feature_dim
         
-        print("🏗️ Building GNN Route Generator...")
+        print("[GNN] Building GNN Route Generator...")
         self.generator = GNNRouteGenerator(
             num_nodes=num_nodes,
             node_feature_dim=node_feature_dim,
@@ -668,7 +668,7 @@ class GNNRouteGAN:
             attention_heads=attention_heads,
         )
         
-        print("🏗️ Building GNN Route Discriminator...")
+        print("[GNN] Building GNN Route Discriminator...")
         self.discriminator = GNNRouteDiscriminator(
             num_nodes=num_nodes,
             node_feature_dim=node_feature_dim,
@@ -676,6 +676,19 @@ class GNNRouteGAN:
             hidden_dim=hidden_dim,
             attention_heads=attention_heads,
         )
+
+        # Build submodel architectures for immediate Keras 3 weight-loading compatibility
+        try:
+            dummy_adj = tf.zeros((1, num_nodes, num_nodes), dtype=tf.float32)
+            dummy_ev = tf.zeros((1, ev_state_dim), dtype=tf.float32)
+            dummy_noise = tf.zeros((1, noise_dim), dtype=tf.float32)
+            dummy_cond = tf.zeros((1, 20), dtype=tf.float32)
+            self.generator([dummy_noise, dummy_ev, dummy_cond], dummy_adj, training=False)
+
+            dummy_feats = tf.zeros((1, num_nodes, node_feature_dim), dtype=tf.float32)
+            self.discriminator([dummy_feats, dummy_adj, dummy_ev], training=False)
+        except Exception as _b_err:
+            pass
         
         # Route encoder
         self.encoder = RouteEncoder(max_nodes=num_nodes, feature_dim=node_feature_dim)
@@ -801,7 +814,7 @@ class GNNRouteGAN:
                 print(f"Epoch {epoch+1}/{epochs} - D Loss: {avg_d:.4f}, G Loss: {avg_g:.4f}")
         
         if verbose:
-            print("✅ GNN Route GAN training complete!")
+            print("[GNN] GNN Route GAN training complete.")
     
     def generate_route(self,
                       source: int,
@@ -837,7 +850,7 @@ class GNNRouteGAN:
         os.makedirs(path, exist_ok=True)
         self.generator.save(f"{path}/gnn_generator.keras")
         self.discriminator.save(f"{path}/gnn_discriminator.keras")
-        print(f"✅ GNN Route GAN saved to {path}")
+        print(f"[GNN] GNN Route GAN saved to {path}")
     
     def load(self, path: str):
         """Load models from .keras format."""
@@ -855,7 +868,7 @@ class GNNRouteGAN:
                 'GraphAttentionLayerV2': GraphAttentionLayerV2,
             },
         )
-        print(f"✅ GNN Route GAN loaded from {path}")
+        print(f"[GNN] GNN Route GAN loaded from {path}")
 
 
 # ============================================================================

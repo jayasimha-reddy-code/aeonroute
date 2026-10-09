@@ -142,6 +142,25 @@ def _load_weights_from_keras_or_h5(model: Any, path: Path, label: str) -> bool:
 
     suffix = path.suffix.lower()
 
+    # Ensure subclassed Keras 3 models are built before loading weights
+    if not getattr(model, "built", False):
+        try:
+            import tensorflow as tf  # noqa: PLC0415
+            num_nodes = getattr(model, "num_nodes", 100)
+            ev_dim = getattr(model, "ev_state_dim", 5)
+            dummy_adj = tf.zeros((1, num_nodes, num_nodes), dtype=tf.float32)
+            dummy_ev = tf.zeros((1, ev_dim), dtype=tf.float32)
+            if hasattr(model, "noise_dim"):
+                noise = tf.zeros((1, model.noise_dim), dtype=tf.float32)
+                cond = tf.zeros((1, 20), dtype=tf.float32)
+                model([noise, dummy_ev, cond], dummy_adj, training=False)
+            elif hasattr(model, "node_encoder") or hasattr(model, "validity_head"):
+                feat_dim = getattr(model, "node_feature_dim", 8)
+                feats = tf.zeros((1, num_nodes, feat_dim), dtype=tf.float32)
+                model([feats, dummy_adj, dummy_ev], training=False)
+        except Exception as _b_err:
+            logger.debug("[GNNService] Automatic model build failed: %s", _b_err)
+
     # ── Strategy A: weights-only .h5 file ─────────────────────────────────────
     if suffix in (".h5",):
         try:
