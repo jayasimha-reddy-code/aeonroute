@@ -1,6 +1,7 @@
 import { useEffect, lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
+import { Analytics } from '@vercel/analytics/react';
 import { useSetActiveTab, useSetRoadNetwork, useLoading, useAddToast, type AppTab } from './store/store';
 import { trainingSSE } from './store/trainingSSEManager';
 import api from './services/api';
@@ -121,6 +122,7 @@ function App() {
       </div>
 
       <ToastContainer />
+      <Analytics />
     </>
   );
 }
