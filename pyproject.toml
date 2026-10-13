@@ -127,6 +127,9 @@ exclude_lines = [
     "@abstractmethod",
 ]
 
+[tool.vercel]
+entrypoint = "backend_api:app"
+
 [project.urls]
 Repository = "https://github.com/yourusername/ev-routing"
 Documentation = "https://ev-routing.readthedocs.io"
